@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>罐头场通告排期</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部导航栏 -->
+        <header class="header">
+            <h1>罐头场通告排期</h1>
+            <div class="toolbar">
+                <button id="prev-week" class="btn">◀ 上周</button>
+                <button id="current-week" class="btn primary">本周</button>
+                <button id="next-week" class="btn">下周 ▶</button>
+                <span id="week-display" class="week-display"></span>
+                <button id="add-project" class="btn primary">+ 新增项目</button>
+                <button id="export-image" class="btn secondary">导出图片</button>
+                <button id="paste-recognition" class="btn secondary">粘贴识别</button>
+                <button id="settings" class="btn">设置</button>
+            </div>
+        </header>
+
+        <!-- 版本信息 (不显示在导出图片中) -->
+        <div class="version-info" id="version-info">
+            <span class="version-number">v2.5</span>
+            <span class="version-date">2026-02-14</span>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <main class="main-content">
+            <!-- 星期标题 -->
+            <div class="week-header">
+                <div class="day-header" id="monday-header">周一</div>
+                <div class="day-header" id="tuesday-header">周二</div>
+                <div class="day-header" id="wednesday-header">周三</div>
+                <div class="day-header" id="thursday-header">周四</div>
+                <div class="day-header" id="friday-header">周五</div>
+                <div class="day-header" id="saturday-header">周六</div>
+                <div class="day-header" id="sunday-header">周日</div>
+            </div>
+
+            <!-- 项目列表区域 -->
+            <div class="schedule-container">
+                <div class="day-column" id="monday">
+                    <div class="empty-state">🈚️</div>
+                </div>
+                <div class="day-column" id="tuesday">
+                    <div class="empty-state">🈚️</div>
+                </div>
+                <div class="day-column" id="wednesday">
+                    <div class="empty-state">🈚️</div>
+                </div>
+                <div class="day-column" id="thursday">
+                    <div class="empty-state">🈚️</div>
+                </div>
+                <div class="day-column" id="friday">
+                    <div class="empty-state">🈚️</div>
+                </div>
+                <div class="day-column" id="saturday">
+                    <div class="empty-state">🈚️</div>
+                </div>
+                <div class="day-column" id="sunday">
+                    <div class="empty-state">🈚️</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 项目编辑模态框 -->
+        <div id="project-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>项目信息</h2>
+                <form id="project-form">
+                    <div class="form-group">
+                        <label for="project-name">项目名称:</label>
+                        <input type="text" id="project-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-location">拍摄地:</label>
+                        <select id="project-location">
+                            <option value="">请选择拍摄地</option>
+                        </select>
+                        <input type="text" id="project-location-input" style="display: none;">
+                        <button type="button" id="add-location" class="btn" style="margin-top: 5px;">添加新拍摄地</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-date">日期:</label>
+                        <div class="date-input-container">
+                            <input type="text" id="project-date" readonly placeholder="请选择日期">
+                            <button type="button" id="select-date-btn" class="btn">📅 选择日期</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-director">导演:</label>
+                        <select multiple id="project-director" size="3">
+                            <option value="">请选择导演</option>
+                        </select>
+                        <input type="text" id="project-director-input" style="display: none;">
+                        <button type="button" id="add-director" class="btn" style="margin-top: 5px;">添加新导演</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-photographer">摄影:</label>
+                        <select multiple id="project-photographer" size="3">
+                            <option value="">请选择摄影师</option>
+                        </select>
+                        <input type="text" id="project-photographer-input" style="display: none;">
+                        <button type="button" id="add-photographer" class="btn" style="margin-top: 5px;">添加新摄影师</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-production">制片:</label>
+                        <select multiple id="project-production" size="3">
+                            <option value="">请选择制片</option>
+                        </select>
+                        <input type="text" id="project-production-input" style="display: none;">
+                        <button type="button" id="add-production" class="btn" style="margin-top: 5px;">添加新制片</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-rd">研发:</label>
+                        <select multiple id="project-rd" size="3">
+                            <option value="">请选择研发</option>
+                        </select>
+                        <input type="text" id="project-rd-input" style="display: none;">
+                        <button type="button" id="add-rd" class="btn" style="margin-top: 5px;">添加新研发</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-operational">运营:</label>
+                        <select multiple id="project-operational" size="3">
+                            <option value="">请选择运营</option>
+                        </select>
+                        <input type="text" id="project-operational-input" style="display: none;">
+                        <button type="button" id="add-operational" class="btn" style="margin-top: 5px;">添加新运营</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-audio">录音:</label>
+                        <select multiple id="project-audio" size="3">
+                            <option value="">请选择录音</option>
+                        </select>
+                        <input type="text" id="project-audio-input" style="display: none;">
+                        <button type="button" id="add-audio" class="btn" style="margin-top: 5px;">添加新录音</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-start-time">开始时间:</label>
+                        <select id="project-start-time">
+                            <option value="">请选择开始时间</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-type">类型:</label>
+                        <select id="project-type">
+                            <option value="">请选择</option>
+                            <option value="平面">平面</option>
+                            <option value="视频">视频</option>
+                            <option value="直播">直播</option>
+                            <option value="试做">试做</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="project-laodao" value="1"> 老刀出镜
+                        </label>
+                    </div>
+                    <!-- 状态字段已移除 -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn primary">保存</button>
+                        <button type="button" id="cancel-edit" class="btn">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 日期选择器模态框 -->
+        <div id="date-picker-modal" class="modal">
+            <div class="modal-content date-picker">
+                <span class="close" id="close-date-picker">&times;</span>
+                <h2>选择日期</h2>
+                <div class="date-picker-header">
+                    <button id="prev-month" class="btn">◀</button>
+                    <span id="current-month-year"></span>
+                    <button id="next-month" class="btn">▶</button>
+                </div>
+                <div class="date-picker-calendar">
+                    <div class="weekdays">
+                        <div>日</div>
+                        <div>一</div>
+                        <div>二</div>
+                        <div>三</div>
+                        <div>四</div>
+                        <div>五</div>
+                        <div>六</div>
+                    </div>
+                    <div id="calendar-days" class="days"></div>
+                </div>
+                <div class="selected-date-info">
+                    <p>选定日期: <span id="selected-date-display"></span></p>
+                </div>
+                <div class="form-actions">
+                    <button id="confirm-date" class="btn primary">确定</button>
+                    <button id="cancel-date" class="btn">取消</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 图片导出模态框 -->
+        <div id="export-modal" class="modal">
+            <div class="modal-content export-modal">
+                <span class="close" id="close-export">&times;</span>
+                <h2>导出图片</h2>
+                <div class="export-preview">
+                    <canvas id="export-canvas" style="width: 100%; max-width: 600px; border: 1px solid #ddd;"></canvas>
+                </div>
+                <div class="form-actions">
+                    <button id="download-image" class="btn primary">下载图片</button>
+                    <button id="open-in-new-tab" class="btn">在新标签页打开</button>
+                    <button id="cancel-export" class="btn">取消</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 设置模态框 -->
+        <div id="settings-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>设置</h2>
+                <div class="settings-section">
+                    <h3>常用项管理</h3>
+                    <div class="form-group">
+                        <label for="common-locations">常用拍摄地:</label>
+                        <textarea id="common-locations" placeholder="每行一个地点"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="common-directors">常用导演:</label>
+                        <textarea id="common-directors" placeholder="每行一个导演"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="common-photographers">常用摄影师:</label>
+                        <textarea id="common-photographers" placeholder="每行一个摄影师"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="common-production-facilities">制片:</label>
+                        <textarea id="common-production-facilities" placeholder="每行一个制片"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="common-rd-facilities">研发:</label>
+                        <textarea id="common-rd-facilities" placeholder="每行一个研发"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="common-operational-facilities">运营:</label>
+                        <textarea id="common-operational-facilities" placeholder="每行一个运营"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="common-audio-facilities">录音:</label>
+                        <textarea id="common-audio-facilities" placeholder="每行一个录音"></textarea>
+                    </div>
+                </div>
+                
+                <!-- 数据备份与恢复 - 独立板块（需要密码） -->
+                <div class="settings-section">
+                    <h3>数据备份与恢复 🔒</h3>
+                    <p style="color: var(--text-tertiary); font-size: 12px; margin-bottom: 16px;">备份文件将保存到服务器 backups 文件夹中</p>
+                    
+                    <!-- 锁定状态 - 点击解锁 -->
+                    <div id="backup-locked" class="backup-locked">
+                        <div class="lock-icon">🔐</div>
+                        <p>数据备份与恢复功能已锁定</p>
+                        <button id="unlock-backup" class="btn primary">输入密码解锁</button>
+                    </div>
+                    
+                    <!-- 解锁后的备份恢复内容 -->
+                    <div id="backup-unlocked" class="backup-unlocked" style="display: none;">
+                        <!-- 一键备份到宿主机 -->
+                        <div class="backup-section">
+                            <div class="form-group">
+                                <button id="backup-to-host" class="btn primary">📦 一键备份到宿主机</button>
+                                <p>将所有设置和排期数据备份到服务器指定文件夹</p>
+                            </div>
+                            
+                            <!-- 备份列表 -->
+                            <div class="backup-list-container">
+                                <h4>最近备份记录</h4>
+                                <div id="backup-list" class="backup-list">
+                                    <p class="no-backup">暂无备份记录</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0;">
+                        
+                        <!-- 从宿主机恢复 -->
+                        <div class="restore-section">
+                            <div class="form-group">
+                                <button id="restore-from-host" class="btn">📥 从备份恢复</button>
+                                <p>从服务器备份文件夹选择恢复数据</p>
+                            </div>
+                        </div>
+                        
+                        <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0;">
+                        
+                        <!-- 原有导出导入功能 -->
+                        <div class="form-group">
+                            <button id="export-data" class="btn">💾 下载备份文件</button>
+                            <p>下载 JSON 格式的备份文件到本地</p>
+                        </div>
+                        <div class="form-group">
+                            <input type="file" id="import-file" accept=".json" style="display: none;">
+                            <button id="import-data" class="btn">📤 导入备份文件</button>
+                            <p>从本地选择备份文件恢复数据</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button id="save-settings" class="btn primary">保存设置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示组件 -->
+    <div id="toast-container"></div>
+
+    <!-- 密码验证模态框 -->
+    <div id="password-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close" id="close-password-modal">&times;</span>
+            <h2>🔐 输入密码</h2>
+            <p style="margin-bottom: 15px; color: #666;">请输入备份与恢复功能的访问密码</p>
+            <div class="form-group">
+                <input type="password" id="backup-password" placeholder="请输入密码">
+            </div>
+            <div class="form-actions">
+                <button id="confirm-password" class="btn primary">确认</button>
+                <button id="cancel-password" class="btn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading 加载指示器 -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">加载中...</div>
+    </div>
+
+    <!-- 复制项目模态框 -->
+    <div id="copy-modal" class="modal">
+        <div class="modal-content copy-modal-content">
+            <span class="close" id="close-copy-modal">&times;</span>
+            <h2>复制项目到其他日期</h2>
+            <p style="margin-bottom: 15px; color: #666;">选择目标日期（可多选，支持跨周）：</p>
+            <div id="copy-date-options" class="copy-date-options"></div>
+            <div class="form-actions">
+                <button id="confirm-copy" class="btn primary">确认复制</button>
+                <button id="cancel-copy" class="btn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

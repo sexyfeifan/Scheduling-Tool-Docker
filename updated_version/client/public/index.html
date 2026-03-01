@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>罐头场通告排期</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部导航栏 -->
+        <header class="header">
+            <h1>罐头场通告排期</h1>
+            <div class="toolbar">
+                <button id="prev-week" class="btn">◀ 上周</button>
+                <button id="current-week" class="btn primary">本周</button>
+                <button id="next-week" class="btn">下周 ▶</button>
+                <span id="week-display" class="week-display"></span>
+                <button id="add-project" class="btn primary">+ 新增项目</button>
+                <button id="export-image" class="btn secondary">导出图片</button>
+                <button id="settings" class="btn">设置</button>
+                <button id="logout" class="btn">退出登录</button>
+            </div>
+        </header>
+
+        <!-- 主要内容区域 -->
+        <main class="main-content">
+            <!-- 星期标题 -->
+            <div class="week-header">
+                <div class="day-header" id="monday-header">周一</div>
+                <div class="day-header" id="tuesday-header">周二</div>
+                <div class="day-header" id="wednesday-header">周三</div>
+                <div class="day-header" id="thursday-header">周四</div>
+                <div class="day-header" id="friday-header">周五</div>
+                <div class="day-header" id="saturday-header">周六</div>
+                <div class="day-header" id="sunday-header">周日</div>
+            </div>
+
+            <!-- 项目列表区域 -->
+            <div class="schedule-container">
+                <div class="day-column" id="monday">
+                    <div class="empty-state">🈚️</div>
+                </div>
+                <div class="day-column" id="tuesday">
+                    <div class="empty-state">🈚️</div>
+                </div>
+                <div class="day-column" id="wednesday">
+                    <div class="empty-state">🈚️</div>
+                </div>
+                <div class="day-column" id="thursday">
+                    <div class="empty-state">🈚️</div>
+                </div>
+                <div class="day-column" id="friday">
+                    <div class="empty-state">🈚️</div>
+                </div>
+                <div class="day-column" id="saturday">
+                    <div class="empty-state">🈚️</div>
+                </div>
+                <div class="day-column" id="sunday">
+                    <div class="empty-state">🈚️</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 项目编辑模态框 -->
+        <div id="project-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>项目信息</h2>
+                <form id="project-form">
+                    <div class="form-group">
+                        <label for="project-name">项目名称:</label>
+                        <input type="text" id="project-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-location">拍摄地:</label>
+                        <select id="project-location">
+                            <option value="">请选择拍摄地</option>
+                        </select>
+                        <input type="text" id="project-location-input" style="display: none;">
+                        <button type="button" id="add-location" class="btn" style="margin-top: 5px;">添加新拍摄地</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-director">导演:</label>
+                        <select id="project-director">
+                            <option value="">请选择导演</option>
+                        </select>
+                        <input type="text" id="project-director-input" style="display: none;">
+                        <button type="button" id="add-director" class="btn" style="margin-top: 5px;">添加新导演</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-photographer">摄影:</label>
+                        <select multiple id="project-photographer" size="3">
+                            <option value="">请选择摄影师</option>
+                        </select>
+                        <input type="text" id="project-photographer-input" style="display: none;">
+                        <button type="button" id="add-photographer" class="btn" style="margin-top: 5px;">添加新摄影师</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-date">日期:</label>
+                        <div class="date-input-container">
+                            <input type="text" id="project-date" readonly placeholder="请选择日期">
+                            <button type="button" id="select-date-btn" class="btn">📅 选择日期</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-start-time">开始时间:</label>
+                        <select id="project-start-time">
+                            <option value="">请选择开始时间</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-type">类型:</label>
+                        <select id="project-type">
+                            <option value="">请选择</option>
+                            <option value="平面">平面</option>
+                            <option value="视频">视频</option>
+                            <option value="直播">直播</option>
+                            <option value="试做">试做</option>
+                        </select>
+                    </div>
+                    <!-- 状态字段已移除 -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn primary">保存</button>
+                        <button type="button" id="cancel-edit" class="btn">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 日期选择器模态框 -->
+        <div id="date-picker-modal" class="modal">
+            <div class="modal-content date-picker">
+                <span class="close" id="close-date-picker">&times;</span>
+                <h2>选择日期</h2>
+                <div class="date-picker-header">
+                    <button id="prev-month" class="btn">◀</button>
+                    <span id="current-month-year"></span>
+                    <button id="next-month" class="btn">▶</button>
+                </div>
+                <div class="date-picker-calendar">
+                    <div class="weekdays">
+                        <div>日</div>
+                        <div>一</div>
+                        <div>二</div>
+                        <div>三</div>
+                        <div>四</div>
+                        <div>五</div>
+                        <div>六</div>
+                    </div>
+                    <div id="calendar-days" class="days"></div>
+                </div>
+                <div class="selected-date-info">
+                    <p>选定日期: <span id="selected-date-display"></span></p>
+                </div>
+                <div class="form-actions">
+                    <button id="confirm-date" class="btn primary">确定</button>
+                    <button id="cancel-date" class="btn">取消</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 图片导出模态框 -->
+        <div id="export-modal" class="modal">
+            <div class="modal-content export-modal">
+                <span class="close" id="close-export">&times;</span>
+                <h2>导出图片</h2>
+                <div class="export-preview">
+                    <canvas id="export-canvas" style="width: 100%; max-width: 600px; border: 1px solid #ddd;"></canvas>
+                </div>
+                <div class="form-actions">
+                    <button id="download-image" class="btn primary">下载图片</button>
+                    <button id="cancel-export" class="btn">取消</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 设置模态框 -->
+        <div id="settings-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>设置</h2>
+                <div class="settings-section">
+                    <h3>常用项管理</h3>
+                    <div class="form-group">
+                        <label for="common-locations">常用拍摄地:</label>
+                        <textarea id="common-locations" placeholder="每行一个地点"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="common-directors">常用导演:</label>
+                        <textarea id="common-directors" placeholder="每行一个导演"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="common-photographers">常用摄影师:</label>
+                        <textarea id="common-photographers" placeholder="每行一个摄影师"></textarea>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button id="save-settings" class="btn primary">保存设置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>
