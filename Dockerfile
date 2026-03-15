@@ -10,7 +10,7 @@ WORKDIR /app
 COPY server/package*.json ./
 
 # 安装依赖
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # 复制应用代码
 COPY server/ ./
@@ -22,7 +22,7 @@ COPY client/ /client/
 RUN mkdir -p data backups
 
 # 确保 version.json 存在
-RUN test -f data/version.json || echo '{"version":"2.10","createDate":"2026-02-14","buildDate":""}' > data/version.json
+RUN test -f data/version.json || echo '{"version":"2.17","createDate":"2026-03-15","buildDate":""}' > data/version.json
 
 # 暴露端口
 EXPOSE 3000

@@ -1,8 +1,7 @@
-version: '3.8'
-
 services:
   scheduling-tool:
-    build: .
+    image: sexyfeifan/scheduling-tool:2.17
+    container_name: scheduling-tool
     ports:
       - "3000:3000"
     volumes:
@@ -10,5 +9,5 @@ services:
       - ./backups:/app/backups
     environment:
       - BACKUP_DIR=/app/backups
-      - BACKUP_PASSWORD=admin123
+      - BACKUP_PASSWORD=${BACKUP_PASSWORD:-change-me}
     restart: unless-stopped

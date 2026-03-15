@@ -227,6 +227,30 @@ const scheduleAPI = {
     },
 };
 
+// 按日期持久化排期：无项目时删除当天记录，避免残留空数组数据
+async function persistScheduleDate(dateStr) {
+    const projects = scheduleData[dateStr] || [];
+    if (projects.length === 0) {
+        try {
+            await scheduleAPI.deleteSchedule(dateStr);
+        } catch (error) {
+            // 如果后端该日期已不存在（404），视为成功
+            if (!/404|未找到/.test(error.message || '')) {
+                await scheduleAPI.saveSchedule({
+                    date: dateStr,
+                    projects: []
+                });
+            }
+        }
+        return;
+    }
+
+    await scheduleAPI.saveSchedule({
+        date: dateStr,
+        projects
+    });
+}
+
 // 设置相关API
 const settingAPI = {
     // 获取设置
@@ -460,11 +484,20 @@ function connectSSE() {
                 break;
             case 'settingsUpdate':
                 // 更新本地设置
-                commonLocationsTextarea.value = data.settings.commonLocations.join('\n');
-                commonDirectorsTextarea.value = data.settings.commonDirectors.join('\n');
-                commonPhotographersTextarea.value = data.settings.commonPhotographers.join('\n');
+                commonLocationsTextarea.value = (data.settings.commonLocations || []).join('\n');
+                commonDirectorsTextarea.value = (data.settings.commonDirectors || []).join('\n');
+                commonPhotographersTextarea.value = (data.settings.commonPhotographers || []).join('\n');
+                commonProductionFacilitiesTextarea.value = (data.settings.commonProductionFacilities || []).join('\n');
+                commonRdFacilitiesTextarea.value = (data.settings.commonRdFacilities || []).join('\n');
+                commonOperationalFacilitiesTextarea.value = (data.settings.commonOperationalFacilities || []).join('\n');
+                commonAudioFacilitiesTextarea.value = (data.settings.commonAudioFacilities || []).join('\n');
                 // 更新项目表单选项
                 updateProjectFormOptions();
+                break;
+            case 'restoreComplete':
+                // 备份恢复后重新拉取完整数据，避免本地状态残留
+                loadScheduleData();
+                loadSettings();
                 break;
         }
     };
@@ -1194,6 +1227,8 @@ async function saveProject() {
     }
     
     try {
+        const sourceDate = currentEditingProject ? currentEditingProject.date : null;
+
         if (currentEditingProject) {
             // 更新现有项目
             if (!scheduleData[currentEditingProject.date]) {
@@ -1223,11 +1258,12 @@ async function saveProject() {
             scheduleData[projectDate].push(project);
         }
         
-        // 保存数据到API
-        await scheduleAPI.saveSchedule({
-            date: projectDate,
-            projects: scheduleData[projectDate]
-        });
+        // 保存目标日期
+        await persistScheduleDate(projectDate);
+        // 如果是跨日期编辑，还要同步源日期，防止源日期残留旧项目
+        if (sourceDate && sourceDate !== projectDate) {
+            await persistScheduleDate(sourceDate);
+        }
         
         // 关闭模态框并重新渲染
         projectModal.style.display = 'none';
@@ -1657,10 +1693,7 @@ async function deleteProject(dateStr, projectIndex) {
                 delete scheduleData[dateStr];
             }
             
-            await scheduleAPI.saveSchedule({
-                date: dateStr,
-                projects: scheduleData[dateStr] || []
-            });
+            await persistScheduleDate(dateStr);
             
             renderSchedule();
             showToast('项目已删除', 'success');
@@ -2023,17 +2056,9 @@ async function handleDrop(e) {
                 }
                 scheduleData[targetDate].push(project);
                 
-                // 保存源日期的更新
-                await scheduleAPI.saveSchedule({
-                    date: srcDate,
-                    projects: scheduleData[srcDate] || []
-                });
-                
-                // 保存目标日期的更新
-                await scheduleAPI.saveSchedule({
-                    date: targetDate,
-                    projects: scheduleData[targetDate]
-                });
+                // 同步源日期和目标日期
+                await persistScheduleDate(srcDate);
+                await persistScheduleDate(targetDate);
                 
                 // 重新渲染
                 renderSchedule();
@@ -2305,7 +2330,7 @@ async function exportAllData() {
             settings: settings,
             schedules: schedules,
             exportDate: new Date().toISOString(),
-            version: '1.13'
+            version: '2.17'
         };
         
         // 创建Blob对象

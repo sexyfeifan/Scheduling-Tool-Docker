@@ -220,7 +220,10 @@ body {
     text-align: center;
     font-weight: 600;
     font-size: 14px;
-    letter-spacing: 0.5px;
+    letter-spacing: 0;
+    font-kerning: none;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
     text-transform: uppercase;
     transition: all 0.2s ease;
 }
@@ -1022,6 +1025,10 @@ body {
 .copy-date-option .date-label {
     font-weight: 600;
     font-size: 14px;
+    letter-spacing: 0;
+    font-kerning: none;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
 }
 
 .copy-date-option .day-label {
