@@ -73,6 +73,20 @@ docker push sexyfeifan/scheduling-tool:latest
 
 当前 [docker-compose.yml](docker-compose.yml) 已经预设为 `sexyfeifan/scheduling-tool:2.17`，推送成功后可直接部署。
 
+## Docker Hub 页面介绍与部署教程
+
+已准备好可直接粘贴到 Docker Hub 的文案文件：
+
+- 短描述（Short Description）：[DOCKER_HUB_SHORT_DESCRIPTION.txt](DOCKER_HUB_SHORT_DESCRIPTION.txt)
+- 完整描述（Full Description + 部署教程）：[DOCKER_HUB_OVERVIEW.md](DOCKER_HUB_OVERVIEW.md)
+
+在 Docker Hub 仓库页面执行：
+
+1. 打开 `Repository Settings -> General`
+2. 将 `DOCKER_HUB_SHORT_DESCRIPTION.txt` 内容粘贴到 `Short Description`
+3. 将 `DOCKER_HUB_OVERVIEW.md` 内容粘贴到 `Full Description`
+4. 点击 `Save`
+
 ## 访问路径
 
 1. **主编辑页面**: `http://localhost:3000` - 完整功能，支持所有编辑操作
