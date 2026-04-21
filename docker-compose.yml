@@ -8,6 +8,7 @@ services:
       - ./data:/app/data
       - ./backups:/app/backups
     environment:
+      - DATA_DIR=/app/data
       - BACKUP_DIR=/app/backups
       - BACKUP_PASSWORD=${BACKUP_PASSWORD:-change-me}
     restart: unless-stopped

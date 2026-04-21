@@ -23,6 +23,12 @@
 - **编辑页面保留高亮**：在编辑页面中，当天日期仍然保持高亮显示，便于用户识别当前日期
 - **样式一致性**：导出的图片与编辑页面视觉分离，确保输出内容的一致性和美观性
 
+### 数据安全与恢复修复
+- **原子写入**：排期和设置改为原子写入，降低运行中断电或异常退出导致 JSON 损坏的风险
+- **自动恢复副本**：当主数据文件损坏时，服务端会自动尝试从 `.bak` 副本恢复
+- **恢复兼容旧备份**：支持恢复旧版数组格式和导出文件对象格式的排期备份
+- **恢复前快照**：执行恢复前会自动生成一次 `before_restore` 快照，便于回滚
+
 ## 快速开始
 
 ### 使用Docker Compose（推荐）
@@ -51,11 +57,21 @@ docker build -t scheduling-tool .
 docker run -d \
   --name scheduling-tool \
   -p 3000:3000 \
-  -v scheduling-data:/app/data \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/backups:/app/backups \
+  -e DATA_DIR=/app/data \
+  -e BACKUP_DIR=/app/backups \
+  -e BACKUP_PASSWORD=change-me \
+  --restart unless-stopped \
   scheduling-tool
 ```
 
 ## 推送到 Docker Hub
+
+推荐使用多架构发布脚本，默认同时发布：
+
+- `linux/amd64`
+- `linux/arm64`
 
 下面以 `sexyfeifan` 为例：
 
@@ -64,11 +80,14 @@ cd "/Users/sexyfeifan/Library/Mobile Documents/com~apple~CloudDocs/Code/Planb_v2
 
 docker login
 
-docker build -t sexyfeifan/scheduling-tool:2.17 .
-docker tag sexyfeifan/scheduling-tool:2.17 sexyfeifan/scheduling-tool:latest
+chmod +x scripts/docker-build-push.sh
+DOCKERHUB_NAMESPACE=sexyfeifan VERSION=2.17 ./scripts/docker-build-push.sh
+```
 
-docker push sexyfeifan/scheduling-tool:2.17
-docker push sexyfeifan/scheduling-tool:latest
+如需只发布版本标签、不更新 `latest`：
+
+```
+DOCKERHUB_NAMESPACE=sexyfeifan VERSION=2.17 PUSH_LATEST=0 ./scripts/docker-build-push.sh
 ```
 
 当前 [docker-compose.yml](docker-compose.yml) 已经预设为 `sexyfeifan/scheduling-tool:2.17`，推送成功后可直接部署。

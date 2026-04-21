@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
 const dotenv = require('dotenv');
-const fs = require('fs').promises;
+const fsNative = require('fs');
+const fs = fsNative.promises;
 const path = require('path');
 
 // 加载环境变量
@@ -22,8 +23,33 @@ app.use((req, res, next) => {
   next();
 });
 
+function resolveStorageDir(envName, dirName) {
+  if (process.env[envName]) {
+    return path.resolve(process.env[envName]);
+  }
+
+  const siblingDir = path.resolve(__dirname, '..', dirName);
+  if (path.basename(__dirname) === 'server' && fsNative.existsSync(siblingDir)) {
+    return siblingDir;
+  }
+
+  return path.resolve(__dirname, dirName);
+}
+
+const DEFAULT_SETTINGS = {
+  commonLocations: [],
+  commonDirectors: [],
+  commonPhotographers: [],
+  commonProductionFacilities: [],
+  commonRdFacilities: [],
+  commonOperationalFacilities: [],
+  commonAudioFacilities: []
+};
+
+const writeQueues = new Map();
+
 // 数据存储目录
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = resolveStorageDir('DATA_DIR', 'data');
 const SCHEDULES_FILE = path.join(DATA_DIR, 'schedules.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const VERSION_FILE = path.join(DATA_DIR, 'version.json');
@@ -32,7 +58,7 @@ const APP_VERSION = '2.17';
 const APP_CREATE_DATE = '2026-03-15';
 
 // 默认备份目录（可通过环境变量配置）
-const BACKUP_DIR = process.env.BACKUP_DIR || path.join(__dirname, '..', 'backups');
+const BACKUP_DIR = resolveStorageDir('BACKUP_DIR', 'backups');
 
 // 备份功能访问密码（可通过环境变量配置，默认为 "admin123"）
 const BACKUP_PASSWORD = process.env.BACKUP_PASSWORD || 'admin123';
@@ -89,6 +115,67 @@ function normalizeProjects(projects) {
     .slice(0, 200);
 }
 
+function normalizeSettingsPayload(rawSettings) {
+  const base = Array.isArray(rawSettings) ? (rawSettings[0] || {}) : (rawSettings || {});
+  return {
+    commonLocations: normalizeTextArray(base.commonLocations),
+    commonDirectors: normalizeTextArray(base.commonDirectors),
+    commonPhotographers: normalizeTextArray(base.commonPhotographers),
+    commonProductionFacilities: normalizeTextArray(base.commonProductionFacilities),
+    commonRdFacilities: normalizeTextArray(base.commonRdFacilities),
+    commonOperationalFacilities: normalizeTextArray(base.commonOperationalFacilities),
+    commonAudioFacilities: normalizeTextArray(base.commonAudioFacilities)
+  };
+}
+
+function normalizeScheduleList(rawSchedules) {
+  if (Array.isArray(rawSchedules)) {
+    return rawSchedules
+      .map((schedule, index) => {
+        if (!schedule || !isValidDateString(schedule.date)) {
+          return null;
+        }
+
+        const projects = normalizeProjects(schedule.projects);
+        if (projects === null) {
+          return null;
+        }
+
+        return {
+          id: normalizeText(schedule.id, 80) || `${schedule.date}-${index}`,
+          date: schedule.date,
+          projects
+        };
+      })
+      .filter(Boolean)
+      .sort((left, right) => left.date.localeCompare(right.date));
+  }
+
+  if (rawSchedules && typeof rawSchedules === 'object') {
+    return Object.keys(rawSchedules)
+      .filter(isValidDateString)
+      .sort()
+      .map((date) => ({
+        id: date,
+        date,
+        projects: normalizeProjects(rawSchedules[date]) || []
+      }));
+  }
+
+  return [];
+}
+
+function normalizeBackupPayload(rawBackup) {
+  if (!rawBackup || typeof rawBackup !== 'object') {
+    throw new Error('备份文件格式无效');
+  }
+
+  return {
+    settings: normalizeSettingsPayload(rawBackup.settings),
+    schedules: normalizeScheduleList(rawBackup.schedules)
+  };
+}
+
 function safeCompare(left, right) {
   const leftBuffer = Buffer.from(String(left));
   const rightBuffer = Buffer.from(String(right));
@@ -102,45 +189,93 @@ function isSafeBackupSegment(value) {
   return typeof value === 'string' && /^[a-zA-Z0-9._-]+$/.test(value);
 }
 
+function getDataBackupFile(filePath) {
+  return `${filePath}.bak`;
+}
+
+function queueFileWrite(filePath, operation) {
+  const previous = writeQueues.get(filePath) || Promise.resolve();
+  const next = previous.then(operation, operation);
+  writeQueues.set(filePath, next.catch(() => {}));
+  return next;
+}
+
+async function writeFileAtomically(filePath, content) {
+  const tempFile = path.join(
+    path.dirname(filePath),
+    `.${path.basename(filePath)}.${process.pid}.${Date.now()}.tmp`
+  );
+
+  await fs.writeFile(tempFile, content, 'utf8');
+  await fs.rename(tempFile, filePath);
+}
+
+async function parseJsonFile(filePath) {
+  const data = await fs.readFile(filePath, 'utf8');
+  return JSON.parse(data);
+}
+
 // 确保数据目录存在
 async function ensureDataDir() {
-  try {
-    await fs.access(DATA_DIR);
-  } catch (error) {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-  }
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  await fs.mkdir(BACKUP_DIR, { recursive: true });
   
   // 确保数据文件存在
   try {
     await fs.access(SCHEDULES_FILE);
   } catch (error) {
-    await fs.writeFile(SCHEDULES_FILE, JSON.stringify([]));
+    await writeDataFile(SCHEDULES_FILE, []);
   }
   
   try {
     await fs.access(SETTINGS_FILE);
   } catch (error) {
-    await fs.writeFile(SETTINGS_FILE, JSON.stringify({
-      commonLocations: [],
-      commonDirectors: [],
-      commonPhotographers: [],
-      commonProductionFacilities: [],
-      commonRdFacilities: [],
-      commonOperationalFacilities: [],
-      commonAudioFacilities: []
-    }));
+    await writeDataFile(SETTINGS_FILE, DEFAULT_SETTINGS);
+  }
+
+  try {
+    await fs.access(VERSION_FILE);
+  } catch (error) {
+    await writeDataFile(VERSION_FILE, {
+      version: APP_VERSION,
+      createDate: APP_CREATE_DATE,
+      buildDate: ''
+    });
   }
 }
 
 // 读取数据文件
 async function readDataFile(filePath) {
-  const data = await fs.readFile(filePath, 'utf8');
-  return JSON.parse(data);
+  try {
+    return await parseJsonFile(filePath);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      throw error;
+    }
+
+    const backupFile = getDataBackupFile(filePath);
+    try {
+      const recoveredData = await parseJsonFile(backupFile);
+      console.warn(`检测到 ${path.basename(filePath)} 损坏，已从 ${path.basename(backupFile)} 自动恢复`);
+      await queueFileWrite(filePath, async () => {
+        const payload = JSON.stringify(recoveredData, null, 2);
+        await writeFileAtomically(filePath, payload);
+      });
+      return recoveredData;
+    } catch (backupError) {
+      throw error;
+    }
+  }
 }
 
 // 写入数据文件
 async function writeDataFile(filePath, data) {
-  await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+  return queueFileWrite(filePath, async () => {
+    const payload = JSON.stringify(data, null, 2);
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    await writeFileAtomically(filePath, payload);
+    await writeFileAtomically(getDataBackupFile(filePath), payload);
+  });
 }
 
 // 用于存储连接的客户端（实现实时同步）
@@ -169,6 +304,11 @@ function sendUpdateToClients(data) {
   });
 }
 
+function createBackupFolderName(prefix = 'backup') {
+  const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z').replace(/[:]/g, '-');
+  return `${prefix}_${timestamp}`;
+}
+
 // 排期相关路由
 // 获取排期数据
 app.get('/api/schedules', async (req, res) => {
@@ -183,7 +323,7 @@ app.get('/api/schedules', async (req, res) => {
     await ensureDataDir();
     
     // 读取排期数据
-    const schedules = await readDataFile(SCHEDULES_FILE);
+    const schedules = normalizeScheduleList(await readDataFile(SCHEDULES_FILE));
     
     // 如果提供了日期范围，则添加日期过滤条件
     let filteredSchedules = schedules;
@@ -224,7 +364,7 @@ app.post('/api/schedules', async (req, res) => {
     await ensureDataDir();
     
     // 读取排期数据
-    let schedules = await readDataFile(SCHEDULES_FILE);
+    let schedules = normalizeScheduleList(await readDataFile(SCHEDULES_FILE));
     
     // 查找或创建排期记录
     const scheduleIndex = schedules.findIndex(schedule => schedule.date === date);
@@ -262,7 +402,7 @@ app.delete('/api/schedules/:date', async (req, res) => {
     await ensureDataDir();
     
     // 读取排期数据
-    let schedules = await readDataFile(SCHEDULES_FILE);
+    let schedules = normalizeScheduleList(await readDataFile(SCHEDULES_FILE));
     
     // 查找并删除排期记录
     const scheduleIndex = schedules.findIndex(schedule => schedule.date === date);
@@ -292,17 +432,7 @@ app.get('/api/settings', async (req, res) => {
     await ensureDataDir();
     
     // 读取设置数据
-    const rawSettings = await readDataFile(SETTINGS_FILE);
-    const base = Array.isArray(rawSettings) ? (rawSettings[0] || {}) : (rawSettings || {});
-    const settings = {
-      commonLocations: base.commonLocations || [],
-      commonDirectors: base.commonDirectors || [],
-      commonPhotographers: base.commonPhotographers || [],
-      commonProductionFacilities: base.commonProductionFacilities || [],
-      commonRdFacilities: base.commonRdFacilities || [],
-      commonOperationalFacilities: base.commonOperationalFacilities || [],
-      commonAudioFacilities: base.commonAudioFacilities || []
-    };
+    const settings = normalizeSettingsPayload(await readDataFile(SETTINGS_FILE));
 
     res.json(settings);
   } catch (error) {
@@ -320,15 +450,15 @@ app.post('/api/settings', async (req, res) => {
     await ensureDataDir();
     
     // 创建设置对象
-    const settings = {
-      commonLocations: normalizeTextArray(commonLocations),
-      commonDirectors: normalizeTextArray(commonDirectors),
-      commonPhotographers: normalizeTextArray(commonPhotographers),
-      commonProductionFacilities: normalizeTextArray(commonProductionFacilities),
-      commonRdFacilities: normalizeTextArray(commonRdFacilities),
-      commonOperationalFacilities: normalizeTextArray(commonOperationalFacilities),
-      commonAudioFacilities: normalizeTextArray(commonAudioFacilities)
-    };
+    const settings = normalizeSettingsPayload({
+      commonLocations,
+      commonDirectors,
+      commonPhotographers,
+      commonProductionFacilities,
+      commonRdFacilities,
+      commonOperationalFacilities,
+      commonAudioFacilities
+    });
     
     await writeDataFile(SETTINGS_FILE, settings);
     
@@ -345,6 +475,8 @@ app.post('/api/settings', async (req, res) => {
 // 获取版本信息
 app.get('/api/version', async (req, res) => {
   try {
+    await ensureDataDir();
+
     let versionData = {
       version: APP_VERSION,
       createDate: APP_CREATE_DATE,
@@ -352,16 +484,15 @@ app.get('/api/version', async (req, res) => {
     };
     
     try {
-      const data = await fs.readFile(VERSION_FILE, 'utf8');
-      versionData = JSON.parse(data);
+      versionData = await readDataFile(VERSION_FILE);
       // 如果 buildDate 为空，设置为当前日期
       if (!versionData.buildDate) {
         versionData.buildDate = new Date().toISOString().split('T')[0];
-        await fs.writeFile(VERSION_FILE, JSON.stringify(versionData, null, 2));
+        await writeDataFile(VERSION_FILE, versionData);
       }
     } catch (e) {
       // 如果版本文件不存在，创建它
-      await fs.writeFile(VERSION_FILE, JSON.stringify(versionData, null, 2));
+      await writeDataFile(VERSION_FILE, versionData);
     }
     
     res.json(versionData);
@@ -379,13 +510,13 @@ app.post('/api/backup', async (req, res) => {
     await ensureDataDir();
     
     // 创建备份目录
-    const backupDate = new Date().toISOString().split('T')[0];
-    const backupSubDir = path.join(BACKUP_DIR, `backup_${backupDate}`);
+    const backupSubDirName = createBackupFolderName();
+    const backupSubDir = path.join(BACKUP_DIR, backupSubDirName);
     await fs.mkdir(backupSubDir, { recursive: true });
     
     // 读取所有数据
-    const schedules = await readDataFile(SCHEDULES_FILE);
-    const settings = await readDataFile(SETTINGS_FILE);
+    const schedules = normalizeScheduleList(await readDataFile(SCHEDULES_FILE));
+    const settings = normalizeSettingsPayload(await readDataFile(SETTINGS_FILE));
     
     // 创建备份数据
     const backupData = {
@@ -397,7 +528,7 @@ app.post('/api/backup', async (req, res) => {
     
     // 保存备份文件
     const backupFile = path.join(backupSubDir, 'backup.json');
-    await fs.writeFile(backupFile, JSON.stringify(backupData, null, 2));
+    await writeFileAtomically(backupFile, JSON.stringify(backupData, null, 2));
     
     // 获取备份列表
     const backupFiles = await fs.readdir(BACKUP_DIR);
@@ -418,7 +549,7 @@ app.post('/api/backup', async (req, res) => {
     
     res.json({ 
       message: '备份成功', 
-      backupPath: backupSubDir,
+      backupPath: `/backups/${backupSubDirName}/backup.json`,
       backups: backups.slice(0, 10) // 返回最近10个备份
     });
   } catch (error) {
@@ -487,6 +618,8 @@ app.post('/api/restore', async (req, res) => {
   }
 
   try {
+    await ensureDataDir();
+
     // 解析备份文件路径（仅允许 BACKUP_DIR 下的文件）
     const normalizedPath = String(backupPath).replace(/^\/+/, '');
     const relativeToBackups = normalizedPath.replace(/^backups[\\/]/, '');
@@ -497,17 +630,26 @@ app.post('/api/restore', async (req, res) => {
     }
     
     // 读取备份文件
-    const backupData = JSON.parse(await fs.readFile(backupFile, 'utf8'));
+    const backupData = normalizeBackupPayload(JSON.parse(await fs.readFile(backupFile, 'utf8')));
+
+    // 在恢复前自动生成一次快照，避免误恢复无法回滚
+    const restoreSnapshotDir = path.join(BACKUP_DIR, createBackupFolderName('before_restore'));
+    await fs.mkdir(restoreSnapshotDir, { recursive: true });
+    await writeFileAtomically(
+      path.join(restoreSnapshotDir, 'backup.json'),
+      JSON.stringify({
+        settings: normalizeSettingsPayload(await readDataFile(SETTINGS_FILE)),
+        schedules: normalizeScheduleList(await readDataFile(SCHEDULES_FILE)),
+        backupDate: new Date().toISOString(),
+        version: APP_VERSION
+      }, null, 2)
+    );
     
     // 恢复设置
-    if (backupData.settings) {
-      await writeDataFile(SETTINGS_FILE, backupData.settings);
-    }
+    await writeDataFile(SETTINGS_FILE, backupData.settings);
     
     // 恢复排期数据
-    if (backupData.schedules) {
-      await writeDataFile(SCHEDULES_FILE, backupData.schedules);
-    }
+    await writeDataFile(SCHEDULES_FILE, backupData.schedules);
     
     // 通知所有客户端重新加载，避免空日期污染本地状态
     sendUpdateToClients({ type: 'restoreComplete' });

@@ -2357,13 +2357,40 @@ async function exportAllData() {
     }
 }
 
+function normalizeImportedSchedules(rawSchedules) {
+    if (Array.isArray(rawSchedules)) {
+        return rawSchedules.reduce((result, schedule) => {
+            if (
+                schedule &&
+                typeof schedule.date === 'string' &&
+                /^\d{4}-\d{2}-\d{2}$/.test(schedule.date) &&
+                Array.isArray(schedule.projects)
+            ) {
+                result[schedule.date] = schedule.projects;
+            }
+            return result;
+        }, {});
+    }
+
+    if (rawSchedules && typeof rawSchedules === 'object') {
+        return Object.entries(rawSchedules).reduce((result, [date, projects]) => {
+            if (/^\d{4}-\d{2}-\d{2}$/.test(date) && Array.isArray(projects)) {
+                result[date] = projects;
+            }
+            return result;
+        }, {});
+    }
+
+    return {};
+}
+
 // 处理导入文件
 async function handleImportFile(event) {
     const file = event.target.files[0];
     if (!file) return;
     
     // 检查文件类型
-    if (file.type !== 'application/json') {
+    if (file.type && file.type !== 'application/json' && !file.name.toLowerCase().endsWith('.json')) {
         showToast('请选择JSON格式的备份文件', 'warning');
         return;
     }
@@ -2384,18 +2411,30 @@ async function handleImportFile(event) {
 
 注意：这将覆盖当前的所有设置和排期数据！`);
                 if (!confirmImport) return;
+
+                const importedSchedules = normalizeImportedSchedules(importData.schedules);
                 
                 // 保存设置
-                await settingAPI.saveSettings(importData.settings);
+                await settingAPI.saveSettings(importData.settings || {});
                 
+                // 先清理当前排期，再写入备份，确保导入结果是完整恢复而不是叠加
+                const existingSchedules = await scheduleAPI.getSchedules();
+                for (const date of Object.keys(existingSchedules)) {
+                    try {
+                        await scheduleAPI.deleteSchedule(date);
+                    } catch (error) {
+                        if (!/404|未找到/.test(error.message || '')) {
+                            throw error;
+                        }
+                    }
+                }
+
                 // 保存排期数据
-                // 注意：这里需要逐个保存每个日期的排期数据
-                for (const date in importData.schedules) {
-                    const scheduleData = {
-                        date: date,
-                        projects: importData.schedules[date]
-                    };
-                    await scheduleAPI.saveSchedule(scheduleData);
+                for (const [date, projects] of Object.entries(importedSchedules)) {
+                    await scheduleAPI.saveSchedule({
+                        date,
+                        projects
+                    });
                 }
                 
                 // 重新加载数据

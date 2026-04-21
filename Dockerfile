@@ -6,6 +6,9 @@ RUN apk add --no-cache bash
 # 设置工作目录
 WORKDIR /app
 
+ENV DATA_DIR=/app/data
+ENV BACKUP_DIR=/app/backups
+
 # 复制package.json和package-lock.json（如果存在）
 COPY server/package*.json ./
 

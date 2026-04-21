@@ -11,6 +11,7 @@
 - 只读预览页（`/date`、`/canbox`）
 - 本地文件持久化（无需数据库）
 - 备份与恢复
+- 数据损坏自动恢复（`.bak` 回退）
 
 ## 镜像标签
 
@@ -38,6 +39,7 @@ services:
       - ./data:/app/data
       - ./backups:/app/backups
     environment:
+      - DATA_DIR=/app/data
       - BACKUP_DIR=/app/backups
       - BACKUP_PASSWORD=change-me
     restart: unless-stopped
@@ -64,10 +66,25 @@ docker run -d \
   -p 3000:3000 \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/backups:/app/backups \
+  -e DATA_DIR=/app/data \
   -e BACKUP_DIR=/app/backups \
   -e BACKUP_PASSWORD=change-me \
   --restart unless-stopped \
   sexyfeifan/scheduling-tool:2.17
+```
+
+## 多架构镜像
+
+Docker Hub 推荐发布以下常用架构:
+
+- `linux/amd64`
+- `linux/arm64`
+
+仓库内已提供多架构发布脚本:
+
+```bash
+chmod +x scripts/docker-build-push.sh
+DOCKERHUB_NAMESPACE=sexyfeifan VERSION=2.17 ./scripts/docker-build-push.sh
 ```
 
 ## 持久化与升级
