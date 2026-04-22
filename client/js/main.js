@@ -1,40 +1,17 @@
-// 获取当前周的周一日期
-function getMonday(d) {
-    d = new Date(d);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // 调整：周日为第一天时调整为周一
-    return new Date(d.setDate(diff));
-}
-
-// 格式化日期为 YYYY-MM-DD
-function formatDate(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-// 格式化日期为 MM月DD日
-function formatMonthDay(date) {
-    return `${date.getMonth() + 1}月${date.getDate()}日`;
-}
-
-// 获取一周的日期
-function getWeekDates(monday) {
-    const dates = [];
-    for (let i = 0; i < 7; i++) {
-        const date = new Date(monday);
-        date.setDate(monday.getDate() + i);
-        dates.push(date);
-    }
-    return dates;
-}
+import { createApiClient } from './modules/api.js';
+import { getMonday, formatDate, formatMonthDay, getWeekDates, getWeekNumber } from './modules/date.js';
+import { createDefaultFilters, matchesProjectFilters } from './modules/filters.js';
+import { createUndoManager } from './modules/undo.js';
 
 // 当前周的周一
 let currentMonday = getMonday(new Date());
 
 // 项目数据存储
 let scheduleData = {};
+
+// 向非模块脚本暴露实时引用
+Object.defineProperty(window, '__scheduleData', { get: () => scheduleData, configurable: true });
+Object.defineProperty(window, '__currentMonday', { get: () => currentMonday, configurable: true });
 
 // DOM元素
 const weekDisplay = document.getElementById('week-display');
@@ -44,6 +21,14 @@ const currentWeekBtn = document.getElementById('current-week');
 const addProjectBtn = document.getElementById('add-project');
 const exportImageBtn = document.getElementById('export-image');
 const settingsBtn = document.getElementById('settings');
+const undoActionBtn = document.getElementById('undo-action');
+const searchProjectsInput = document.getElementById('search-projects');
+const filterTypeSelect = document.getElementById('filter-type');
+const filterPersonInput = document.getElementById('filter-person');
+const clearFiltersBtn = document.getElementById('clear-filters');
+const healthBadge = document.getElementById('health-badge');
+const adminBtn = document.getElementById('admin-btn');
+const heatmapBtn = document.getElementById('heatmap-btn');
 
 // 模态框元素
 const projectModal = document.getElementById('project-modal');
@@ -81,6 +66,9 @@ const addProductionBtn = document.getElementById('add-production');
 const addRdBtn = document.getElementById('add-rd');
 const addOperationalBtn = document.getElementById('add-operational');
 const addAudioBtn = document.getElementById('add-audio');
+const projectTemplateSelect = document.getElementById('project-template-select');
+const applyTemplateBtn = document.getElementById('apply-template');
+const saveTemplateFromFormBtn = document.getElementById('save-template-from-form');
 
 // 设置元素
 const commonLocationsTextarea = document.getElementById('common-locations');
@@ -90,11 +78,18 @@ const commonProductionFacilitiesTextarea = document.getElementById('common-produ
 const commonRdFacilitiesTextarea = document.getElementById('common-rd-facilities');
 const commonOperationalFacilitiesTextarea = document.getElementById('common-operational-facilities');
 const commonAudioFacilitiesTextarea = document.getElementById('common-audio-facilities');
+const templateList = document.getElementById('template-list');
 
 // 数据导出导入元素
 const exportDataBtn = document.getElementById('export-data');
 const importDataBtn = document.getElementById('import-data');
 const importFileInput = document.getElementById('import-file');
+const saveAccessSettingsBtn = document.getElementById('save-access-settings');
+const copyShareLinkBtn = document.getElementById('copy-share-link');
+const shareEnabledSetting = document.getElementById('share-enabled-setting');
+const shareTokenSetting = document.getElementById('share-token-setting');
+const editPasswordSetting = document.getElementById('edit-password-setting');
+const shareLinkDisplay = document.getElementById('share-link-display');
 
 // 日期选择器元素
 const datePickerModal = document.getElementById('date-picker-modal');
@@ -114,6 +109,11 @@ const exportCanvas = document.getElementById('export-canvas');
 const downloadImageBtn = document.getElementById('download-image');
 const openInNewTabBtn = document.getElementById('open-in-new-tab');
 const cancelExportBtn = document.getElementById('cancel-export');
+const backupPreviewModal = document.getElementById('backup-preview-modal');
+const backupPreviewBody = document.getElementById('backup-preview-body');
+const closeBackupPreviewBtn = document.getElementById('close-backup-preview');
+const cancelBackupRestoreBtn = document.getElementById('cancel-backup-restore');
+const confirmBackupRestoreBtn = document.getElementById('confirm-backup-restore');
 
 // 粘贴识别按钮
 const pasteRecognitionBtn = document.getElementById('paste-recognition');
@@ -130,9 +130,24 @@ let currentEditingDay = null;
 
 // 拖拽相关变量
 let dragSrcElement = null;
+let projectTemplates = [];
+let pendingRestorePath = '';
+let adminPassword = '';
+let editPassword = '';
+let accessSettings = {
+    editPasswordEnabled: false,
+    shareEnabled: false,
+    shareToken: '',
+    shareUrl: ''
+};
+let filterState = createDefaultFilters();
+const undoManager = createUndoManager();
 
-// API基础URL
-const API_BASE_URL = '/api';
+const apiClient = createApiClient({
+    baseUrl: '/api',
+    getAdminPassword: () => adminPassword,
+    getEditPassword: () => editPassword
+});
 
 // Toast 提示函数
 function showToast(message, type = 'info', duration = 3000) {
@@ -166,65 +181,63 @@ function hideLoading() {
     overlay.style.display = 'none';
 }
 
-// API请求封装
-const apiRequest = async (url, options = {}) => {
-    const config = {
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers,
-        },
-        ...options,
-    };
-    
-    const response = await fetch(`${API_BASE_URL}${url}`, config);
-    return response;
+function isAuthError(error, keyword = '编辑密码') {
+    return error && (error.status === 401 || String(error.message || '').includes(keyword));
+}
+
+async function promptForEditPassword() {
+    const password = window.prompt('该操作已启用编辑密码，请输入后继续：', '');
+    if (!password) {
+        return false;
+    }
+
+    editPassword = password;
+    showToast('已临时解锁编辑操作', 'success');
+    return true;
+}
+
+async function withEditAccess(task) {
+    try {
+        return await task();
+    } catch (error) {
+        if (isAuthError(error) && await promptForEditPassword()) {
+            return task();
+        }
+        throw error;
+    }
+}
+
+function updateUndoButton() {
+    undoActionBtn.disabled = !undoManager.canUndo();
+}
+
+const scheduleAPI = {
+    getSchedules: (params = {}) => apiClient.getSchedules(params),
+    saveSchedule: (payload) => withEditAccess(() => apiClient.saveSchedule(payload)),
+    deleteSchedule: (date) => withEditAccess(() => apiClient.deleteSchedule(date))
 };
 
-// 排期相关API
-const scheduleAPI = {
-    // 获取排期数据
-    getSchedules: async (params = {}) => {
-        const queryParams = new URLSearchParams(params).toString();
-        const url = `/schedules${queryParams ? `?${queryParams}` : ''}`;
-        
-        const response = await apiRequest(url);
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || '获取排期数据失败');
-        }
-        
-        return response.json();
-    },
-    
-    // 保存排期数据
-    saveSchedule: async (scheduleData) => {
-        const response = await apiRequest('/schedules', {
-            method: 'POST',
-            body: JSON.stringify(scheduleData),
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || '保存排期数据失败');
-        }
-        
-        return response.json();
-    },
-    
-    // 删除排期数据
-    deleteSchedule: async (date) => {
-        const response = await apiRequest(`/schedules/${date}`, {
-            method: 'DELETE',
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || '删除排期数据失败');
-        }
-        
-        return response.json();
-    },
+const settingAPI = {
+    getSettings: () => apiClient.getSettings(),
+    saveSettings: (payload) => withEditAccess(() => apiClient.saveSettings(payload)),
+    getTemplates: () => apiClient.getTemplates(),
+    saveTemplate: (payload) => withEditAccess(() => apiClient.saveTemplate(payload)),
+    deleteTemplate: (templateId) => withEditAccess(() => apiClient.deleteTemplate(templateId)),
+    getAccessSettings: () => apiClient.getAccessSettings(),
+    saveAccessSettings: (payload) => apiClient.saveAccessSettings(payload)
+};
+
+const versionAPI = {
+    getVersion: () => apiClient.version(),
+    getHealth: () => apiClient.health()
+};
+
+const backupAPI = {
+    createBackup: () => withEditAccess(() => apiClient.createBackup()),
+    getBackups: () => apiClient.getBackups(),
+    restoreBackup: (backupPath) => withEditAccess(() => apiClient.restoreBackup(backupPath)),
+    fetchBackupPayload: (backupPath) => apiClient.fetchBackupPayload(backupPath),
+    verifyPassword: (password) => apiClient.verifyAdminPassword(password)
 };
 
 // 按日期持久化排期：无项目时删除当天记录，避免残留空数组数据
@@ -232,107 +245,327 @@ async function persistScheduleDate(dateStr) {
     const projects = scheduleData[dateStr] || [];
     if (projects.length === 0) {
         try {
-            await scheduleAPI.deleteSchedule(dateStr);
+            await withEditAccess(() => apiClient.deleteSchedule(dateStr));
         } catch (error) {
             // 如果后端该日期已不存在（404），视为成功
             if (!/404|未找到/.test(error.message || '')) {
-                await scheduleAPI.saveSchedule({
+                await withEditAccess(() => apiClient.saveSchedule({
                     date: dateStr,
                     projects: []
-                });
+                }));
             }
         }
         return;
     }
 
-    await scheduleAPI.saveSchedule({
+    await withEditAccess(() => apiClient.saveSchedule({
         date: dateStr,
         projects
+    }));
+}
+
+function cloneScheduleState() {
+    return JSON.parse(JSON.stringify(scheduleData));
+}
+
+function collectDatesFromStates(...states) {
+    return [...new Set(states.flatMap((state) => Object.keys(state || {})))];
+}
+
+async function syncScheduleDates(dateList) {
+    const uniqueDates = [...new Set((dateList || []).filter(Boolean))];
+    for (const date of uniqueDates) {
+        await persistScheduleDate(date);
+    }
+}
+
+function pushUndoSnapshot(label, beforeState, afterState) {
+    undoManager.push({
+        label,
+        before: beforeState,
+        after: afterState
+    });
+    updateUndoButton();
+}
+
+async function undoLastChange() {
+    const snapshot = undoManager.pop();
+    updateUndoButton();
+    if (!snapshot) {
+        return;
+    }
+
+    scheduleData = JSON.parse(JSON.stringify(snapshot.before));
+    await syncScheduleDates(collectDatesFromStates(snapshot.before, snapshot.after));
+    renderSchedule();
+    showToast(`已撤销：${snapshot.label}`, 'success');
+}
+
+function updateShareLinkDisplay() {
+    if (!shareLinkDisplay) {
+        return;
+    }
+
+    if (accessSettings.shareEnabled && accessSettings.shareUrl) {
+        shareLinkDisplay.textContent = accessSettings.shareUrl;
+    } else {
+        shareLinkDisplay.textContent = '分享链接尚未启用';
+    }
+}
+
+async function loadAccessSettings() {
+    if (!adminPassword) {
+        accessSettings = {
+            editPasswordEnabled: false,
+            shareEnabled: false,
+            shareToken: '',
+            shareUrl: ''
+        };
+        updateShareLinkDisplay();
+        return;
+    }
+
+    try {
+        accessSettings = await settingAPI.getAccessSettings();
+        shareEnabledSetting.checked = accessSettings.shareEnabled;
+        shareTokenSetting.value = accessSettings.shareToken || '';
+        editPasswordSetting.value = '';
+        updateShareLinkDisplay();
+    } catch (error) {
+        console.error('加载访问设置失败:', error);
+        showToast('访问设置加载失败', 'warning');
+    }
+}
+
+async function loadHealthStatus() {
+    try {
+        const health = await versionAPI.getHealth();
+        healthBadge.textContent = `系统正常 · ${health.schedulesCount}天排期`;
+        healthBadge.dataset.state = 'ok';
+    } catch (error) {
+        healthBadge.textContent = '系统状态异常';
+        healthBadge.dataset.state = 'error';
+    }
+}
+
+function renderTemplateList() {
+    if (!templateList) {
+        return;
+    }
+
+    if (projectTemplates.length === 0) {
+        templateList.innerHTML = '<p class="no-template">暂无模板</p>';
+        return;
+    }
+
+    templateList.innerHTML = '';
+    projectTemplates.forEach((template) => {
+        const item = document.createElement('div');
+        item.className = 'template-item';
+        item.innerHTML = `
+            <div class="template-item-info">
+                <strong>${template.name}</strong>
+                <span>${template.defaults.type || '未设置类型'} · ${template.defaults.location || '未设置场地'}</span>
+            </div>
+            <div class="template-item-actions">
+                <button class="btn use-template-btn" data-template-id="${template.id}">应用</button>
+                <button class="btn delete-template-btn" data-template-id="${template.id}">删除</button>
+            </div>
+        `;
+        templateList.appendChild(item);
+    });
+
+    templateList.querySelectorAll('.use-template-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+            projectTemplateSelect.value = button.dataset.templateId;
+            applySelectedTemplate();
+        });
+    });
+
+    templateList.querySelectorAll('.delete-template-btn').forEach((button) => {
+        button.addEventListener('click', async () => {
+            try {
+                await settingAPI.deleteTemplate(button.dataset.templateId);
+                projectTemplates = projectTemplates.filter((template) => template.id !== button.dataset.templateId);
+                populateTemplateSelect();
+                renderTemplateList();
+                showToast('模板已删除', 'success');
+            } catch (error) {
+                console.error('删除模板失败:', error);
+                showToast(error.message || '删除模板失败', 'error');
+            }
+        });
     });
 }
 
-// 设置相关API
-const settingAPI = {
-    // 获取设置
-    getSettings: async () => {
-        const response = await apiRequest('/settings');
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || '获取设置失败');
-        }
-        
-        return response.json();
-    },
-    
-    // 保存设置
-    saveSettings: async (settingsData) => {
-        const response = await apiRequest('/settings', {
-            method: 'POST',
-            body: JSON.stringify(settingsData),
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || '保存设置失败');
-        }
-        
-        return response.json();
-    },
-};
+function populateTemplateSelect() {
+    projectTemplateSelect.innerHTML = '<option value="">选择项目模板</option>';
+    projectTemplates.forEach((template) => {
+        const option = document.createElement('option');
+        option.value = template.id;
+        option.textContent = template.name;
+        projectTemplateSelect.appendChild(option);
+    });
+}
 
-// 版本相关API
-const versionAPI = {
-    // 获取版本信息
-    getVersion: async () => {
-        const response = await apiRequest('/version');
-        if (!response.ok) {
-            throw new Error('获取版本信息失败');
-        }
-        return response.json();
-    },
-};
+function findTemplate(templateId) {
+    return projectTemplates.find((template) => template.id === templateId) || null;
+}
 
-// 备份相关API
-const backupAPI = {
-    // 创建备份
-    createBackup: async () => {
-        const response = await apiRequest('/backup', {
-            method: 'POST',
+function applyTemplateToForm(template) {
+    if (!template) {
+        return;
+    }
+
+    const defaults = template.defaults || {};
+    projectNameInput.value = defaults.name || projectNameInput.value;
+    projectTypeSelect.value = defaults.type || '';
+    projectStartTimeSelect.value = defaults.startTime || '';
+    projectLaodaoCheckbox.checked = Boolean(defaults.laodao);
+
+    const setMultiField = (selectElement, inputElement, value) => {
+        Array.from(selectElement.options).forEach((option) => {
+            option.selected = false;
         });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || '备份失败');
+
+        if (!value) {
+            selectElement.style.display = 'block';
+            inputElement.style.display = 'none';
+            inputElement.value = '';
+            return;
         }
-        
-        return response.json();
-    },
-    
-    // 获取备份列表
-    getBackups: async () => {
-        const response = await apiRequest('/backups');
-        if (!response.ok) {
-            throw new Error('获取备份列表失败');
+
+        const parts = String(value).split(',').map((item) => item.trim()).filter(Boolean);
+        const matched = Array.from(selectElement.options).filter((option) => parts.includes(option.value));
+        if (matched.length === parts.length) {
+            matched.forEach((option) => {
+                option.selected = true;
+            });
+            selectElement.style.display = 'block';
+            inputElement.style.display = 'none';
+            inputElement.value = '';
+        } else {
+            selectElement.style.display = 'none';
+            inputElement.style.display = 'block';
+            inputElement.value = value;
         }
-        return response.json();
-    },
-    
-    // 恢复备份
-    restoreBackup: async (backupPath) => {
-        const response = await apiRequest('/restore', {
-            method: 'POST',
-            body: JSON.stringify({ backupPath }),
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || '恢复失败');
+    };
+
+    if (defaults.location) {
+        const hasLocationOption = Array.from(projectLocationSelect.options).some((option) => option.value === defaults.location);
+        if (hasLocationOption) {
+            projectLocationSelect.style.display = 'block';
+            projectLocationInput.style.display = 'none';
+            projectLocationSelect.value = defaults.location;
+        } else {
+            projectLocationSelect.style.display = 'none';
+            projectLocationInput.style.display = 'block';
+            projectLocationInput.value = defaults.location;
         }
-        
-        return response.json();
-    },
-};
+    }
+
+    setMultiField(projectDirectorSelect, projectDirectorInput, defaults.director);
+    setMultiField(projectPhotographerSelect, projectPhotographerInput, defaults.photographer);
+    setMultiField(projectProductionSelect, projectProductionInput, defaults.production);
+    setMultiField(projectRdSelect, projectRdInput, defaults.rd);
+    setMultiField(projectOperationalSelect, projectOperationalInput, defaults.operational);
+    setMultiField(projectAudioSelect, projectAudioInput, defaults.audio);
+}
+
+function applySelectedTemplate() {
+    const template = findTemplate(projectTemplateSelect.value);
+    if (!template) {
+        showToast('请选择模板', 'warning');
+        return;
+    }
+
+    applyTemplateToForm(template);
+    showToast(`已应用模板：${template.name}`, 'success');
+}
+
+async function saveTemplateFromCurrentForm() {
+    const templateName = window.prompt('请输入模板名称：', projectNameInput.value || '');
+    if (!templateName) {
+        return;
+    }
+
+    const payload = {
+        name: templateName,
+        defaults: {
+            name: projectNameInput.value,
+            location: projectLocationSelect.style.display !== 'none' ? projectLocationSelect.value : projectLocationInput.value,
+            director: Array.from(projectDirectorSelect.selectedOptions).map((option) => option.value).join(', ') || projectDirectorInput.value,
+            photographer: Array.from(projectPhotographerSelect.selectedOptions).map((option) => option.value).join(', ') || projectPhotographerInput.value,
+            production: Array.from(projectProductionSelect.selectedOptions).map((option) => option.value).join(', ') || projectProductionInput.value,
+            rd: Array.from(projectRdSelect.selectedOptions).map((option) => option.value).join(', ') || projectRdInput.value,
+            operational: Array.from(projectOperationalSelect.selectedOptions).map((option) => option.value).join(', ') || projectOperationalInput.value,
+            audio: Array.from(projectAudioSelect.selectedOptions).map((option) => option.value).join(', ') || projectAudioInput.value,
+            type: projectTypeSelect.value,
+            startTime: projectStartTimeSelect.value,
+            laodao: projectLaodaoCheckbox.checked
+        }
+    };
+
+    const response = await settingAPI.saveTemplate(payload);
+    const existingIndex = projectTemplates.findIndex((template) => template.id === response.template.id);
+    if (existingIndex >= 0) {
+        projectTemplates[existingIndex] = response.template;
+    } else {
+        projectTemplates.push(response.template);
+    }
+
+    populateTemplateSelect();
+    renderTemplateList();
+    showToast('模板已保存', 'success');
+}
+
+async function loadTemplateData() {
+    try {
+        projectTemplates = await settingAPI.getTemplates();
+    } catch (error) {
+        console.error('加载模板失败:', error);
+        projectTemplates = [];
+    }
+
+    populateTemplateSelect();
+    renderTemplateList();
+}
+
+function updateFilterState() {
+    filterState = {
+        search: searchProjectsInput.value.trim(),
+        type: filterTypeSelect.value,
+        person: filterPersonInput.value.trim()
+    };
+    renderSchedule();
+}
+
+function closeBackupPreviewModal() {
+    pendingRestorePath = '';
+    backupPreviewModal.style.display = 'none';
+}
+
+async function openBackupPreview(backupPath) {
+    const backupPayload = await backupAPI.fetchBackupPayload(backupPath);
+    const schedules = Array.isArray(backupPayload.schedules)
+        ? backupPayload.schedules
+        : Object.entries(backupPayload.schedules || {}).map(([date, projects]) => ({ date, projects }));
+    const projectCount = schedules.reduce((sum, item) => sum + (item.projects || []).length, 0);
+    const dateRange = schedules.length > 0
+        ? `${schedules[0].date} 至 ${schedules[schedules.length - 1].date}`
+        : '无排期数据';
+
+    backupPreviewBody.innerHTML = `
+        <p><strong>备份时间：</strong>${backupPayload.backupDate || backupPayload.exportDate || '未知'}</p>
+        <p><strong>排期日期数：</strong>${schedules.length}</p>
+        <p><strong>项目总数：</strong>${projectCount}</p>
+        <p><strong>日期范围：</strong>${dateRange}</p>
+        <p><strong>模板数量：</strong>${(backupPayload.settings && backupPayload.settings.projectTemplates ? backupPayload.settings.projectTemplates.length : 0)}</p>
+        <p class="backup-preview-warning">恢复会覆盖当前排期与设置，系统会先自动生成一份恢复前快照。</p>
+    `;
+    pendingRestorePath = backupPath;
+    backupPreviewModal.style.display = 'block';
+}
 
 // 初始化应用
 async function initApp() {
@@ -348,13 +581,16 @@ async function initApp() {
     updateWeekDisplay();
     setupEventListeners();
     setupMobileDateSwitch(); // 移动端日期切换功能
+    updateUndoButton();
     
     // 加载版本信息
     loadVersionInfo();
+    loadHealthStatus();
     
     // 从API加载数据
     await loadScheduleData();
     await loadSettings();
+    await loadTemplateData();
     
     // 移动端默认显示今日日期
     if (isMobile) {
@@ -369,6 +605,7 @@ async function initApp() {
     
     // 连接SSE实现实时同步
     connectSSE();
+    setInterval(loadHealthStatus, 30000);
 }
 
 // 加载版本信息
@@ -383,7 +620,7 @@ async function loadVersionInfo() {
                 versionNumber.textContent = 'v' + versionData.version;
             }
             if (versionDate) {
-                versionDate.textContent = versionData.createDate;
+                versionDate.textContent = `${versionData.createDate} · build ${versionData.buildDate}`;
             }
         }
     } catch (error) {
@@ -494,10 +731,16 @@ function connectSSE() {
                 // 更新项目表单选项
                 updateProjectFormOptions();
                 break;
+            case 'templateUpdate':
+                projectTemplates = data.templates || [];
+                populateTemplateSelect();
+                renderTemplateList();
+                break;
             case 'restoreComplete':
                 // 备份恢复后重新拉取完整数据，避免本地状态残留
                 loadScheduleData();
                 loadSettings();
+                loadTemplateData();
                 break;
         }
     };
@@ -533,8 +776,8 @@ function renderSchedule() {
         const dateStr = formatDate(date);
         const month = date.getMonth() + 1;
         const day = date.getDate();
-        header.textContent = `${weekdays[index]} (${month}/${day})`;
-        
+        header.innerHTML = `${weekdays[index]} (${month}/${day}) <button class="notice-day-btn" data-date="${dateStr}">通告单</button><button class="sort-day-btn" data-date="${dateStr}" title="按开始时间一键排序">⇅ 排序</button>`;
+
         // 今日高亮
         if (dateStr === todayStr) {
             header.classList.add('today-highlight');
@@ -574,17 +817,20 @@ function renderSchedule() {
         column.addEventListener('dragleave', handleDragLeave);
         column.addEventListener('drop', handleDrop);
         
+        const dayProjects = (scheduleData[dateStr] || []).filter((project) => matchesProjectFilters(project, filterState));
+
         // 如果有该项目日期的数据，则渲染项目卡片
-        if (scheduleData[dateStr] && scheduleData[dateStr].length > 0) {
-            scheduleData[dateStr].forEach((project, projectIndex) => {
-                const projectCard = createProjectCard(project, dateStr, projectIndex);
+        if (dayProjects.length > 0) {
+            dayProjects.forEach((project) => {
+                const originalIndex = (scheduleData[dateStr] || []).indexOf(project);
+                const projectCard = createProjectCard(project, dateStr, originalIndex);
                 column.appendChild(projectCard);
             });
         } else {
             // 显示空状态
             const emptyState = document.createElement('div');
             emptyState.className = 'empty-state';
-            emptyState.textContent = '🈚️';
+            emptyState.textContent = (scheduleData[dateStr] && scheduleData[dateStr].length > 0) ? '未匹配筛选条件' : '🈚️';
             column.appendChild(emptyState);
         }
     });
@@ -638,6 +884,11 @@ function createProjectCard(project, dateStr, projectIndex) {
     
     // 添加老刀出镜标记
     const laodaoMark = project.laodao ? '<div class="laodao-mark">老刀出镜</div>' : '';
+
+    // 状态标签
+    const statusClassMap = { '待确认': 'pending', '已确认': 'confirmed', '已完成': 'done', '取消': 'cancelled' };
+    const statusClass = statusClassMap[project.status] || 'pending';
+    const statusBadge = `<span class="status-badge status-${statusClass}">${project.status || '待确认'}</span>`;
     
     card.innerHTML = `
         <div class="project-title">
@@ -645,6 +896,7 @@ function createProjectCard(project, dateStr, projectIndex) {
             <button class="delete-btn" data-date="${dateStr}" data-index="${projectIndex}">×</button>
         </div>
         ${laodaoMark}
+        ${statusBadge}
         ${staffInfo}
         <div class="project-location">📍 ${project.location}</div>
         <div>
@@ -695,6 +947,10 @@ function setupEventListeners() {
             settingsModal.style.display = 'none';
             exportModal.style.display = 'none';
             datePickerModal.style.display = 'none';
+            const adminModal = document.getElementById('admin-modal');
+            if (adminModal) adminModal.style.display = 'none';
+            const heatmapModal = document.getElementById('heatmap-modal');
+            if (heatmapModal) heatmapModal.style.display = 'none';
         }
         
         // Ctrl/Cmd + S 保存项目
@@ -773,6 +1029,51 @@ function setupEventListeners() {
     settingsBtn.addEventListener('click', () => {
         showSettingsModal();
     });
+
+    // 管理员设置按钮
+    if (adminBtn) adminBtn.addEventListener('click', showAdminModal);
+
+    // 热力图按钮
+    if (heatmapBtn) heatmapBtn.addEventListener('click', showHeatmapModal);
+
+    // 通告单按钮（事件委托，因为按钮在 renderSchedule 每次重建）
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('notice-day-btn')) {
+            showNoticeModal(e.target.dataset.date);
+        }
+        if (e.target.classList.contains('sort-day-btn')) {
+            sortDayProjects(e.target.dataset.date);
+        }
+    });
+
+    undoActionBtn.addEventListener('click', async () => {
+        try {
+            await undoLastChange();
+        } catch (error) {
+            console.error('撤销失败:', error);
+            showToast(error.message || '撤销失败', 'error');
+        }
+    });
+
+    searchProjectsInput.addEventListener('input', updateFilterState);
+    filterTypeSelect.addEventListener('change', updateFilterState);
+    filterPersonInput.addEventListener('input', updateFilterState);
+    clearFiltersBtn.addEventListener('click', () => {
+        searchProjectsInput.value = '';
+        filterTypeSelect.value = '';
+        filterPersonInput.value = '';
+        updateFilterState();
+    });
+
+    applyTemplateBtn.addEventListener('click', applySelectedTemplate);
+    saveTemplateFromFormBtn.addEventListener('click', async () => {
+        try {
+            await saveTemplateFromCurrentForm();
+        } catch (error) {
+            console.error('保存模板失败:', error);
+            showToast(error.message || '保存模板失败', 'error');
+        }
+    });
     
     // 模态框关闭按钮
     closeModalButtons.forEach(button => {
@@ -790,6 +1091,46 @@ function setupEventListeners() {
     
     // 保存设置按钮
     saveSettingsBtn.addEventListener('click', saveSettings);
+
+    if (saveAccessSettingsBtn) {
+        saveAccessSettingsBtn.addEventListener('click', async () => {
+            if (!adminPassword) {
+                showToast('请先解锁管理员功能', 'warning');
+                return;
+            }
+
+            try {
+                const response = await settingAPI.saveAccessSettings({
+                    editPassword: editPasswordSetting.value,
+                    shareEnabled: shareEnabledSetting.checked,
+                    shareToken: shareTokenSetting.value.trim()
+                });
+                accessSettings = response.access;
+                editPassword = editPasswordSetting.value ? editPasswordSetting.value : editPassword;
+                updateShareLinkDisplay();
+                showToast('访问控制已保存', 'success');
+            } catch (error) {
+                console.error('保存访问控制失败:', error);
+                showToast(error.message || '访问控制保存失败', 'error');
+            }
+        });
+    }
+
+    if (copyShareLinkBtn) {
+        copyShareLinkBtn.addEventListener('click', async () => {
+            if (!accessSettings.shareUrl) {
+                showToast('请先启用分享链接', 'warning');
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(accessSettings.shareUrl);
+                showToast('分享链接已复制', 'success');
+            } catch (error) {
+                showToast('复制失败，请手动复制', 'warning');
+            }
+        });
+    }
     
     // 数据导出按钮
     exportDataBtn.addEventListener('click', exportAllData);
@@ -801,6 +1142,29 @@ function setupEventListeners() {
     
     // 文件选择事件
     importFileInput.addEventListener('change', handleImportFile);
+
+    closeBackupPreviewBtn.addEventListener('click', closeBackupPreviewModal);
+    cancelBackupRestoreBtn.addEventListener('click', closeBackupPreviewModal);
+    confirmBackupRestoreBtn.addEventListener('click', async () => {
+        if (!pendingRestorePath) {
+            return;
+        }
+
+        try {
+            showLoading('正在恢复...');
+            await backupAPI.restoreBackup(pendingRestorePath);
+            await loadScheduleData();
+            await loadSettings();
+            await loadTemplateData();
+            closeBackupPreviewModal();
+            showToast('恢复成功', 'success');
+        } catch (error) {
+            console.error('恢复失败:', error);
+            showToast(`恢复失败: ${error.message}`, 'error');
+        } finally {
+            hideLoading();
+        }
+    });
     
     // 添加新选项按钮
     addLocationBtn.addEventListener('click', () => {
@@ -909,6 +1273,17 @@ function setupEventListeners() {
         if (e.target === exportModal) {
             exportModal.style.display = 'none';
         }
+        if (e.target === backupPreviewModal) {
+            closeBackupPreviewModal();
+        }
+        const adminModal = document.getElementById('admin-modal');
+        if (adminModal && e.target === adminModal) {
+            adminModal.style.display = 'none';
+        }
+        const heatmapModal = document.getElementById('heatmap-modal');
+        if (heatmapModal && e.target === heatmapModal) {
+            heatmapModal.style.display = 'none';
+        }
     });
 }
 
@@ -940,6 +1315,7 @@ function showProjectModal(dayColumn = null) {
     
     // 重置多选框
     projectLaodaoCheckbox.checked = false;
+    projectTemplateSelect.value = '';
     
     // 设置默认日期：如果指定了日期则使用，否则使用当前周的周一
     if (dayColumn && dayColumn.includes('-')) {
@@ -1136,8 +1512,12 @@ function editProject(dateStr, projectIndex) {
     
     // 设置老刀出镜选项
     projectLaodaoCheckbox.checked = project.laodao || false;
-    
+
     projectTypeSelect.value = project.type || '';
+
+    // 设置项目状态
+    const projectStatusSelect = document.getElementById('project-status');
+    if (projectStatusSelect) projectStatusSelect.value = project.status || '已确认';
     
     projectModal.style.display = 'block';
     projectNameInput.focus();
@@ -1145,6 +1525,7 @@ function editProject(dateStr, projectIndex) {
 
 // 保存项目
 async function saveProject() {
+    const beforeState = cloneScheduleState();
     // 获取摄影师值（多选）
     let photographerValue = '';
     const selectedPhotographerOptions = Array.from(projectPhotographerSelect.selectedOptions);
@@ -1210,7 +1591,8 @@ async function saveProject() {
         audio: audioValue,
         laodao: projectLaodaoCheckbox.checked,
         type: projectTypeSelect.value,
-        startTime: projectStartTimeSelect.value
+        startTime: projectStartTimeSelect.value,
+        status: (document.getElementById('project-status') || {}).value || '已确认'
     };
     
     if (!project.name) {
@@ -1267,114 +1649,20 @@ async function saveProject() {
         
         // 关闭模态框并重新渲染
         projectModal.style.display = 'none';
+        pushUndoSnapshot(currentEditingProject ? '编辑项目' : '新增项目', beforeState, scheduleData);
         renderSchedule();
+        showToast(currentEditingProject ? '项目已更新' : '项目已创建', 'success');
     } catch (error) {
         console.error('保存项目时出错:', error);
-        showToast('保存项目时出错，请重试', 'error');
+        scheduleData = beforeState;
+        showToast(error.message || '保存项目时出错，请重试', 'error');
     }
 }
 
 // 显示设置模态框
 function showSettingsModal() {
     settingsModal.style.display = 'block';
-    
-    // 重置备份区域为锁定状态
-    const backupLocked = document.getElementById('backup-locked');
-    const backupUnlocked = document.getElementById('backup-unlocked');
-    if (backupLocked && backupUnlocked) {
-        backupLocked.style.display = 'block';
-        backupUnlocked.style.display = 'none';
-    }
-    
-    // 绑定备份恢复按钮事件
-    setupBackupEvents();
-    // 绑定密码验证事件
-    setupPasswordEvents();
-}
-
-// 密码验证状态
-let isBackupUnlocked = false;
-
-// 密码验证事件
-function setupPasswordEvents() {
-    const unlockBtn = document.getElementById('unlock-backup');
-    const passwordModal = document.getElementById('password-modal');
-    const closePasswordBtn = document.getElementById('close-password-modal');
-    const confirmPasswordBtn = document.getElementById('confirm-password');
-    const cancelPasswordBtn = document.getElementById('cancel-password');
-    const passwordInput = document.getElementById('backup-password');
-    
-    // 解锁按钮点击
-    if (unlockBtn) {
-        unlockBtn.onclick = () => {
-            passwordModal.style.display = 'block';
-            passwordInput.value = '';
-            passwordInput.focus();
-        };
-    }
-    
-    // 关闭密码模态框
-    if (closePasswordBtn) {
-        closePasswordBtn.onclick = () => {
-            passwordModal.style.display = 'none';
-        };
-    }
-    
-    // 取消按钮
-    if (cancelPasswordBtn) {
-        cancelPasswordBtn.onclick = () => {
-            passwordModal.style.display = 'none';
-        };
-    }
-    
-    // 确认密码
-    if (confirmPasswordBtn) {
-        confirmPasswordBtn.onclick = async () => {
-            const password = passwordInput.value;
-            if (!password) {
-                showToast('请输入密码', 'error');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/verify-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password })
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.valid) {
-                        isBackupUnlocked = true;
-                        passwordModal.style.display = 'none';
-                        // 显示解锁后的内容
-                        document.getElementById('backup-locked').style.display = 'none';
-                        document.getElementById('backup-unlocked').style.display = 'block';
-                        // 加载备份列表
-                        loadBackupList();
-                        showToast('解锁成功', 'success');
-                    } else {
-                        showToast('密码错误', 'error');
-                    }
-                } else {
-                    showToast('密码验证失败', 'error');
-                }
-            } catch (error) {
-                console.error('密码验证失败:', error);
-                showToast('密码验证失败', 'error');
-            }
-        };
-    }
-    
-    // 回车确认
-    if (passwordInput) {
-        passwordInput.onkeypress = (e) => {
-            if (e.key === 'Enter') {
-                confirmPasswordBtn.click();
-            }
-        };
-    }
+    renderTemplateList();
 }
 
 // 加载备份列表
@@ -1397,10 +1685,10 @@ async function loadBackupList() {
             item.innerHTML = `
                 <div class="backup-item-info">
                     <span class="backup-item-date">${backup.date}</span>
-                    <span class="backup-item-time">${new Date(backup.time).toLocaleTimeString()}</span>
+                    <span class="backup-item-time">${new Date(backup.time).toLocaleTimeString()} · ${backup.projectsCount || 0}个项目</span>
                 </div>
                 <div class="backup-item-actions">
-                    <button class="btn restore-backup-btn" data-path="${backup.path}">恢复</button>
+                    <button class="btn restore-backup-btn" data-path="${backup.path}">预览并恢复</button>
                 </div>
             `;
             backupList.appendChild(item);
@@ -1410,20 +1698,11 @@ async function loadBackupList() {
         document.querySelectorAll('.restore-backup-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const backupPath = e.target.dataset.path;
-                if (confirm('确定要从该备份恢复吗？当前数据将被覆盖。')) {
-                    try {
-                        showLoading('正在恢复...');
-                        await backupAPI.restoreBackup(backupPath);
-                        hideLoading();
-                        showToast('恢复成功', 'success');
-                        // 重新加载数据
-                        await loadScheduleData();
-                        await loadSettings();
-                        updateProjectFormOptions();
-                    } catch (error) {
-                        hideLoading();
-                        showToast('恢复失败: ' + error.message, 'error');
-                    }
+                try {
+                    await openBackupPreview(backupPath);
+                } catch (error) {
+                    console.error('读取备份预览失败:', error);
+                    showToast(error.message || '读取备份预览失败', 'error');
                 }
             });
         });
@@ -1461,6 +1740,189 @@ function setupBackupEvents() {
             showToast('请从下方备份列表选择要恢复的版本', 'info');
         };
     }
+}
+
+// ── 管理员设置 Modal ──
+function showAdminModal() {
+    const modal = document.getElementById('admin-modal');
+    if (!modal) return;
+
+    const passwordSection = document.getElementById('admin-password-section');
+    const unlockedContent = document.getElementById('admin-unlocked-content');
+    const passwordInput = document.getElementById('admin-password-input');
+    const confirmBtn = document.getElementById('confirm-admin-password');
+    const closeBtn = document.getElementById('close-admin-modal');
+
+    // 重置为密码输入状态（每次打开都要求重新验证以防会话变更）
+    if (adminPassword) {
+        passwordSection.style.display = 'none';
+        unlockedContent.style.display = 'flex';
+        setupBackupEvents();
+        loadBackupList();
+        loadAccessSettings();
+        loadHistoryRecords();
+    } else {
+        passwordSection.style.display = 'block';
+        unlockedContent.style.display = 'none';
+        if (passwordInput) {
+            passwordInput.value = '';
+            passwordInput.focus();
+        }
+    }
+
+    // 关闭按钮
+    if (closeBtn) {
+        closeBtn.onclick = () => { modal.style.display = 'none'; };
+    }
+
+    // 确认密码
+    if (confirmBtn) {
+        confirmBtn.onclick = async () => {
+            const pwd = passwordInput ? passwordInput.value : '';
+            if (!pwd) { showToast('请输入密码', 'warning'); return; }
+            try {
+                const result = await backupAPI.verifyPassword(pwd);
+                if (result && result.valid) {
+                    adminPassword = pwd;
+                    passwordSection.style.display = 'none';
+                    unlockedContent.style.display = 'flex';
+                    setupBackupEvents();
+                    loadBackupList();
+                    loadAccessSettings();
+                    loadHistoryRecords();
+                    showToast('解锁成功', 'success');
+                } else {
+                    showToast('密码错误', 'error');
+                }
+            } catch (err) {
+                showToast('验证失败', 'error');
+            }
+        };
+    }
+
+    if (passwordInput) {
+        passwordInput.onkeypress = (e) => {
+            if (e.key === 'Enter' && confirmBtn) confirmBtn.click();
+        };
+    }
+
+    // Tab 切换
+    modal.querySelectorAll('.admin-tab-btn').forEach(btn => {
+        btn.onclick = () => {
+            modal.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+            modal.querySelectorAll('.admin-tab-panel').forEach(p => p.style.display = 'none');
+            btn.classList.add('active');
+            const panel = document.getElementById(`admin-tab-${btn.dataset.tab}`);
+            if (panel) panel.style.display = 'block';
+        };
+    });
+
+    // 操作记录刷新按钮
+    const historyRefreshBtn = document.getElementById('history-refresh-btn');
+    if (historyRefreshBtn) {
+        historyRefreshBtn.onclick = loadHistoryRecords;
+    }
+
+    modal.style.display = 'block';
+}
+
+// ── 热力图 Modal ──
+function showHeatmapModal() {
+    const modal = document.getElementById('heatmap-modal');
+    if (!modal) return;
+
+    const closeBtn = document.getElementById('close-heatmap-modal');
+    if (closeBtn) {
+        closeBtn.onclick = () => { modal.style.display = 'none'; };
+    }
+
+    // Tab 切换
+    modal.querySelectorAll('.heatmap-tab-btn').forEach(btn => {
+        btn.onclick = () => {
+            modal.querySelectorAll('.heatmap-tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderHeatmap(btn.dataset.range);
+        };
+    });
+
+    // 默认渲染"本周"
+    const defaultTab = modal.querySelector('.heatmap-tab-btn[data-range="week"]');
+    if (defaultTab) {
+        modal.querySelectorAll('.heatmap-tab-btn').forEach(b => b.classList.remove('active'));
+        defaultTab.classList.add('active');
+    }
+    renderHeatmap('week');
+    modal.style.display = 'block';
+}
+
+function renderHeatmap(range) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let startDate, endDate;
+    if (range === 'today') {
+        startDate = endDate = today;
+    } else if (range === 'week') {
+        startDate = getMonday(today);
+        endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 6);
+    } else {
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    }
+
+    const roles = ['director', 'photographer', 'production', 'operational', 'rd', 'audio'];
+    const personCount = {};
+    const dayCount = {};
+
+    Object.entries(scheduleData).forEach(([dateStr, projects]) => {
+        const d = new Date(dateStr);
+        d.setHours(0, 0, 0, 0);
+        if (d < startDate || d > endDate) return;
+
+        (projects || []).forEach(project => {
+            const dayLabel = formatMonthDay(new Date(dateStr + 'T00:00:00'));
+            dayCount[dayLabel] = (dayCount[dayLabel] || 0) + 1;
+
+            roles.forEach(role => {
+                const val = project[role];
+                if (!val) return;
+                const raw = Array.isArray(val) ? val : [val];
+                const names = raw.flatMap(s => String(s).split(/[,，、]+/));
+                names.forEach(name => {
+                    const n = (name || '').trim();
+                    if (n && n !== '无' && n !== '-') {
+                        personCount[n] = (personCount[n] || 0) + 1;
+                    }
+                });
+            });
+        });
+    });
+
+    const personList = document.getElementById('heatmap-person-list');
+    const dayList = document.getElementById('heatmap-day-list');
+
+    function renderBars(container, dataObj, emptyMsg) {
+        if (!container) return;
+        const entries = Object.entries(dataObj).sort((a, b) => b[1] - a[1]);
+        if (entries.length === 0) {
+            container.innerHTML = `<div class="heatmap-empty">${emptyMsg}</div>`;
+            return;
+        }
+        const maxVal = entries[0][1];
+        container.innerHTML = entries.map(([label, count]) => `
+            <div class="heatmap-bar-row">
+                <div class="heatmap-bar-label">${label}</div>
+                <div class="heatmap-bar-track">
+                    <div class="heatmap-bar-fill" style="width:${Math.round(count / maxVal * 100)}%"></div>
+                </div>
+                <div class="heatmap-bar-count">${count}</div>
+            </div>
+        `).join('');
+    }
+
+    renderBars(personList, personCount, '该时间段暂无人员排期');
+    renderBars(dayList, dayCount, '该时间段暂无项目');
 }
 
 // 切换输入框显示
@@ -1687,6 +2149,7 @@ async function deleteProject(dateStr, projectIndex) {
     // 绑定事件
     modal.querySelector('#confirm-delete-btn').addEventListener('click', async () => {
         document.body.removeChild(modal);
+        const beforeState = cloneScheduleState();
         try {
             scheduleData[dateStr].splice(projectIndex, 1);
             if (scheduleData[dateStr].length === 0) {
@@ -1695,11 +2158,13 @@ async function deleteProject(dateStr, projectIndex) {
             
             await persistScheduleDate(dateStr);
             
+            pushUndoSnapshot('删除项目', beforeState, scheduleData);
             renderSchedule();
             showToast('项目已删除', 'success');
         } catch (error) {
             console.error('删除项目时出错:', error);
-            showToast('删除项目时出错，请重试', 'error');
+            scheduleData = beforeState;
+            showToast(error.message || '删除项目时出错，请重试', 'error');
         }
     });
     
@@ -1717,6 +2182,7 @@ async function deleteProject(dateStr, projectIndex) {
 
 // 复制项目
 async function copyProject(dateStr, projectIndex) {
+    const beforeState = cloneScheduleState();
     try {
         const project = scheduleData[dateStr][projectIndex];
         
@@ -1741,12 +2207,13 @@ async function copyProject(dateStr, projectIndex) {
         });
         
         // 重新渲染
+        pushUndoSnapshot('复制项目', beforeState, scheduleData);
         renderSchedule();
-        
-        console.log('项目复制成功');
+        showToast('项目复制成功', 'success');
     } catch (error) {
         console.error('复制项目时出错:', error);
-        showToast('复制项目时出错，请重试', 'error');
+        scheduleData = beforeState;
+        showToast(error.message || '复制项目时出错，请重试', 'error');
     }
 }
 
@@ -2040,6 +2507,7 @@ async function handleDrop(e) {
         }
         
         if (targetDate) {
+            const beforeState = cloneScheduleState();
             try {
                 // 移动项目
                 const project = scheduleData[srcDate][srcIndex];
@@ -2061,10 +2529,13 @@ async function handleDrop(e) {
                 await persistScheduleDate(targetDate);
                 
                 // 重新渲染
+                pushUndoSnapshot('拖拽移动项目', beforeState, scheduleData);
                 renderSchedule();
+                showToast('项目已移动', 'success');
             } catch (error) {
                 console.error('拖拽项目时出错:', error);
-                showToast('拖拽项目时出错，请重试', 'error');
+                scheduleData = beforeState;
+                showToast(error.message || '拖拽项目时出错，请重试', 'error');
             }
         }
     }
@@ -2078,15 +2549,6 @@ function showExportModal() {
     drawScheduleToCanvas();
 }
 
-// 获取一年中的周数
-function getWeekNumber(date) {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-}
-
 // 在canvas上绘制排期表（所见即所得版本 - Apple 风格）
 function drawScheduleToCanvas() {
     // 创建临时的DOM元素用于渲染
@@ -2094,7 +2556,7 @@ function drawScheduleToCanvas() {
     tempContainer.style.position = 'absolute';
     tempContainer.style.left = '-9999px';
     tempContainer.style.top = '-9999px';
-    tempContainer.style.width = '1200px';
+    tempContainer.style.width = '1680px';
     // 与编辑页面底色一致 - 浅灰色背景
     tempContainer.style.background = '#f5f5f7';
     tempContainer.style.padding = '24px';
@@ -2330,7 +2792,7 @@ async function exportAllData() {
             settings: settings,
             schedules: schedules,
             exportDate: new Date().toISOString(),
-            version: '2.17'
+            version: '2.18'
         };
         
         // 创建Blob对象
@@ -2412,6 +2874,7 @@ async function handleImportFile(event) {
 注意：这将覆盖当前的所有设置和排期数据！`);
                 if (!confirmImport) return;
 
+                const beforeState = cloneScheduleState();
                 const importedSchedules = normalizeImportedSchedules(importData.schedules);
                 
                 // 保存设置
@@ -2440,9 +2903,11 @@ async function handleImportFile(event) {
                 // 重新加载数据
                 await loadScheduleData();
                 await loadSettings();
+                await loadTemplateData();
                 
                 // 更新项目表单选项
                 updateProjectFormOptions();
+                pushUndoSnapshot('导入备份文件', beforeState, scheduleData);
                 
                 showToast('数据导入成功！', 'success');
                 
@@ -2534,6 +2999,7 @@ function showCopyModal(dateStr, projectIndex) {
         }
         
         try {
+            const beforeState = cloneScheduleState();
             const project = scheduleData[copyProjectData.date][copyProjectData.index];
             
             for (const option of selectedOptions) {
@@ -2558,11 +3024,12 @@ function showCopyModal(dateStr, projectIndex) {
                 });
             }
             
+            pushUndoSnapshot('跨周复制项目', beforeState, scheduleData);
             renderSchedule();
             showToast(`成功复制到 ${selectedOptions.length} 个日期`, 'success');
         } catch (error) {
             console.error('复制项目时出错:', error);
-            showToast('复制项目时出错，请重试', 'error');
+            showToast(error.message || '复制项目时出错，请重试', 'error');
         }
         
         copyModal.style.display = 'none';
@@ -2584,6 +3051,237 @@ function showCopyModal(dateStr, projectIndex) {
     };
     
     copyModal.style.display = 'block';
+}
+
+// ── 操作记录 ──
+async function loadHistoryRecords() {
+    const tbody = document.getElementById('history-tbody');
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary)">加载中...</td></tr>';
+
+    const dateFilter = document.getElementById('history-date-filter').value;
+    const params = { limit: 200 };
+    if (dateFilter) params.date = dateFilter;
+
+    try {
+        const records = await apiClient.getHistory(params);
+
+        if (!records || records.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary)">暂无记录</td></tr>';
+            return;
+        }
+
+        const actionLabels = { add: '新增', edit: '编辑', delete: '删除' };
+        const actionClasses = { add: 'history-action-add', edit: 'history-action-edit', delete: 'history-action-delete' };
+
+        tbody.innerHTML = records.map(r => {
+            const ts = new Date(r.ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+            const actionLabel = actionLabels[r.action] || r.action;
+            const actionClass = actionClasses[r.action] || '';
+            let detail = '';
+            if (r.action === 'edit' && r.before_json && r.after_json) {
+                try {
+                    const before = JSON.parse(r.before_json);
+                    const after = JSON.parse(r.after_json);
+                    const diffs = [];
+                    Object.keys(after).forEach(k => {
+                        if (JSON.stringify(before[k]) !== JSON.stringify(after[k])) {
+                            diffs.push(`${k}: <em>${after[k]}</em>`);
+                        }
+                    });
+                    detail = diffs.slice(0, 3).join(' · ');
+                } catch (e) { /* ignore */ }
+            } else if (r.action === 'add' && r.after_json) {
+                try {
+                    const after = JSON.parse(r.after_json);
+                    detail = after.name || '';
+                } catch (e) { /* ignore */ }
+            } else if (r.action === 'delete' && r.before_json) {
+                try {
+                    const before = JSON.parse(r.before_json);
+                    detail = before.name || '';
+                } catch (e) { /* ignore */ }
+            }
+            return `<tr>
+                <td>${ts}</td>
+                <td class="${actionClass}">${actionLabel}</td>
+                <td>${r.date || ''}</td>
+                <td class="history-diff">${detail}</td>
+            </tr>`;
+        }).join('');
+    } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary)">加载失败</td></tr>';
+        showToast('加载操作记录失败', 'error');
+    }
+}
+
+// ── 单日一键排序 ──
+async function sortDayProjects(dateStr) {
+    const projects = scheduleData[dateStr];
+    if (!projects || projects.length === 0) {
+        showToast('当日暂无项目', 'info');
+        return;
+    }
+
+    // compute previous day key
+    const d = new Date(dateStr + 'T00:00:00');
+    d.setDate(d.getDate() - 1);
+    const prevDateStr = d.toISOString().slice(0, 10);
+    const prevNames = new Set((scheduleData[prevDateStr] || []).map(p => p.name));
+
+    const toMinutes = (t) => {
+        if (!t) return Infinity;
+        const m = t.match(/^(\d{1,2}):(\d{2})/);
+        return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : Infinity;
+    };
+
+    const sorted = [...projects].sort((a, b) => {
+        const ta = toMinutes(a.startTime);
+        const tb = toMinutes(b.startTime);
+        if (ta !== tb) return ta - tb;
+        // same time: projects that appeared in previous day come first
+        const inPrevA = prevNames.has(a.name) ? 0 : 1;
+        const inPrevB = prevNames.has(b.name) ? 0 : 1;
+        return inPrevA - inPrevB;
+    });
+
+    scheduleData[dateStr] = sorted;
+    try {
+        await persistScheduleDate(dateStr);
+        renderSchedule();
+        showToast('排序完成', 'success');
+    } catch (err) {
+        console.error('排序保存失败:', err);
+        showToast('排序保存失败', 'error');
+    }
+}
+
+// ── 通告单 Modal ──
+function showNoticeModal(dateStr) {
+    const modal = document.getElementById('notice-modal');
+    if (!modal) return;
+
+    const date = new Date(dateStr + 'T00:00:00');
+    const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    const dateLabel = `${date.getMonth() + 1}月${date.getDate()}日 ${weekdays[date.getDay()]}`;
+
+    document.getElementById('notice-header-info').innerHTML = `<strong>${dateLabel}</strong> 共 ${(scheduleData[dateStr] || []).length} 个项目`;
+
+    const projects = scheduleData[dateStr] || [];
+    const body = document.getElementById('notice-body');
+
+    if (projects.length === 0) {
+        body.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:20px 0">当日暂无项目</p>';
+    } else {
+        body.innerHTML = projects.map((p, i) => {
+            const meta = [
+                p.startTime ? `⏰ ${p.startTime}` : '',
+                p.location ? `📍 ${p.location}` : '',
+                p.director ? `导演: ${p.director}` : '',
+                p.photographer ? `摄影: ${p.photographer}` : '',
+                p.production ? `制片: ${p.production}` : '',
+                p.type ? `类型: ${p.type}` : ''
+            ].filter(Boolean);
+            return `<div class="notice-project-row">
+                <div class="notice-index">${i + 1}</div>
+                <div class="notice-project-info">
+                    <div class="notice-project-name">${p.name}</div>
+                    <div class="notice-project-meta">${meta.map(m => `<span>${m}</span>`).join('')}</div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    document.getElementById('close-notice-modal').onclick = () => { modal.style.display = 'none'; };
+    document.getElementById('close-notice-action-btn').onclick = () => { modal.style.display = 'none'; };
+    document.getElementById('print-notice-btn').onclick = () => { window.print(); };
+
+    // Build an emoji-free off-screen element for reliable image capture
+    const buildNoticeImageElement = () => {
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = [
+            'background:#fff', 'padding:48px 56px', 'width:660px',
+            'font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif',
+            'position:fixed', 'top:-9999px', 'left:0', 'box-sizing:border-box'
+        ].join(';');
+
+        const rows = projects.length === 0
+            ? '<p style="color:#999;text-align:center;padding:24px 0">当日暂无项目</p>'
+            : projects.map((p, i) => {
+                const meta = [
+                    p.startTime    ? `时间: ${p.startTime}`    : '',
+                    p.location     ? `地点: ${p.location}`     : '',
+                    p.director     ? `导演: ${p.director}`     : '',
+                    p.photographer ? `摄影: ${p.photographer}` : '',
+                    p.production   ? `制片: ${p.production}`   : '',
+                    p.type         ? `类型: ${p.type}`         : ''
+                ].filter(Boolean).join('　');
+                const border = i < projects.length - 1 ? 'border-bottom:1px solid #ececec;' : '';
+                return `<div style="display:flex;gap:18px;padding:18px 0;${border}align-items:flex-start">
+                    <div style="font-size:13px;font-weight:600;color:#bbb;min-width:18px;padding-top:3px">${i + 1}</div>
+                    <div style="flex:1">
+                        <div style="font-size:18px;font-weight:700;color:#111;margin-bottom:6px;line-height:1.3">${p.name}</div>
+                        <div style="font-size:13px;color:#666;line-height:1.7">${meta || '—'}</div>
+                    </div>
+                </div>`;
+            }).join('');
+
+        wrapper.innerHTML = `
+            <div style="font-size:28px;font-weight:800;color:#111;margin-bottom:22px;letter-spacing:-0.5px">通告单</div>
+            <div style="font-size:15px;color:#555;margin-bottom:28px;padding-bottom:18px;border-bottom:2px solid #111">
+                <strong style="color:#111;font-size:16px">${dateLabel}</strong>&nbsp;&nbsp;共 ${projects.length} 个项目
+            </div>
+            ${rows}
+        `;
+        document.body.appendChild(wrapper);
+        return wrapper;
+    };
+
+    const captureNotice = () => {
+        const el = buildNoticeImageElement();
+        return html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
+            .then(canvas => { document.body.removeChild(el); return canvas; })
+            .catch(err => { document.body.removeChild(el); throw err; });
+    };
+
+    document.getElementById('notice-save-image-btn').onclick = async () => {
+        const btn = document.getElementById('notice-save-image-btn');
+        btn.disabled = true;
+        btn.textContent = '生成中…';
+        try {
+            const canvas = await captureNotice();
+            const link = document.createElement('a');
+            link.download = `通告单_${dateLabel}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        } catch (err) {
+            showToast('图片生成失败', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '保存为图片';
+        }
+    };
+
+    document.getElementById('notice-open-image-btn').onclick = async () => {
+        const btn = document.getElementById('notice-open-image-btn');
+        btn.disabled = true;
+        btn.textContent = '生成中…';
+        try {
+            const canvas = await captureNotice();
+            const dataUrl = canvas.toDataURL('image/png');
+            const win = window.open('', '_blank');
+            win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>通告单 ${dateLabel}</title><style>body{margin:0;display:flex;justify-content:center;background:#f0f0f0;}img{max-width:100%;}</style></head><body><img src="${dataUrl}"></body></html>`);
+            win.document.close();
+        } catch (err) {
+            showToast('图片生成失败', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '在新窗口打开';
+        }
+    };
+
+    modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+
+    modal.style.display = 'block';
 }
 
 // 页面加载完成后初始化应用

@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>罐头场通告排期</title>
+    <base href="/">
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
-        /* 预览页面特殊样式 */
         .preview-header {
             background: white;
             border-radius: 8px;
@@ -16,47 +15,115 @@
             margin-bottom: 20px;
             text-align: center;
         }
-        
+
         .preview-header h1 {
             color: #2c3e50;
             margin-bottom: 10px;
         }
-        
+
         .preview-toolbar {
             display: flex;
             justify-content: center;
+            align-items: center;
             gap: 10px;
             flex-wrap: wrap;
             margin-top: 15px;
         }
-        
+
         .preview-toolbar .btn {
             background-color: #95a5a6;
             cursor: not-allowed;
         }
-        
+
         .preview-toolbar .btn.primary {
             background-color: #bdc3c7;
         }
-        
+
         .preview-toolbar .btn.secondary {
             background-color: #bdc3c7;
         }
-        
+
+        /* ── 视图切换 Tab (pill 形式，醒目可点) ── */
+        .view-tab-group {
+            display: inline-flex;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #3498db;
+            background: white;
+        }
+
+        .view-toggle-btn {
+            font-size: 13px !important;
+            padding: 6px 18px !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: white !important;
+            cursor: pointer !important;
+            color: #3498db !important;
+            font-weight: 600 !important;
+            transition: background 0.15s, color 0.15s !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        .view-toggle-btn.active {
+            background: #3498db !important;
+            color: white !important;
+            cursor: default !important;
+        }
+
+        .view-toggle-btn:not(.active):hover {
+            background: #eaf4fc !important;
+        }
+
+        .toolbar-divider {
+            width: 1px;
+            height: 28px;
+            background: #ddd;
+            margin: 0 6px;
+            align-self: center;
+        }
+
+        .month-hidden { display: none !important; }
+
+        /* 周/月 导航按钮 — 可交互 */
+        .nav-btn {
+            font-size: 13px !important;
+            padding: 6px 14px !important;
+            border-radius: 6px !important;
+            border: 1px solid #bdc3c7 !important;
+            background: #ecf0f1 !important;
+            cursor: pointer !important;
+            color: #555 !important;
+            font-weight: 500 !important;
+            transition: background 0.15s !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        .nav-btn:hover {
+            background: #d5d8dc !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .nav-btn.today-btn {
+            background: #3498db !important;
+            color: white !important;
+            border-color: #3498db !important;
+        }
+
+        .nav-btn.today-btn:hover { background: #2980b9 !important; }
+
         /* 隐藏编辑相关元素 */
         .project-card:hover {
             transform: none;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
-        
-        .delete-btn {
-            display: none;
-        }
-        
-        .project-card {
-            cursor: default;
-        }
-        
+
+        .delete-btn { display: none; }
+        .project-card { cursor: default; }
+
         /* 实时更新提示 */
         .realtime-indicator {
             position: fixed;
@@ -70,320 +137,267 @@
             display: none;
             z-index: 1000;
         }
-        
-        /* 卡片操作按钮 */
-        .card-actions {
-            margin-top: 8px;
+
+        /* ── 月视图 ── */
+        #month-view { display: none; }
+
+        .month-nav {
             display: flex;
-            justify-content: flex-end;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
         }
-        
-        .copy-btn {
-            background-color: #bdc3c7;
-            color: #7f8c8d;
-            border: none;
-            border-radius: 4px;
-            padding: 4px 8px;
-            font-size: 12px;
-            cursor: not-allowed;
-            transition: background-color 0.2s;
+
+        .month-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .month-grid {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .month-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .month-weekdays div {
+            padding: 10px 4px;
+            font-size: 13px;
+        }
+
+        .month-weeks {
+            display: grid;
+            grid-template-rows: repeat(6, 1fr);
+        }
+
+        .month-week-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            border-bottom: 1px solid #eee;
+        }
+
+        .month-week-row:last-child { border-bottom: none; }
+
+        .month-day-cell {
+            border-right: 1px solid #eee;
+            padding: 6px 8px;
+            min-height: 90px;
+            vertical-align: top;
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+
+        .month-day-cell:last-child { border-right: none; }
+
+        .month-day-cell:hover { background: #f0f7ff; }
+
+        .month-day-cell.other-month { background: #fafafa; }
+        .month-day-cell.other-month .month-day-num { color: #bdc3c7; }
+
+        .month-day-cell.today .month-day-num {
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .month-day-num {
+            font-size: 13px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .month-project-dot {
+            font-size: 11px;
+            line-height: 1.4;
+            color: #555;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 1px 4px;
+            border-radius: 3px;
+            margin-bottom: 2px;
+        }
+
+        .month-project-dot.type-video  { background: #eaf4fb; border-left: 3px solid #2980b9; }
+        .month-project-dot.type-trial  { background: #fef9e7; border-left: 3px solid #f39c12; }
+        .month-project-dot.type-outdoor { background: #eafaf1; border-left: 3px solid #27ae60; }
+        .month-project-dot.type-graphic { background: #f5eef8; border-left: 3px solid #8e44ad; }
+        .month-project-dot.type-default { background: #eaecee; border-left: 3px solid #95a5a6; }
+
+        /* 手机适配 */
+        @media (max-width: 768px) {
+            body { font-size: 14px; }
+            .container { padding: 8px; }
+
+            .preview-header { padding: 12px; margin-bottom: 12px; }
+            .preview-header h1 { font-size: 18px; margin-bottom: 6px; }
+            .preview-header p { font-size: 12px; }
+
+            .preview-toolbar { gap: 6px; margin-top: 10px; }
+            .preview-toolbar .btn { padding: 8px 12px; font-size: 13px; min-height: 36px; }
+
+            .week-display { font-size: 13px; width: 100%; text-align: center; order: -1; }
+
+            .week-header { display: none; }
+
+            .schedule-container {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .day-column {
+                border-right: none !important;
+                border-bottom: 1px solid #eee;
+                padding: 10px !important;
+                min-height: auto !important;
+            }
+
+            .day-column::before {
+                content: attr(data-label);
+                display: block;
+                font-weight: bold;
+                font-size: 14px;
+                color: white;
+                background: #3498db;
+                margin: -10px -10px 10px -10px;
+                padding: 8px 12px;
+                border-radius: 6px 6px 0 0;
+            }
+
+            .project-card { margin-bottom: 8px; padding: 10px; }
+            .project-title { font-size: 14px; }
+            .staff-info { flex-wrap: wrap; gap: 4px; }
+            .staff-role { font-size: 12px; }
+            .project-location { font-size: 12px; }
+            .project-type { font-size: 11px; padding: 2px 6px; }
+            .status-badge { font-size: 11px; }
+            .empty-state { font-size: 20px; padding: 10px; }
+
+            /* 月视图手机适配 */
+            .month-day-cell { min-height: 60px; padding: 4px; }
+            .month-day-num { font-size: 12px; }
+            .month-project-dot { font-size: 10px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- 预览头部 -->
         <div class="preview-header">
             <h1>罐头场通告排期</h1>
-            <p>只读模式 - 数据实时同步</p>
             <div class="preview-toolbar">
-                <button id="prev-week" class="btn">◀ 上周</button>
-                <button id="current-week" class="btn primary">本周</button>
-                <button id="next-week" class="btn">下周 ▶</button>
+                <!-- 视图切换 -->
+                <div class="view-tab-group">
+                    <button id="btn-week-view" class="view-toggle-btn active">周视图</button>
+                    <button id="btn-month-view" class="view-toggle-btn">月视图</button>
+                </div>
+
+                <div class="toolbar-divider"></div>
+
+                <!-- 周导航 -->
+                <button id="prev-week" class="nav-btn">◀ 上周</button>
+                <button id="current-week" class="nav-btn today-btn">本周</button>
+                <button id="next-week" class="nav-btn">下周 ▶</button>
                 <span id="week-display" class="week-display"></span>
-                <button id="export-image" class="btn secondary">导出图片</button>
+
+                <!-- 月导航 (默认隐藏) -->
+                <button id="prev-month" class="nav-btn month-hidden">◀ 上月</button>
+                <button id="current-month" class="nav-btn today-btn month-hidden">本月</button>
+                <button id="next-month" class="nav-btn month-hidden">下月 ▶</button>
+                <span id="month-display" class="week-display month-hidden"></span>
             </div>
         </div>
 
-        <!-- 主要内容区域 -->
-        <main class="main-content">
-            <!-- 星期标题 -->
-            <div class="week-header">
-                <div class="day-header" id="monday-header">周一</div>
-                <div class="day-header" id="tuesday-header">周二</div>
-                <div class="day-header" id="wednesday-header">周三</div>
-                <div class="day-header" id="thursday-header">周四</div>
-                <div class="day-header" id="friday-header">周五</div>
-                <div class="day-header" id="saturday-header">周六</div>
-                <div class="day-header" id="sunday-header">周日</div>
-            </div>
+        <!-- 周视图 -->
+        <div id="week-view">
+            <main class="main-content">
+                <div class="week-header">
+                    <div class="day-header" id="monday-header">周一</div>
+                    <div class="day-header" id="tuesday-header">周二</div>
+                    <div class="day-header" id="wednesday-header">周三</div>
+                    <div class="day-header" id="thursday-header">周四</div>
+                    <div class="day-header" id="friday-header">周五</div>
+                    <div class="day-header" id="saturday-header">周六</div>
+                    <div class="day-header" id="sunday-header">周日</div>
+                </div>
+                <div class="schedule-container">
+                    <div class="day-column" id="monday"><div class="empty-state">🈚️</div></div>
+                    <div class="day-column" id="tuesday"><div class="empty-state">🈚️</div></div>
+                    <div class="day-column" id="wednesday"><div class="empty-state">🈚️</div></div>
+                    <div class="day-column" id="thursday"><div class="empty-state">🈚️</div></div>
+                    <div class="day-column" id="friday"><div class="empty-state">🈚️</div></div>
+                    <div class="day-column" id="saturday"><div class="empty-state">🈚️</div></div>
+                    <div class="day-column" id="sunday"><div class="empty-state">🈚️</div></div>
+                </div>
+            </main>
+        </div>
 
-            <!-- 项目列表区域 -->
-            <div class="schedule-container">
-                <div class="day-column" id="monday">
-                    <div class="empty-state">🈚️</div>
+        <!-- 月视图 -->
+        <div id="month-view">
+            <div class="month-grid">
+                <div class="month-weekdays">
+                    <div>周一</div><div>周二</div><div>周三</div>
+                    <div>周四</div><div>周五</div><div>周六</div><div>周日</div>
                 </div>
-                <div class="day-column" id="tuesday">
-                    <div class="empty-state">🈚️</div>
-                </div>
-                <div class="day-column" id="wednesday">
-                    <div class="empty-state">🈚️</div>
-                </div>
-                <div class="day-column" id="thursday">
-                    <div class="empty-state">🈚️</div>
-                </div>
-                <div class="day-column" id="friday">
-                    <div class="empty-state">🈚️</div>
-                </div>
-                <div class="day-column" id="saturday">
-                    <div class="empty-state">🈚️</div>
-                </div>
-                <div class="day-column" id="sunday">
-                    <div class="empty-state">🈚️</div>
-                </div>
+                <div id="month-weeks" class="month-weeks"></div>
             </div>
-        </main>
+        </div>
     </div>
-    
+
     <!-- 实时更新提示 -->
     <div id="realtime-indicator" class="realtime-indicator">数据已更新</div>
-    
-    <!-- 图片导出模态框 -->
-    <div id="export-modal" class="modal">
-        <div class="modal-content export-modal">
-            <span class="close" id="close-export">&times;</span>
-            <h2>导出图片</h2>
-            <div class="export-preview">
-                <canvas id="export-canvas" style="width: 100%; max-width: 600px; border: 1px solid #ddd;"></canvas>
-            </div>
-            <div class="form-actions">
-                <button id="download-image" class="btn primary">下载图片</button>
-                <button id="open-in-new-tab" class="btn">在新标签页打开</button>
-                <button id="cancel-export" class="btn">取消</button>
-            </div>
-        </div>
-    </div>
 
     <script>
-        // 获取当前周的周一日期
+        // ── 工具函数 ──────────────────────────────────────────────
+
         function getMonday(d) {
             d = new Date(d);
             const day = d.getDay();
-            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // 调整：周日为第一天时调整为周一
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
             return new Date(d.setDate(diff));
         }
 
-        // 格式化日期为 YYYY-MM-DD
         function formatDate(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
         }
 
-        // 格式化日期为 MM月DD日
         function formatMonthDay(date) {
             return `${date.getMonth() + 1}月${date.getDate()}日`;
         }
 
-        // 获取一周的日期
         function getWeekDates(monday) {
             const dates = [];
             for (let i = 0; i < 7; i++) {
-                const date = new Date(monday);
-                date.setDate(monday.getDate() + i);
-                dates.push(date);
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                dates.push(d);
             }
             return dates;
         }
 
-        // 当前周的周一
-        let currentMonday = getMonday(new Date());
-
-        // 项目数据存储
-        let scheduleData = {};
-
-        // DOM元素
-        const weekDisplay = document.getElementById('week-display');
-        const prevWeekBtn = document.getElementById('prev-week');
-        const nextWeekBtn = document.getElementById('next-week');
-        const currentWeekBtn = document.getElementById('current-week');
-        const exportImageBtn = document.getElementById('export-image');
-        
-        // 图片导出元素
-        const exportModal = document.getElementById('export-modal');
-        const closeExportBtn = document.getElementById('close-export');
-        const exportCanvas = document.getElementById('export-canvas');
-        const downloadImageBtn = document.getElementById('download-image');
-        const openInNewTabBtn = document.getElementById('open-in-new-tab');
-        const cancelExportBtn = document.getElementById('cancel-export');
-
-        // API请求封装
-        const apiRequest = async (url, options = {}) => {
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...options.headers,
-                },
-                ...options,
-            };
-            
-            const response = await fetch(`/api${url}`, config);
-            return response;
-        };
-
-
-        // 更新周显示
-        function updateWeekDisplay() {
-            const weekDates = getWeekDates(currentMonday);
-            const startDate = formatMonthDay(weekDates[0]);
-            const endDate = formatMonthDay(weekDates[6]);
-            weekDisplay.textContent = `${startDate} - ${endDate}`;
-        }
-
-        // 渲染排期表
-        function renderSchedule() {
-            const weekDates = getWeekDates(currentMonday);
-            const dayColumns = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-            const dayHeaders = ['monday-header', 'tuesday-header', 'wednesday-header', 'thursday-header', 'friday-header', 'saturday-header', 'sunday-header'];
-            
-            // 更新星期标题，显示准确日期
-            const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-            dayHeaders.forEach((headerId, index) => {
-                const header = document.getElementById(headerId);
-                const date = weekDates[index];
-                const month = date.getMonth() + 1;
-                const day = date.getDate();
-                header.textContent = `${weekdays[index]} (${month}/${day})`;
-            });
-            
-            dayColumns.forEach((columnId, index) => {
-                const column = document.getElementById(columnId);
-                const dateStr = formatDate(weekDates[index]);
-                
-                // 清空现有内容
-                column.innerHTML = '';
-                
-                // 如果有该项目日期的数据，则渲染项目卡片
-                if (scheduleData[dateStr]) {
-                    scheduleData[dateStr].forEach((project, projectIndex) => {
-                        const projectCard = createProjectCard(project, dateStr, projectIndex);
-                        column.appendChild(projectCard);
-                    });
-                } else {
-                    // 显示空状态
-                    const emptyState = document.createElement('div');
-                    emptyState.className = 'empty-state';
-                    emptyState.textContent = '🈚️';
-                    column.appendChild(emptyState);
-                }
-            });
-        }
-
-        // 创建项目卡片
-        function createProjectCard(project, dateStr, projectIndex) {
-            const card = document.createElement('div');
-            card.className = `project-card`;
-            
-            const typeClassMap = {
-                '平面': 'plane',
-                '视频': 'video',
-                '直播': 'live',
-                '试做': 'test'
-            };
-            
-            const typeClass = typeClassMap[project.type] || 'plane';
-            
-            // 构建工作人员信息
-            let staffInfo = '';
-            if (project.director || project.photographer || project.production || project.rd || project.startTime) {
-                staffInfo = '<div class="staff-info">';
-                if (project.startTime) {
-                    staffInfo += `<span class="staff-role start-time">⏰ ${project.startTime}</span>`;
-                }
-                if (project.director) {
-                    staffInfo += `<span class="staff-role director">导演：${project.director}</span>`;
-                }
-                if (project.photographer) {
-                    staffInfo += `<span class="staff-role photographer">摄影：${project.photographer}</span>`;
-                }
-                if (project.production) {
-                    staffInfo += `<span class="staff-role production">制片：${project.production}</span>`;
-                }
-                if (project.rd) {
-                    staffInfo += `<span class="staff-role rd">研发：${project.rd}</span>`;
-                }
-                staffInfo += '</div>';
-            }
-            
-            // 添加老刀出镜标记
-            const laodaoMark = project.laodao ? '<div class="laodao-mark">老刀出镜</div>' : '';
-            
-            card.innerHTML = `
-                <div class="project-title">
-                    <span>${project.name}</span>
-                </div>
-                ${laodaoMark}
-                ${staffInfo}
-                <div class="project-location">📍 ${project.location}</div>
-                <div>
-                    <span class="project-type ${typeClass}">${project.type}</span>
-                </div>
-            `;
-            
-            return card;
-        }
-
-        // 设置事件监听器
-        function setupEventListeners() {
-            // 周切换按钮
-            prevWeekBtn.addEventListener('click', () => {
-                currentMonday.setDate(currentMonday.getDate() - 7);
-                updateWeekDisplay();
-                renderSchedule();
-            });
-            
-            nextWeekBtn.addEventListener('click', () => {
-                currentMonday.setDate(currentMonday.getDate() + 7);
-                updateWeekDisplay();
-                renderSchedule();
-            });
-            
-            currentWeekBtn.addEventListener('click', () => {
-                currentMonday = getMonday(new Date());
-                updateWeekDisplay();
-                renderSchedule();
-            });
-            
-            // 导出图片按钮
-            exportImageBtn.addEventListener('click', showExportModal);
-            
-            // 图片导出模态框事件
-            closeExportBtn.addEventListener('click', () => {
-                exportModal.style.display = 'none';
-            });
-            
-            downloadImageBtn.addEventListener('click', downloadImage);
-            
-            // 添加在新标签页打开图片事件
-            openInNewTabBtn.addEventListener('click', openImageInNewTab);
-            
-            cancelExportBtn.addEventListener('click', () => {
-                exportModal.style.display = 'none';
-            });
-            
-            // 点击模态框外部关闭图片导出模态框
-            exportModal.addEventListener('click', (e) => {
-                if (e.target === exportModal) {
-                    exportModal.style.display = 'none';
-                }
-            });
-        }
-
-        // API基础URL
-        const API_BASE_URL = '/api';
-
-        // 获取一年中的周数
         function getWeekNumber(date) {
             const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
             const dayNum = d.getUTCDay() || 7;
@@ -392,266 +406,306 @@
             return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
         }
 
-        // 在canvas上绘制排期表（所见即所得版本）
-        function drawScheduleToCanvas() {
-            // 创建临时的DOM元素用于渲染
-            const tempContainer = document.createElement('div');
-            tempContainer.style.position = 'absolute';
-            tempContainer.style.left = '-9999px';
-            tempContainer.style.top = '-9999px';
-            tempContainer.style.width = '1200px';
-            tempContainer.style.backgroundColor = '#f5f5f5';
-            tempContainer.style.padding = '20px';
-            
-            // 创建头部（不包含"排期通告工具"标题）
-            const header = document.createElement('div');
-            header.style.backgroundColor = 'white';
-            header.style.borderRadius = '8px';
-            header.style.padding = '20px';
-            header.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
-            header.style.marginBottom = '20px';
-            header.style.textAlign = 'center';
-            
-            // 创建周信息（不包含标题）
+        const todayStr = formatDate(new Date());
+
+        // ── 状态 ──────────────────────────────────────────────────
+
+        let currentView = 'week'; // 'week' | 'month'
+        let currentMonday = getMonday(new Date());
+        let currentMonthDate = new Date(); // 任意该月内的日期
+        let scheduleData = {};
+
+        // ── DOM ───────────────────────────────────────────────────
+
+        const weekViewEl     = document.getElementById('week-view');
+        const monthViewEl    = document.getElementById('month-view');
+        const weekDisplay    = document.getElementById('week-display');
+        const monthDisplay   = document.getElementById('month-display');
+        // ── 视图切换 ──────────────────────────────────────────────
+
+        function switchToWeek() {
+            currentView = 'week';
+            weekViewEl.style.display = '';
+            monthViewEl.style.display = 'none';
+            document.getElementById('btn-week-view').classList.add('active');
+            document.getElementById('btn-month-view').classList.remove('active');
+
+            // 导航按钮
+            ['prev-week', 'current-week', 'next-week', 'week-display'].forEach(id => {
+                document.getElementById(id).classList.remove('month-hidden');
+            });
+            ['prev-month', 'current-month', 'next-month', 'month-display'].forEach(id => {
+                document.getElementById(id).classList.add('month-hidden');
+            });
+
+            updateWeekDisplay();
+            renderSchedule();
+        }
+
+        function switchToMonth() {
+            currentView = 'month';
+            weekViewEl.style.display = 'none';
+            monthViewEl.style.display = 'block';
+            document.getElementById('btn-month-view').classList.add('active');
+            document.getElementById('btn-week-view').classList.remove('active');
+
+            // 导航按钮
+            ['prev-week', 'current-week', 'next-week', 'week-display'].forEach(id => {
+                document.getElementById(id).classList.add('month-hidden');
+            });
+            ['prev-month', 'current-month', 'next-month', 'month-display'].forEach(id => {
+                document.getElementById(id).classList.remove('month-hidden');
+            });
+
+            updateMonthDisplay();
+            renderMonthView();
+        }
+
+        // ── 周视图渲染 ────────────────────────────────────────────
+
+        function updateWeekDisplay() {
             const weekDates = getWeekDates(currentMonday);
-            const weekNumber = getWeekNumber(weekDates[0]);
-            const year = weekDates[0].getFullYear();
-            const startDate = formatMonthDay(weekDates[0]);
-            const endDate = formatMonthDay(weekDates[6]);
-            
-            const weekInfo = document.createElement('div');
-            weekInfo.textContent = `${year}年第${weekNumber}周 周通告 (${startDate} - ${endDate})`;
-            weekInfo.style.fontWeight = 'bold';
-            weekInfo.style.fontSize = '18px';
-            weekInfo.style.color = '#7f8c8d';
-            
-            header.appendChild(weekInfo);
-            
-            // 创建主要内容区域
-            const mainContent = document.createElement('div');
-            mainContent.style.backgroundColor = 'white';
-            mainContent.style.borderRadius = '8px';
-            mainContent.style.overflow = 'hidden';
-            mainContent.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
-            
-            // 创建星期标题
-            const weekHeader = document.createElement('div');
-            weekHeader.style.display = 'grid';
-            weekHeader.style.gridTemplateColumns = 'repeat(7, 1fr)';
-            weekHeader.style.backgroundColor = '#3498db';
-            weekHeader.style.color = 'white';
-            
+            weekDisplay.textContent = `${formatMonthDay(weekDates[0])} - ${formatMonthDay(weekDates[6])}`;
+        }
+
+        function renderSchedule() {
+            const weekDates = getWeekDates(currentMonday);
+            const dayColumns = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            const dayHeaders = ['monday-header', 'tuesday-header', 'wednesday-header', 'thursday-header', 'friday-header', 'saturday-header', 'sunday-header'];
             const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-            for (let i = 0; i < 7; i++) {
-                const dayHeader = document.createElement('div');
-                dayHeader.className = 'day-header';
-                dayHeader.style.padding = '15px';
-                dayHeader.style.textAlign = 'center';
-                dayHeader.style.fontWeight = 'bold';
-                
-                const date = weekDates[i];
-                const month = date.getMonth() + 1;
-                const day = date.getDate();
-                dayHeader.textContent = `${weekdays[i]}\n(${month}/${day})`;
-                
-                weekHeader.appendChild(dayHeader);
-            }
-            
-            // 创建排期容器
-            const scheduleContainer = document.createElement('div');
-            scheduleContainer.style.display = 'grid';
-            scheduleContainer.style.gridTemplateColumns = 'repeat(7, 1fr)';
-            scheduleContainer.style.minHeight = '500px';
-            
-            // 创建每天的列
-            for (let i = 0; i < 7; i++) {
-                const dayColumn = document.createElement('div');
-                dayColumn.className = 'day-column';
-                dayColumn.style.borderRight = '1px solid #eee';
-                dayColumn.style.padding = '15px';
-                dayColumn.style.minHeight = '500px';
-                
-                if (i === 6) {
-                    dayColumn.style.borderRight = 'none';
-                }
-                
-                const dateStr = formatDate(weekDates[i]);
-                const projects = scheduleData[dateStr] || [];
-                
-                if (projects.length > 0) {
+
+            dayHeaders.forEach((headerId, index) => {
+                const header = document.getElementById(headerId);
+                const date = weekDates[index];
+                header.textContent = `${weekdays[index]} (${date.getMonth() + 1}/${date.getDate()})`;
+            });
+
+            dayColumns.forEach((columnId, index) => {
+                const column = document.getElementById(columnId);
+                const date = weekDates[index];
+                column.setAttribute('data-label', `${weekdays[index]} (${date.getMonth() + 1}/${date.getDate()})`);
+                const dateStr = formatDate(date);
+                column.innerHTML = '';
+
+                const projects = scheduleData[dateStr];
+                if (projects && projects.length > 0) {
                     projects.forEach((project, projectIndex) => {
-                        // 创建项目卡片
-                        const projectCard = createProjectCard(project, dateStr, projectIndex);
-                        dayColumn.appendChild(projectCard);
+                        column.appendChild(createProjectCard(project, dateStr, projectIndex));
                     });
                 } else {
-                    // 显示空状态
                     const emptyState = document.createElement('div');
                     emptyState.className = 'empty-state';
-                    emptyState.style.color = '#95a5a6';
-                    emptyState.style.textAlign = 'center';
-                    emptyState.style.padding = '20px';
-                    emptyState.style.fontSize = '24px';
                     emptyState.textContent = '🈚️';
-                    dayColumn.appendChild(emptyState);
+                    column.appendChild(emptyState);
                 }
-                
-                scheduleContainer.appendChild(dayColumn);
-            }
-            
-            mainContent.appendChild(weekHeader);
-            mainContent.appendChild(scheduleContainer);
-            
-            tempContainer.appendChild(header);
-            tempContainer.appendChild(mainContent);
-            
-            // 添加到文档中
-            document.body.appendChild(tempContainer);
-            
-            // 使用html2canvas库将DOM元素渲染到canvas
-            html2canvas(tempContainer, {
-                scale: 2, // 提高分辨率
-                useCORS: true,
-                backgroundColor: '#f5f5f5'
-            }).then(canvas => {
-                // 将生成的canvas替换到导出canvas中
-                const exportCtx = exportCanvas.getContext('2d');
-                exportCanvas.width = canvas.width;
-                exportCanvas.height = canvas.height;
-                exportCtx.drawImage(canvas, 0, 0);
-                
-                // 移除临时元素
-                document.body.removeChild(tempContainer);
-            }).catch(error => {
-                console.error('导出图片时出错:', error);
-                // 移除临时元素
-                document.body.removeChild(tempContainer);
-                
-                // 出错时显示提示
-                alert('导出图片时出错，请重试');
             });
         }
 
-        // 下载图片
-        function downloadImage() {
-            const canvas = exportCanvas;
-            const link = document.createElement('a');
-            link.download = '罐头场通告排期.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
+        // ── 月视图渲染 ────────────────────────────────────────────
+
+        function updateMonthDisplay() {
+            const y = currentMonthDate.getFullYear();
+            const m = currentMonthDate.getMonth() + 1;
+            monthDisplay.textContent = `${y}年${m}月`;
         }
 
-        // 移动端保存图片到相册
-        // 已移除此功能
+        function renderMonthView() {
+            const weeksEl = document.getElementById('month-weeks');
+            weeksEl.innerHTML = '';
 
-        // 在新标签页打开图片
-        function openImageInNewTab() {
-            const canvas = exportCanvas;
-            try {
-                // 将canvas转换为数据URL并在新标签页打开
-                const dataURL = canvas.toDataURL('image/png');
-                const newWindow = window.open();
-                newWindow.document.write(`<img src="${dataURL}" alt="罐头场通告排期" style="width:100%;height:auto;" />`);
-                newWindow.document.close();
-            } catch (error) {
-                console.error('在新标签页打开图片时出错:', error);
-                alert('无法在新标签页打开图片，请尝试下载图片');
-            }
-        }
+            const y = currentMonthDate.getFullYear();
+            const m = currentMonthDate.getMonth();
 
-        // 显示导出模态框
-        function showExportModal() {
-            exportModal.style.display = 'block';
-            drawScheduleToCanvas();
-        }
+            // 月份第一天
+            const firstDay = new Date(y, m, 1);
+            // 周一为第一列，0=周日需映射到6
+            const startDow = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+            // 月份最后一天
+            const lastDay = new Date(y, m + 1, 0);
 
-        // 排期相关API
-        const scheduleAPI = {
-            // 获取排期数据
-            getSchedules: async (params = {}) => {
-                const queryParams = new URLSearchParams(params).toString();
-                const url = `/schedules${queryParams ? `?${queryParams}` : ''}`;
-                
-                const response = await apiRequest(url);
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.message || '获取排期数据失败');
+            // 网格起点（含补位的前月日期）
+            const gridStart = new Date(firstDay);
+            gridStart.setDate(gridStart.getDate() - startDow);
+
+            // 固定渲染6行
+            for (let row = 0; row < 6; row++) {
+                const rowEl = document.createElement('div');
+                rowEl.className = 'month-week-row';
+
+                for (let col = 0; col < 7; col++) {
+                    const cellDate = new Date(gridStart);
+                    cellDate.setDate(gridStart.getDate() + row * 7 + col);
+                    const dateStr = formatDate(cellDate);
+                    const isThisMonth = cellDate.getMonth() === m;
+                    const isToday = dateStr === todayStr;
+
+                    const cell = document.createElement('div');
+                    cell.className = 'month-day-cell' +
+                        (isThisMonth ? '' : ' other-month') +
+                        (isToday ? ' today' : '');
+                    cell.dataset.date = dateStr;
+
+                    // 日期数字
+                    const numEl = document.createElement('span');
+                    numEl.className = 'month-day-num';
+                    numEl.textContent = cellDate.getDate();
+                    cell.appendChild(numEl);
+
+                    // 项目列表
+                    const projects = scheduleData[dateStr] || [];
+                    const typeClassMap = { '视频': 'type-video', '试做': 'type-trial', '外拍': 'type-outdoor', '平面': 'type-graphic' };
+                    projects.forEach(p => {
+                        const dot = document.createElement('div');
+                        dot.className = `month-project-dot ${typeClassMap[p.type] || 'type-default'}`;
+                        dot.textContent = p.name;
+                        dot.title = p.name;
+                        cell.appendChild(dot);
+                    });
+
+                    // 点击跳转到对应周的周视图
+                    cell.addEventListener('click', () => {
+                        currentMonday = getMonday(cellDate);
+                        switchToWeek();
+                    });
+
+                    rowEl.appendChild(cell);
                 }
-                
-                return response.json();
-            }
-        };
 
-        // 显示实时更新提示
+                weeksEl.appendChild(rowEl);
+            }
+        }
+
+        // ── 项目卡片 ──────────────────────────────────────────────
+
+        function createProjectCard(project, dateStr, projectIndex) {
+            const card = document.createElement('div');
+            card.className = 'project-card';
+
+            const typeClassMap = { '平面': 'plane', '视频': 'video', '直播': 'live', '试做': 'test' };
+            const typeClass = typeClassMap[project.type] || 'plane';
+
+            let staffInfo = '';
+            if (project.director || project.photographer || project.production || project.rd || project.startTime) {
+                staffInfo = '<div class="staff-info">';
+                if (project.startTime) staffInfo += `<span class="staff-role start-time">⏰ ${project.startTime}</span>`;
+                if (project.director)   staffInfo += `<span class="staff-role director">导演：${project.director}</span>`;
+                if (project.photographer) staffInfo += `<span class="staff-role photographer">摄影：${project.photographer}</span>`;
+                if (project.production) staffInfo += `<span class="staff-role production">制片：${project.production}</span>`;
+                if (project.rd)         staffInfo += `<span class="staff-role rd">研发：${project.rd}</span>`;
+                staffInfo += '</div>';
+            }
+
+            const laodaoMark = project.laodao ? '<div class="laodao-mark">老刀出镜</div>' : '';
+            const statusClassMap = { '待确认': 'pending', '已确认': 'confirmed', '已完成': 'done', '取消': 'cancelled' };
+            const statusClass = statusClassMap[project.status] || 'pending';
+            const statusBadge = `<span class="status-badge status-${statusClass}">${project.status || '待确认'}</span>`;
+
+            card.innerHTML = `
+                <div class="project-title"><span>${project.name}</span></div>
+                ${laodaoMark}
+                ${statusBadge}
+                ${staffInfo}
+                <div class="project-location">📍 ${project.location}</div>
+                <div><span class="project-type ${typeClass}">${project.type}</span></div>
+            `;
+            return card;
+        }
+
+        // ── 事件监听 ──────────────────────────────────────────────
+
+        function setupEventListeners() {
+            document.getElementById('btn-week-view').addEventListener('click', () => {
+                if (currentView !== 'week') switchToWeek();
+            });
+            document.getElementById('btn-month-view').addEventListener('click', () => {
+                if (currentView !== 'month') switchToMonth();
+            });
+
+            // 周导航
+            document.getElementById('prev-week').addEventListener('click', () => {
+                currentMonday.setDate(currentMonday.getDate() - 7);
+                updateWeekDisplay();
+                renderSchedule();
+            });
+            document.getElementById('next-week').addEventListener('click', () => {
+                currentMonday.setDate(currentMonday.getDate() + 7);
+                updateWeekDisplay();
+                renderSchedule();
+            });
+            document.getElementById('current-week').addEventListener('click', () => {
+                currentMonday = getMonday(new Date());
+                updateWeekDisplay();
+                renderSchedule();
+            });
+
+            // 月导航
+            document.getElementById('prev-month').addEventListener('click', () => {
+                currentMonthDate.setDate(1);
+                currentMonthDate.setMonth(currentMonthDate.getMonth() - 1);
+                updateMonthDisplay();
+                renderMonthView();
+            });
+            document.getElementById('next-month').addEventListener('click', () => {
+                currentMonthDate.setDate(1);
+                currentMonthDate.setMonth(currentMonthDate.getMonth() + 1);
+                updateMonthDisplay();
+                renderMonthView();
+            });
+            document.getElementById('current-month').addEventListener('click', () => {
+                currentMonthDate = new Date();
+                updateMonthDisplay();
+                renderMonthView();
+            });
+        }
+
+        // ── SSE 实时同步 ──────────────────────────────────────────
+
         function showRealtimeIndicator() {
-            const indicator = document.getElementById('realtime-indicator');
-            indicator.style.display = 'block';
-            setTimeout(() => {
-                indicator.style.display = 'none';
-            }, 2000);
+            const el = document.getElementById('realtime-indicator');
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 2000);
         }
 
-        // 连接SSE实现实时同步
         function connectSSE() {
-            const eventSource = new EventSource('/events');
-            
-            eventSource.onmessage = function(event) {
+            const es = new EventSource('/events');
+            es.onmessage = (event) => {
                 const data = JSON.parse(event.data);
-                
-                switch (data.type) {
-                    case 'scheduleUpdate':
-                        // 更新本地数据
-                        scheduleData[data.date] = data.projects;
-                        // 重新渲染当前周的视图
-                        renderSchedule();
-                        // 显示实时更新提示
-                        showRealtimeIndicator();
-                        break;
-                    case 'scheduleDelete':
-                        // 从本地数据中删除
-                        delete scheduleData[data.date];
-                        // 重新渲染当前周的视图
-                        renderSchedule();
-                        // 显示实时更新提示
-                        showRealtimeIndicator();
-                        break;
+                if (data.type === 'scheduleUpdate') {
+                    scheduleData[data.date] = data.projects;
+                } else if (data.type === 'scheduleDelete') {
+                    delete scheduleData[data.date];
+                } else {
+                    return;
                 }
+                if (currentView === 'week') renderSchedule();
+                else renderMonthView();
+                showRealtimeIndicator();
             };
-            
-            eventSource.onerror = function(err) {
-                console.error('SSE连接错误:', err);
-            };
+            es.onerror = (err) => console.error('SSE连接错误:', err);
         }
 
-        // 从API加载排期数据
+        // ── API ───────────────────────────────────────────────────
+
         async function loadScheduleData() {
             try {
-                // 从API获取所有数据（不传递日期范围参数）
-                scheduleData = await scheduleAPI.getSchedules();
-                
-                renderSchedule();
-            } catch (error) {
-                console.error('加载排期数据时出错:', error);
-                // 使用空对象作为默认值
+                const res = await fetch('/api/schedules');
+                if (!res.ok) throw new Error('获取失败');
+                scheduleData = await res.json();
+            } catch (err) {
+                console.error('加载排期数据时出错:', err);
                 scheduleData = {};
-                renderSchedule();
             }
         }
 
-        // 初始化预览页面
+        // ── 初始化 ────────────────────────────────────────────────
+
         async function initPreview() {
-            updateWeekDisplay();
             setupEventListeners();
-            
-            // 从API加载数据
             await loadScheduleData();
-            
-            // 连接SSE实现实时同步
+            switchToWeek(); // 默认周视图
             connectSSE();
         }
 
-        // 页面加载完成后初始化预览
         document.addEventListener('DOMContentLoaded', initPreview);
     </script>
 </body>

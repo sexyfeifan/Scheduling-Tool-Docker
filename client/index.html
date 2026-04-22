@@ -19,15 +19,32 @@
                 <span id="week-display" class="week-display"></span>
                 <button id="add-project" class="btn primary">+ 新增项目</button>
                 <button id="export-image" class="btn secondary">导出图片</button>
+                <button id="export-week-text" class="btn secondary">导出本周通告</button>
                 <button id="paste-recognition" class="btn secondary">粘贴识别</button>
+                <button id="undo-action" class="btn" disabled>撤销</button>
                 <button id="settings" class="btn">设置</button>
+                <button id="admin-btn" class="btn">管理员设置</button>
+            </div>
+            <div class="toolbar filters-toolbar">
+                <input id="search-projects" class="toolbar-input" type="search" placeholder="搜索项目 / 场地 / 人员">
+                <select id="filter-type" class="toolbar-select">
+                    <option value="">全部类型</option>
+                    <option value="平面">平面</option>
+                    <option value="视频">视频</option>
+                    <option value="直播">直播</option>
+                    <option value="试做">试做</option>
+                </select>
+                <input id="filter-person" class="toolbar-input" type="search" placeholder="按导演 / 摄影 / 制片筛选">
+                <button id="clear-filters" class="btn">清除筛选</button>
+                <span id="health-badge" class="health-badge">系统检查中</span>
+                <button id="heatmap-btn" class="btn">热力图</button>
             </div>
         </header>
 
         <!-- 版本信息 (不显示在导出图片中) -->
         <div class="version-info" id="version-info">
-            <span class="version-number">v2.17</span>
-            <span class="version-date">2026-03-15</span>
+            <span class="version-number">v2.31</span>
+            <span class="version-date">2026-04-22</span>
         </div>
 
         <!-- 主要内容区域 -->
@@ -74,10 +91,49 @@
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h2>项目信息</h2>
+                <div class="template-toolbar">
+                    <select id="project-template-select">
+                        <option value="">选择项目模板</option>
+                    </select>
+                    <button type="button" id="apply-template" class="btn">应用模板</button>
+                    <button type="button" id="save-template-from-form" class="btn">存为模板</button>
+                </div>
                 <form id="project-form">
                     <div class="form-group">
                         <label for="project-name">项目名称:</label>
                         <input type="text" id="project-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-status">项目状态:</label>
+                        <select id="project-status">
+                            <option value="已确认">已确认</option>
+                            <option value="待确认">待确认</option>
+                            <option value="已完成">已完成</option>
+                            <option value="取消">取消</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-type">类型:</label>
+                        <select id="project-type">
+                            <option value="">请选择</option>
+                            <option value="平面">平面</option>
+                            <option value="视频">视频</option>
+                            <option value="直播">直播</option>
+                            <option value="试做">试做</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-date">日期:</label>
+                        <div class="date-input-container">
+                            <input type="text" id="project-date" readonly placeholder="请选择日期">
+                            <button type="button" id="select-date-btn" class="btn">📅 选择日期</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-start-time">开始时间:</label>
+                        <select id="project-start-time">
+                            <option value="">请选择开始时间</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="project-location">拍摄地:</label>
@@ -86,13 +142,6 @@
                         </select>
                         <input type="text" id="project-location-input" style="display: none;">
                         <button type="button" id="add-location" class="btn" style="margin-top: 5px;">添加新拍摄地</button>
-                    </div>
-                    <div class="form-group">
-                        <label for="project-date">日期:</label>
-                        <div class="date-input-container">
-                            <input type="text" id="project-date" readonly placeholder="请选择日期">
-                            <button type="button" id="select-date-btn" class="btn">📅 选择日期</button>
-                        </div>
                     </div>
                     <div class="form-group">
                         <label for="project-director">导演:</label>
@@ -119,20 +168,20 @@
                         <button type="button" id="add-production" class="btn" style="margin-top: 5px;">添加新制片</button>
                     </div>
                     <div class="form-group">
-                        <label for="project-rd">研发:</label>
-                        <select multiple id="project-rd" size="3">
-                            <option value="">请选择研发</option>
-                        </select>
-                        <input type="text" id="project-rd-input" style="display: none;">
-                        <button type="button" id="add-rd" class="btn" style="margin-top: 5px;">添加新研发</button>
-                    </div>
-                    <div class="form-group">
                         <label for="project-operational">运营:</label>
                         <select multiple id="project-operational" size="3">
                             <option value="">请选择运营</option>
                         </select>
                         <input type="text" id="project-operational-input" style="display: none;">
                         <button type="button" id="add-operational" class="btn" style="margin-top: 5px;">添加新运营</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-rd">研发:</label>
+                        <select multiple id="project-rd" size="3">
+                            <option value="">请选择研发</option>
+                        </select>
+                        <input type="text" id="project-rd-input" style="display: none;">
+                        <button type="button" id="add-rd" class="btn" style="margin-top: 5px;">添加新研发</button>
                     </div>
                     <div class="form-group">
                         <label for="project-audio">录音:</label>
@@ -143,27 +192,10 @@
                         <button type="button" id="add-audio" class="btn" style="margin-top: 5px;">添加新录音</button>
                     </div>
                     <div class="form-group">
-                        <label for="project-start-time">开始时间:</label>
-                        <select id="project-start-time">
-                            <option value="">请选择开始时间</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="project-type">类型:</label>
-                        <select id="project-type">
-                            <option value="">请选择</option>
-                            <option value="平面">平面</option>
-                            <option value="视频">视频</option>
-                            <option value="直播">直播</option>
-                            <option value="试做">试做</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
                         <label>
                             <input type="checkbox" id="project-laodao" value="1"> 老刀出镜
                         </label>
                     </div>
-                    <!-- 状态字段已移除 -->
                     <div class="form-actions">
                         <button type="submit" class="btn primary">保存</button>
                         <button type="button" id="cancel-edit" class="btn">取消</button>
@@ -256,59 +288,12 @@
                         <textarea id="common-audio-facilities" placeholder="每行一个录音"></textarea>
                     </div>
                 </div>
-                
-                <!-- 数据备份与恢复 - 独立板块（需要密码） -->
+
                 <div class="settings-section">
-                    <h3>数据备份与恢复 🔒</h3>
-                    <p style="color: var(--text-tertiary); font-size: 12px; margin-bottom: 16px;">备份文件将保存到服务器 backups 文件夹中</p>
-                    
-                    <!-- 锁定状态 - 点击解锁 -->
-                    <div id="backup-locked" class="backup-locked">
-                        <div class="lock-icon">🔐</div>
-                        <p>数据备份与恢复功能已锁定</p>
-                        <button id="unlock-backup" class="btn primary">输入密码解锁</button>
-                    </div>
-                    
-                    <!-- 解锁后的备份恢复内容 -->
-                    <div id="backup-unlocked" class="backup-unlocked" style="display: none;">
-                        <!-- 一键备份到宿主机 -->
-                        <div class="backup-section">
-                            <div class="form-group">
-                                <button id="backup-to-host" class="btn primary">📦 一键备份到宿主机</button>
-                                <p>将所有设置和排期数据备份到服务器指定文件夹</p>
-                            </div>
-                            
-                            <!-- 备份列表 -->
-                            <div class="backup-list-container">
-                                <h4>最近备份记录</h4>
-                                <div id="backup-list" class="backup-list">
-                                    <p class="no-backup">暂无备份记录</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0;">
-                        
-                        <!-- 从宿主机恢复 -->
-                        <div class="restore-section">
-                            <div class="form-group">
-                                <button id="restore-from-host" class="btn">📥 从备份恢复</button>
-                                <p>从服务器备份文件夹选择恢复数据</p>
-                            </div>
-                        </div>
-                        
-                        <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0;">
-                        
-                        <!-- 原有导出导入功能 -->
-                        <div class="form-group">
-                            <button id="export-data" class="btn">💾 下载备份文件</button>
-                            <p>下载 JSON 格式的备份文件到本地</p>
-                        </div>
-                        <div class="form-group">
-                            <input type="file" id="import-file" accept=".json" style="display: none;">
-                            <button id="import-data" class="btn">📤 导入备份文件</button>
-                            <p>从本地选择备份文件恢复数据</p>
-                        </div>
+                    <h3>项目模板</h3>
+                    <p style="color: var(--text-tertiary); font-size: 12px; margin-bottom: 16px;">可保存常用项目模板，在新增项目时一键套用。</p>
+                    <div id="template-list" class="template-list">
+                        <p class="no-template">暂无模板</p>
                     </div>
                 </div>
                 <div class="form-actions">
@@ -318,24 +303,136 @@
         </div>
     </div>
 
-    <!-- Toast 提示组件 -->
-    <div id="toast-container"></div>
-
-    <!-- 密码验证模态框 -->
-    <div id="password-modal" class="modal">
-        <div class="modal-content" style="max-width: 400px;">
-            <span class="close" id="close-password-modal">&times;</span>
-            <h2>🔐 输入密码</h2>
-            <p style="margin-bottom: 15px; color: #666;">请输入备份与恢复功能的访问密码</p>
-            <div class="form-group">
-                <input type="password" id="backup-password" placeholder="请输入密码">
+    <!-- 管理员设置模态框 -->
+    <div id="admin-modal" class="modal">
+        <div class="modal-content admin-modal-content">
+            <span class="close" id="close-admin-modal">&times;</span>
+            <h2>管理员设置</h2>
+            <!-- 管理员密码验证 -->
+            <div id="admin-password-section">
+                <p style="margin-bottom: 12px; color: #666;">此功能需要管理员密码</p>
+                <div class="form-group">
+                    <input type="password" id="admin-password-input" placeholder="请输入管理员密码">
+                </div>
+                <div class="form-actions">
+                    <button id="confirm-admin-password" class="btn primary">验证密码</button>
+                </div>
             </div>
-            <div class="form-actions">
-                <button id="confirm-password" class="btn primary">确认</button>
-                <button id="cancel-password" class="btn">取消</button>
+            <!-- 解锁后内容 -->
+            <div id="admin-unlocked-content" style="display: none;">
+                <!-- 标签切换 -->
+                <div class="admin-tabs">
+                    <button class="admin-tab-btn active" data-tab="backup">数据备份与恢复</button>
+                    <button class="admin-tab-btn" data-tab="history">操作记录</button>
+                </div>
+
+                <!-- 备份与恢复标签页 -->
+                <div id="admin-tab-backup" class="admin-tab-panel">
+                    <p style="color: var(--text-tertiary); font-size: 12px; margin-bottom: 16px;">备份文件将保存到服务器 backups 文件夹中</p>
+                    <div class="backup-section">
+                        <div class="form-group">
+                            <button id="backup-to-host" class="btn primary">📦 一键备份到宿主机</button>
+                            <p>将所有设置和排期数据备份到服务器指定文件夹</p>
+                        </div>
+                        <div class="backup-list-container">
+                            <h4>最近备份记录</h4>
+                            <div id="backup-list" class="backup-list">
+                                <p class="no-backup">暂无备份记录</p>
+                            </div>
+                        </div>
+                    </div>
+                    <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0;">
+                    <div class="restore-section">
+                        <div class="form-group">
+                            <button id="restore-from-host" class="btn">📥 从备份恢复</button>
+                            <p>从服务器备份文件夹选择恢复数据</p>
+                        </div>
+                    </div>
+                    <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0;">
+                    <div class="access-section">
+                        <h4>访问控制与分享</h4>
+                        <div class="form-group">
+                            <label for="edit-password-setting">编辑密码:</label>
+                            <input type="password" id="edit-password-setting" placeholder="留空表示关闭编辑密码">
+                            <p>设置后，新增、编辑、删除、恢复等操作需要先输入编辑密码。</p>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="share-enabled-setting"> 启用只读分享链接
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label for="share-token-setting">分享标识:</label>
+                            <input type="text" id="share-token-setting" placeholder="例如 team-weekly">
+                            <p>分享地址会生成为 `/share/你的分享标识`。</p>
+                        </div>
+                        <div class="form-group">
+                            <button id="save-access-settings" class="btn">保存访问设置</button>
+                            <button id="copy-share-link" class="btn" type="button">复制分享链接</button>
+                            <p id="share-link-display" class="share-link-display">分享链接尚未启用</p>
+                        </div>
+                    </div>
+                    <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0;">
+                    <div class="form-group">
+                        <button id="export-data" class="btn">💾 下载备份文件</button>
+                        <p>下载 JSON 格式的备份文件到本地</p>
+                    </div>
+                    <div class="form-group">
+                        <input type="file" id="import-file" accept=".json" style="display: none;">
+                        <button id="import-data" class="btn">📤 导入备份文件</button>
+                        <p>从本地选择备份文件恢复数据</p>
+                    </div>
+                </div>
+
+                <!-- 操作记录标签页 -->
+                <div id="admin-tab-history" class="admin-tab-panel" style="display: none;">
+                    <div class="history-filters">
+                        <input type="date" id="history-date-filter" placeholder="按日期筛选">
+                        <button id="history-refresh-btn" class="btn">刷新</button>
+                    </div>
+                    <div id="history-table-container" class="history-table-container">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>操作</th>
+                                    <th>日期</th>
+                                    <th>详情</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- 热力图模态框 -->
+    <div id="heatmap-modal" class="modal">
+        <div class="modal-content heatmap-modal-content">
+            <span class="close" id="close-heatmap-modal">&times;</span>
+            <h2>工作量热力图</h2>
+            <div class="heatmap-tabs">
+                <button class="heatmap-tab-btn active" data-range="today">今日</button>
+                <button class="heatmap-tab-btn" data-range="week">本周</button>
+                <button class="heatmap-tab-btn" data-range="month">本月</button>
+            </div>
+            <div id="heatmap-content">
+                <div class="heatmap-section">
+                    <h3>人员工作量排行</h3>
+                    <div id="heatmap-person-list" class="heatmap-person-list"></div>
+                </div>
+                <div class="heatmap-section">
+                    <h3>每日项目数</h3>
+                    <div id="heatmap-day-list" class="heatmap-day-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示组件 -->
+    <div id="toast-container"></div>
 
     <!-- Loading 加载指示器 -->
     <div id="loading-overlay" class="loading-overlay" style="display: none;">
@@ -357,6 +454,153 @@
         </div>
     </div>
 
-    <script src="js/main.js"></script>
+    <div id="backup-preview-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="close-backup-preview">&times;</span>
+            <h2>恢复预览</h2>
+            <div id="backup-preview-body" class="backup-preview-body"></div>
+            <div class="form-actions">
+                <button id="confirm-backup-restore" class="btn primary">确认恢复</button>
+                <button id="cancel-backup-restore" class="btn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通告单生成模态框 -->
+    <div id="notice-modal" class="modal">
+        <div class="modal-content notice-modal-content">
+            <span class="close" id="close-notice-modal">&times;</span>
+            <h2>通告单</h2>
+            <div id="notice-header-info" class="notice-header-info"></div>
+            <div id="notice-body" class="notice-body"></div>
+            <div class="form-actions">
+                <button id="print-notice-btn" class="btn primary">打印 / 保存PDF</button>
+                <button id="notice-save-image-btn" class="btn secondary">保存为图片</button>
+                <button id="notice-open-image-btn" class="btn secondary">在新窗口打开</button>
+                <button id="close-notice-action-btn" class="btn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+
+    <!-- 导出本周通告模态框 -->
+    <div id="week-export-modal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width:600px;">
+            <span class="close" id="close-week-export">&times;</span>
+            <h2>导出本周通告</h2>
+            <textarea id="week-export-text" readonly style="width:100%;height:400px;font-family:monospace;font-size:13px;line-height:1.6;resize:vertical;border:1px solid #ddd;border-radius:4px;padding:10px;box-sizing:border-box;"></textarea>
+            <div class="form-actions" style="margin-top:12px;">
+                <button id="copy-week-export" class="btn primary">复制全部</button>
+                <button id="cancel-week-export" class="btn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        function getMonday(d) {
+            d = new Date(d);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+        function formatDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+        function friendlyDate(dateStr) {
+            const [y, m, d] = dateStr.split('-');
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            const dow = new Date(dateStr).getDay();
+            return `${parseInt(m)}月${parseInt(d)}日（周${weekdays[dow]}）`;
+        }
+        function calcEndTime(startTime) {
+            if (!startTime) return '18:00';
+            const [h] = startTime.split(':').map(Number);
+            return h < 18 ? '18:00' : '23:59';
+        }
+        function arrayVal(v) {
+            if (!v) return '';
+            if (Array.isArray(v)) return v.filter(Boolean).join('、');
+            return String(v);
+        }
+
+        function generateWeekExportText(scheduleData, currentMonday) {
+            const lines = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(currentMonday);
+                d.setDate(currentMonday.getDate() + i);
+                const dateStr = formatDate(d);
+                const projects = scheduleData[dateStr];
+                if (!projects || projects.length === 0) continue;
+
+                projects.forEach(p => {
+                    const endTime = calcEndTime(p.startTime);
+                    lines.push(`【${friendlyDate(dateStr)}】`);
+                    lines.push(`项目：${p.name || ''}`);
+                    if (p.startTime) {
+                        lines.push(`时间：${p.startTime} → ${endTime}`);
+                    }
+                    if (p.location) lines.push(`地点：${p.location}`);
+                    const staffFields = [
+                        { label: '导演', key: 'director' },
+                        { label: '摄影', key: 'photographer' },
+                        { label: '制片', key: 'production' },
+                        { label: '运营', key: 'operational' },
+                        { label: '研发', key: 'rd' },
+                        { label: '录音', key: 'audio' },
+                    ];
+                    staffFields.forEach(({ label, key }) => {
+                        const val = arrayVal(p[key]);
+                        if (val) lines.push(`${label}：${val}`);
+                    });
+                    if (p.laodao) lines.push('老刀出镜');
+                    lines.push('');
+                });
+            }
+            return lines.join('\n').trimEnd();
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const btn = document.getElementById('export-week-text');
+            const modal = document.getElementById('week-export-modal');
+            const textarea = document.getElementById('week-export-text');
+            const closeBtn = document.getElementById('close-week-export');
+            const cancelBtn = document.getElementById('cancel-week-export');
+            const copyBtn = document.getElementById('copy-week-export');
+
+            if (!btn) return;
+
+            btn.addEventListener('click', function () {
+                // Access scheduleData and currentMonday from main.js via window
+                const sd = window.__scheduleData || {};
+                const monday = window.__currentMonday || getMonday(new Date());
+                textarea.value = generateWeekExportText(sd, monday) || '本周暂无项目数据';
+                modal.style.display = 'flex';
+            });
+
+            function closeModal() { modal.style.display = 'none'; }
+            closeBtn.addEventListener('click', closeModal);
+            cancelBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) closeModal();
+            });
+
+            copyBtn.addEventListener('click', function () {
+                textarea.select();
+                try {
+                    navigator.clipboard.writeText(textarea.value).catch(() => document.execCommand('copy'));
+                } catch (_) {
+                    document.execCommand('copy');
+                }
+                copyBtn.textContent = '已复制！';
+                setTimeout(() => { copyBtn.textContent = '复制全部'; }, 1500);
+            });
+        });
+    })();
+    </script>
 </body>
 </html>
