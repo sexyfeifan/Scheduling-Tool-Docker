@@ -11,6 +11,7 @@ WORKDIR /app
 
 ENV DATA_DIR=/app/data
 ENV BACKUP_DIR=/app/backups
+ENV TMPDIR=/app/data/.tmp
 
 # 复制package.json和package-lock.json（如果存在）
 COPY server/package*.json ./
@@ -29,7 +30,7 @@ COPY client/ /client/
 
 # 创建数据目录和备份目录（空目录，实际数据由 volume 挂载提供）
 # 注意：不在这里写入任何 JSON 文件，防止镜像层数据覆盖 volume 挂载的真实数据
-RUN mkdir -p data backups && chown -R appuser:appgroup /app /client
+RUN mkdir -p data data/.tmp backups && chown -R appuser:appgroup /app /client
 
 USER appuser
 

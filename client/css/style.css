@@ -117,9 +117,26 @@ body {
 /* 工具栏 */
 .toolbar {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     align-items: center;
     flex-wrap: wrap;
+}
+
+/* 图标按钮 - 紧凑样式 */
+.btn.icon-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+    white-space: nowrap;
+    gap: 4px;
+}
+
+/* 工具栏分隔符 */
+.toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.12);
+    margin: 0 2px;
+    flex-shrink: 0;
 }
 
 .filters-toolbar {
@@ -1275,40 +1292,50 @@ body {
     .toolbar {
         flex-direction: row;
         flex-wrap: wrap;
-        justify-content: space-between;
-        gap: 8px;
+        justify-content: center;
+        gap: 6px;
     }
-    
+
+    .toolbar .toolbar-divider {
+        display: none;
+    }
+
     /* 核心按钮 - 新增项目 */
     .toolbar .btn.primary {
         order: -2;
         flex: 1 1 45%;
-        padding: 12px 16px;
-        font-size: 14px;
+        padding: 10px 12px;
+        font-size: 13px;
     }
-    
+
     /* 导航按钮组 */
     #prev-week, #next-week, #current-week {
-        padding: 10px 12px;
+        padding: 8px 10px;
         font-size: 13px;
         flex: 1;
     }
-    
+
     /* 周显示 */
     .week-display {
         flex: 0 0 100%;
-        margin: 8px 0;
+        margin: 6px 0;
         text-align: center;
         font-size: 14px;
-        padding: 10px;
+        padding: 8px;
         order: -1;
     }
-    
+
+    /* 图标按钮移动端 */
+    .btn.icon-btn {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
     /* 次要按钮 */
     .toolbar .btn.secondary,
     .toolbar .btn:not(.primary):not(#prev-week):not(#next-week):not(#current-week) {
         flex: 1 1 30%;
-        padding: 10px 8px;
+        padding: 8px 6px;
         font-size: 11px;
     }
     
@@ -1971,10 +1998,11 @@ body {
 
 /* ── 热力图 Modal ── */
 .heatmap-modal-content {
-    max-width: 640px;
-    width: 92vw;
+    max-width: 1100px;
+    width: 95vw;
     max-height: 85vh;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
 }
@@ -2071,4 +2099,132 @@ body {
     font-size: 13px;
     text-align: center;
     padding: 20px 0;
+}
+
+/* ── 热力图表（日历格子） ── */
+.heatmap-chart {
+    margin: 16px 0;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-width: 100%;
+    min-height: 120px;
+    flex-shrink: 0;
+}
+
+.heatmap-chart-inner {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    min-width: max-content;
+}
+
+.heatmap-chart-labels {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-top: 0;
+}
+
+.heatmap-label-cell {
+    height: 14px;
+    line-height: 14px;
+    font-size: 10px;
+    color: var(--text-secondary);
+    text-align: right;
+    padding-right: 6px;
+    white-space: nowrap;
+}
+
+.heatmap-chart-grid {
+    display: flex;
+    gap: 3px;
+    flex-wrap: nowrap;
+}
+
+.heatmap-chart-week {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.heatmap-cell {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    background: #ebedf0;
+    cursor: default;
+    position: relative;
+}
+
+.heatmap-cell-empty {
+    background: transparent;
+}
+
+.heatmap-cell-today {
+    outline: 2px solid var(--primary-color);
+    outline-offset: -1px;
+}
+
+.heatmap-chart-legend {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    justify-content: flex-end;
+    margin-top: 8px;
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+.heatmap-bar-top .heatmap-bar-label {
+    font-weight: 700;
+}
+
+/* ── Tag 按钮组（项目表单） ── */
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+.tag-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 16px;
+    border: 2px solid rgba(0, 0, 0, 0.12);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.tag-btn:hover {
+    border-color: var(--primary-color);
+    background: rgba(102, 126, 234, 0.06);
+    color: var(--primary-color);
+}
+
+.tag-btn.active {
+    background: var(--primary-gradient);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.35);
+}
+
+.tag-btn.active:hover {
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+}
+
+.checkbox-empty {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-style: italic;
 }

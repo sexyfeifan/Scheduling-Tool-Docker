@@ -32,13 +32,14 @@ function createSchedulesRouter({ store, sendUpdateToClients, requireEditAccess }
       return res.status(400).json({ message: 'projects 必须是数组' });
     }
 
-    const existing = store.readSchedules().find((s) => s.date === date);
+    const existing = store.readScheduleByDate(date);
     const before = existing ? existing.projects : null;
 
     store.writeScheduleDate(date, existing ? existing.id : generateId('schedule'), normalizedProjects);
 
     if (store.appendHistory) {
-      store.appendHistory({ action: 'saveSchedule', date, before, after: normalizedProjects });
+      const detail = buildSaveDetail(date, before, normalizedProjects);
+      store.appendHistory({ action: 'saveSchedule', date, before, after: normalizedProjects, detail });
     }
 
     sendUpdateToClients({ type: 'scheduleUpdate', date, projects: normalizedProjects });
@@ -51,7 +52,7 @@ function createSchedulesRouter({ store, sendUpdateToClients, requireEditAccess }
       return res.status(400).json({ message: '日期格式无效' });
     }
 
-    const existing = store.readSchedules().find((s) => s.date === date);
+    const existing = store.readScheduleByDate(date);
     if (!existing) {
       return res.status(404).json({ message: '未找到指定日期的排期数据' });
     }
@@ -59,7 +60,14 @@ function createSchedulesRouter({ store, sendUpdateToClients, requireEditAccess }
     store.deleteScheduleDate(date);
 
     if (store.appendHistory) {
-      store.appendHistory({ action: 'deleteSchedule', date, before: existing.projects, after: null });
+      const names = (existing.projects || []).map(p => p.name).filter(Boolean).join(', ');
+      store.appendHistory({
+        action: 'deleteSchedule',
+        date,
+        before: existing.projects,
+        after: null,
+        detail: `删除 ${date} 的排期（${(existing.projects || []).length}个项目: ${names || '无'}）`
+      });
     }
 
     sendUpdateToClients({ type: 'scheduleDelete', date });
@@ -67,6 +75,43 @@ function createSchedulesRouter({ store, sendUpdateToClients, requireEditAccess }
   });
 
   return router;
+}
+
+function buildSaveDetail(date, before, after) {
+  const beforeNames = new Set((before || []).map(p => p.name).filter(Boolean));
+  const afterNames = new Set((after || []).map(p => p.name).filter(Boolean));
+
+  const added = [...afterNames].filter(n => !beforeNames.has(n));
+  const removed = [...beforeNames].filter(n => !afterNames.has(n));
+  const kept = [...afterNames].filter(n => beforeNames.has(n));
+
+  const parts = [];
+  if (added.length > 0) parts.push(`新增: ${added.join(', ')}`);
+  if (removed.length > 0) parts.push(`删除: ${removed.join(', ')}`);
+
+  // 对保留的项目，检查字段变更
+  const fields = ['startTime', 'location', 'type', 'director', 'photographer', 'production', 'operational', 'rd', 'audio', 'status'];
+  const fieldLabels = { startTime: '时间', location: '地点', type: '类型', director: '导演', photographer: '摄影', production: '制片', operational: '运营', rd: '研发', audio: '录音', status: '状态' };
+  kept.forEach(name => {
+    const oldP = (before || []).find(p => p.name === name);
+    const newP = (after || []).find(p => p.name === name);
+    if (!oldP || !newP) return;
+    const changes = [];
+    fields.forEach(f => {
+      const oldVal = oldP[f] || '';
+      const newVal = newP[f] || '';
+      if (oldVal !== newVal) {
+        changes.push(`${fieldLabels[f] || f}: ${oldVal || '空'}→${newVal || '空'}`);
+      }
+    });
+    if (changes.length > 0) {
+      parts.push(`${name}: ${changes.join(', ')}`);
+    }
+  });
+
+  if (!before) return `新建 ${date} 排期（${after.length}个项目: ${after.map(p => p.name).filter(Boolean).join(', ')}）`;
+  if (parts.length === 0) return `更新 ${date} 排期（${after.length}个项目，无实质变更）`;
+  return `${date} ${parts.join(' | ')}`;
 }
 
 module.exports = { createSchedulesRouter };

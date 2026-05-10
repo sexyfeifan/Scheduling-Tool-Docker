@@ -1,6 +1,8 @@
 # 罐头场通告排期 - Docker版本
 
-> 当前版本：**v2.31** | Docker Hub: `sexyfeifan/scheduling-tool:2.31`
+> **作者**: 性感的非凡 | **邮箱**: zhoufeifan@gmail.com
+
+> 当前版本：**v2.57** | Docker Hub: `sexyfeifan/scheduling-tool:2.57`
 
 ## 简介
 
@@ -19,39 +21,37 @@
 - 🐳 Docker一键部署
 - 👀 只读预览页面（`/notice`）
 - 📋 卡片复制功能
+- 🔔 Webhook 推送通告（钉钉/飞书/企业微信）
 
-## 最新特性（v2.31）
+## 最新特性（v2.57）
 
-### 月视图优化
-- **完整显示所有项目**：每个日期格不再限制最多3条，所有项目全部展开显示
-- **按类型区分颜色**：
-  - 视频 → 蓝色
-  - 试做 → 橙色
-  - 外拍 → 绿色
-  - 平面 → 紫色
+### Webhook 推送模板增强
+- 新增 **7 种日通告预设模板**：标准详细版、紧凑卡片版、完整人员版、极简版、分类标签版、表格版（钉钉/飞书）、紧急通知版
+- 新增 **6 种周通告预设模板**：标准详细版、紧凑日历版、完整人员版、极简版、表格版（飞书/企微）、每日分组带统计版
+- 管理员设置新增 **预设模板下拉选择器**，支持一键应用预设模板到日/周通告模板输入框
+- 后端新增模板预设库，通过 `/api/webhook/templates` 接口暴露给前端
+- 新增独立参考文档 [`WEBHOOK_TEMPLATES.md`](WEBHOOK_TEMPLATES.md)，包含完整变量说明和所有模板的纯文本版本
 
-### 一键导出本周通告
-- 编辑页顶部新增「导出本周通告」按钮
-- 按日期列出本周所有项目，包含：开始时间→结束时间、地点、各类别人员名单
-- 结束时间自动补全：开始时间 ≤ 18:00 补全至 `18:00`，开始时间 > 18:00 则补全至 `23:59`
-- 弹窗内可一键复制全部文字
+### 备份功能改进
+- 备份文件夹命名改为实际本地日期时间格式（如 `backup_2026-05-10_00-13-00`），替代原来的 ISO 时间戳
+- 备份时间使用东八区（UTC+8）时间，确保与上海本地时间一致
+- 新增 **手动删除备份** 功能，备份列表中每条记录新增"删除"按钮
+- 后端新增 `DELETE /api/backups` 接口，支持按备份路径删除
 
-### 预览路径简化
-- 只保留 `/notice` 作为唯一只读预览入口
-- 已移除 `/canbox`、`/date`、`/share/:token` 等旧路由
+### 导出图片优化
+- 导出图片副标题改为单行显示：`第X周通告 5月4日 - 5月10日` 格式
 
-### 数据安全与恢复
-- **原子写入**：排期和设置改为原子写入，降低断电或异常退出导致 JSON 损坏的风险
-- **自动恢复副本**：主数据文件损坏时自动从 `.bak` 副本恢复
-- **恢复前快照**：执行恢复前自动生成 `before_restore` 快照，便于回滚
+### 版本号修复
+- 修复 `server/config.js` 和 `client/index.html` 中版本号硬编码未更新的问题
 
 ## 快速开始
 
 ### 使用Docker Compose（推荐）
 
 ```bash
-# 下载发布目录后进入项目
-cd scheduling-tool-docker-v2.18
+# 克隆仓库
+git clone https://github.com/sexyfeifan/Scheduling-Tool-Docker.git
+cd Scheduling-Tool-Docker
 
 # 可选：先设置备份密码
 export BACKUP_PASSWORD='your-strong-password'
@@ -90,7 +90,7 @@ docker compose pull && docker compose up -d
 ```bash
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -t sexyfeifan/scheduling-tool:2.31 \
+  -t sexyfeifan/scheduling-tool:2.57 \
   -t sexyfeifan/scheduling-tool:latest \
   --push .
 ```

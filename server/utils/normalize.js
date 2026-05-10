@@ -15,6 +15,13 @@ const DEFAULT_SETTINGS = {
     editPasswordHash: '',
     shareEnabled: false,
     shareToken: ''
+  },
+  webhook: {
+    enabled: false,
+    url: '',
+    platform: 'custom',
+    dailyTemplate: '',
+    weeklyTemplate: ''
   }
 };
 
@@ -118,6 +125,19 @@ function normalizeAccessConfig(rawAccess) {
   };
 }
 
+function normalizeWebhookConfig(rawWebhook) {
+  const wh = rawWebhook && typeof rawWebhook === 'object' ? rawWebhook : {};
+  const validPlatforms = ['dingtalk', 'feishu', 'wecom', 'custom'];
+  const platform = validPlatforms.includes(wh.platform) ? wh.platform : 'custom';
+  return {
+    enabled: Boolean(wh.enabled),
+    url: normalizeText(wh.url, 500),
+    platform,
+    dailyTemplate: normalizeText(wh.dailyTemplate, 5000),
+    weeklyTemplate: normalizeText(wh.weeklyTemplate, 5000)
+  };
+}
+
 function normalizeSettingsPayload(rawSettings) {
   const base = rawSettings && typeof rawSettings === 'object'
     ? (Array.isArray(rawSettings) ? (rawSettings[0] || {}) : rawSettings)
@@ -132,7 +152,8 @@ function normalizeSettingsPayload(rawSettings) {
     commonOperationalFacilities: normalizeTextArray(base.commonOperationalFacilities),
     commonAudioFacilities: normalizeTextArray(base.commonAudioFacilities),
     projectTemplates: normalizeTemplateList(base.projectTemplates),
-    access: normalizeAccessConfig(base.access)
+    access: normalizeAccessConfig(base.access),
+    webhook: normalizeWebhookConfig(base.webhook)
   };
 }
 
@@ -194,7 +215,8 @@ function sanitizeSettingsForClient(settings) {
     projectTemplates: settings.projectTemplates || [],
     access: {
       shareEnabled: Boolean(settings.access && settings.access.shareEnabled)
-    }
+    },
+    webhook: settings.webhook || { enabled: false, url: '', platform: 'custom', dailyTemplate: '', weeklyTemplate: '' }
   };
 }
 

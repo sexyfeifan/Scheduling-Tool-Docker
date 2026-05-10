@@ -90,6 +90,11 @@ export function createApiClient({
         getBackups: () => request('/backups', {
             admin: true
         }),
+        deleteBackup: (backupPath) => request('/backups', {
+            method: 'DELETE',
+            admin: true,
+            body: JSON.stringify({ backupPath })
+        }),
         restoreBackup: (backupPath) => request('/restore', {
             method: 'POST',
             body: JSON.stringify({ backupPath })
@@ -106,6 +111,12 @@ export function createApiClient({
             const query = new URLSearchParams(params).toString();
             return request(`/history${query ? `?${query}` : ''}`, { admin: true });
         },
+        clearHistory: () => request('/history', { method: 'DELETE', admin: true }),
+        // Webhook
+        testWebhook: () => request('/webhook/test', { method: 'POST', admin: true }),
+        pushDailyNotice: (date) => request('/webhook/push/daily', { method: 'POST', admin: true, body: JSON.stringify({ date }) }),
+        pushWeeklyNotice: (startDate, endDate) => request('/webhook/push/weekly', { method: 'POST', admin: true, body: JSON.stringify({ startDate, endDate }) }),
+        getWebhookTemplates: () => request('/webhook/templates', { admin: true }),
         fetchBackupPayload: async (backupPath) => {
             const adminPassword = getAdminPassword ? getAdminPassword() : '';
             const response = await fetch(backupPath, {

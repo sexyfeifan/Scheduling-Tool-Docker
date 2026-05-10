@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const APP_VERSION = '2.18';
-const APP_CREATE_DATE = '2026-04-21';
+const APP_VERSION = '2.57';
+const APP_CREATE_DATE = '2026-05-10';
 const SCHEMA_VERSION = 2;
 
 function resolveStorageDir(envName, dirName) {

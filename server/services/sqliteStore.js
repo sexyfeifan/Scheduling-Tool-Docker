@@ -27,6 +27,9 @@ function createSqliteStore(options = {}) {
   async function ensureBootstrapFiles() {
     await fs.mkdir(dataDir, { recursive: true });
     await fs.mkdir(backupDir, { recursive: true });
+    // Ensure SQLite temp directory exists (set via TMPDIR env var)
+    const tmpDir = path.join(dataDir, '.tmp');
+    await fs.mkdir(tmpDir, { recursive: true });
 
     // Verify the data directory is actually writable before proceeding.
     try {
@@ -45,6 +48,8 @@ function createSqliteStore(options = {}) {
     db.pragma('journal_mode = WAL');
     db.pragma('foreign_keys = ON');
     db.pragma('busy_timeout = 5000');
+    // Use memory for temp tables to avoid /tmp space issues in Docker
+    db.pragma('temp_store = MEMORY');
 
     db.exec(`
       CREATE TABLE IF NOT EXISTS schedules (
@@ -68,10 +73,19 @@ function createSqliteStore(options = {}) {
         ts          TEXT    NOT NULL,
         action      TEXT    NOT NULL,
         date        TEXT,
+        detail      TEXT,
         before_json TEXT,
         after_json  TEXT
       );
     `);
+
+    // Migration: add detail column if missing
+    try {
+      const cols = db.prepare("PRAGMA table_info(history)").all();
+      if (!cols.some(c => c.name === 'detail')) {
+        db.exec("ALTER TABLE history ADD COLUMN detail TEXT");
+      }
+    } catch (_) {}
 
     // Seed default settings if absent
     const settingsRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('main');
@@ -147,6 +161,12 @@ function createSqliteStore(options = {}) {
     }));
   }
 
+  function readScheduleByDate(date) {
+    const row = getDb().prepare('SELECT id, date, data FROM schedules WHERE date = ?').get(date);
+    if (!row) return null;
+    return { id: row.id, date: row.date, projects: JSON.parse(row.data) };
+  }
+
   function writeSchedules(schedules) {
     const normalized = normalizeScheduleList(schedules);
     const upsert = getDb().prepare('INSERT OR REPLACE INTO schedules (date, id, data) VALUES (?, ?, ?)');
@@ -161,6 +181,8 @@ function createSqliteStore(options = {}) {
   function writeScheduleDate(date, id, projects) {
     getDb().prepare('INSERT OR REPLACE INTO schedules (date, id, data) VALUES (?, ?, ?)')
       .run(date, id, JSON.stringify(projects));
+    // Periodic WAL checkpoint to prevent WAL file from growing unbounded
+    try { getDb().pragma('wal_checkpoint(PASSIVE)'); } catch (_) {}
   }
 
   function deleteScheduleDate(date) {
@@ -194,16 +216,47 @@ function createSqliteStore(options = {}) {
       .run('main', JSON.stringify(normalized));
   }
 
-  function appendHistory({ action, date, before, after }) {
-    getDb().prepare(
-      'INSERT INTO history (ts, action, date, before_json, after_json) VALUES (?, ?, ?, ?, ?)'
-    ).run(
-      new Date().toISOString(),
-      String(action),
-      date || null,
-      before !== undefined ? JSON.stringify(before) : null,
-      after !== undefined ? JSON.stringify(after) : null
-    );
+  function appendHistory({ action, date, before, after, detail }) {
+    try {
+      const now = new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+
+      // 每天最多保留 20 条记录
+      const todayCount = getDb().prepare(
+        "SELECT COUNT(*) as c FROM history WHERE ts LIKE ?"
+      ).get(todayStr + '%').c;
+
+      if (todayCount >= 20) {
+        // 删除今天最早的记录，为新记录腾出空间
+        const oldest = getDb().prepare(
+          "SELECT id FROM history WHERE ts LIKE ? ORDER BY ts ASC LIMIT 1"
+        ).get(todayStr + '%');
+        if (oldest) {
+          getDb().prepare('DELETE FROM history WHERE id = ?').run(oldest.id);
+        }
+      }
+
+      getDb().prepare(
+        'INSERT INTO history (ts, action, date, detail, before_json, after_json) VALUES (?, ?, ?, ?, ?, ?)'
+      ).run(
+        now.toISOString(),
+        String(action),
+        date || null,
+        detail || null,
+        before !== undefined ? JSON.stringify(before) : null,
+        after !== undefined ? JSON.stringify(after) : null
+      );
+
+      // 清理 30 天前的旧记录
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      getDb().prepare('DELETE FROM history WHERE ts < ?').run(thirtyDaysAgo);
+    } catch (err) {
+      console.error('[history] appendHistory failed:', err.message);
+    }
+  }
+
+  function clearHistory() {
+    getDb().prepare('DELETE FROM history').run();
   }
 
   function readHistory({ limit = 100, date } = {}) {
@@ -249,10 +302,12 @@ function createSqliteStore(options = {}) {
     backupDir,
     dataDir,
     dbPath,
+    get db() { return db; },
     ensureBootstrapFiles,
     getHealthStatus,
     paths: {},
     readSchedules,
+    readScheduleByDate,
     writeSchedules,
     writeScheduleDate,
     deleteScheduleDate,
@@ -261,6 +316,7 @@ function createSqliteStore(options = {}) {
     readVersion,
     writeVersion,
     appendHistory,
+    clearHistory,
     readHistory,
     createSnapshot,
     writeJsonWithBackup

@@ -9,8 +9,17 @@ function isSafeBackupSegment(value) {
 }
 
 function createBackupFolderName(prefix = 'backup') {
-  const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z').replace(/[:]/g, '-');
-  return `${prefix}_${timestamp}`;
+  // 使用东八区（UTC+8）时间
+  const now = new Date();
+  const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+  const local = new Date(utcMs + 8 * 3600000);
+  const year = local.getFullYear();
+  const month = String(local.getMonth() + 1).padStart(2, '0');
+  const day = String(local.getDate()).padStart(2, '0');
+  const hours = String(local.getHours()).padStart(2, '0');
+  const minutes = String(local.getMinutes()).padStart(2, '0');
+  const seconds = String(local.getSeconds()).padStart(2, '0');
+  return `${prefix}_${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
 }
 
 function createBackupService(store) {
@@ -114,11 +123,25 @@ function createBackupService(store) {
     await store.writeVersion(payload.version);
   }
 
+  async function deleteBackup(backupPath) {
+    const backupFile = await resolveBackupFile(backupPath);
+    const targetDir = path.dirname(backupFile);
+
+    // 确保要删除的是备份目录，防止误删
+    const backupRoot = path.resolve(store.backupDir);
+    if (!targetDir.startsWith(backupRoot + path.sep) || targetDir === backupRoot) {
+      throw new Error('无效的备份路径');
+    }
+
+    await fs.rm(targetDir, { recursive: true, force: true });
+  }
+
   return {
     createBackup,
     listBackups,
     resolveBackupFile,
-    restoreBackup
+    restoreBackup,
+    deleteBackup
   };
 }
 

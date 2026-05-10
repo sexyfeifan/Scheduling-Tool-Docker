@@ -13,17 +13,22 @@
         <header class="header">
             <h1>罐头场通告排期</h1>
             <div class="toolbar">
-                <button id="prev-week" class="btn">◀ 上周</button>
-                <button id="current-week" class="btn primary">本周</button>
-                <button id="next-week" class="btn">下周 ▶</button>
+                <button id="prev-week" class="btn icon-btn" title="上一周">◀</button>
+                <button id="current-week" class="btn primary icon-btn" title="回到本周">本周</button>
+                <button id="next-week" class="btn icon-btn" title="下一周">▶</button>
                 <span id="week-display" class="week-display"></span>
-                <button id="add-project" class="btn primary">+ 新增项目</button>
-                <button id="export-image" class="btn secondary">导出图片</button>
-                <button id="export-week-text" class="btn secondary">导出本周通告</button>
-                <button id="paste-recognition" class="btn secondary">粘贴识别</button>
-                <button id="undo-action" class="btn" disabled>撤销</button>
-                <button id="settings" class="btn">设置</button>
-                <button id="admin-btn" class="btn">管理员设置</button>
+                <span class="toolbar-divider"></span>
+                <button id="add-project" class="btn primary icon-btn" title="新增项目">➕ 新增</button>
+                <button id="undo-action" class="btn icon-btn" disabled title="撤销">↩</button>
+                <span class="toolbar-divider"></span>
+                <button id="export-image" class="btn secondary icon-btn" title="导出图片">🖼 导出</button>
+                <button id="export-week-text" class="btn secondary icon-btn" title="导出本周通告">📋 通告</button>
+                <button id="paste-recognition" class="btn secondary icon-btn" title="粘贴识别">📌 粘贴</button>
+                <span class="toolbar-divider"></span>
+                <button id="heatmap-btn" class="btn icon-btn" title="工作量热力图">🔥 热力图</button>
+                <button id="webhook-btn" class="btn icon-btn" title="Webhook 推送">📤 推送</button>
+                <button id="settings" class="btn icon-btn" title="设置">⚙ 设置</button>
+                <button id="admin-btn" class="btn icon-btn" title="管理员设置">🔐 管理</button>
             </div>
             <div class="toolbar filters-toolbar">
                 <input id="search-projects" class="toolbar-input" type="search" placeholder="搜索项目 / 场地 / 人员">
@@ -34,17 +39,15 @@
                     <option value="直播">直播</option>
                     <option value="试做">试做</option>
                 </select>
-                <input id="filter-person" class="toolbar-input" type="search" placeholder="按导演 / 摄影 / 制片筛选">
-                <button id="clear-filters" class="btn">清除筛选</button>
+                <button id="clear-filters" class="btn icon-btn">✕ 清除</button>
                 <span id="health-badge" class="health-badge">系统检查中</span>
-                <button id="heatmap-btn" class="btn">热力图</button>
             </div>
         </header>
 
         <!-- 版本信息 (不显示在导出图片中) -->
         <div class="version-info" id="version-info">
-            <span class="version-number">v2.31</span>
-            <span class="version-date">2026-04-22</span>
+            <span class="version-number">v2.57</span>
+            <span class="version-date">2026-05-10</span>
         </div>
 
         <!-- 主要内容区域 -->
@@ -92,7 +95,7 @@
                 <span class="close">&times;</span>
                 <h2>项目信息</h2>
                 <div class="template-toolbar">
-                    <select id="project-template-select">
+                    <select id="project-template-select" class="toolbar-select">
                         <option value="">选择项目模板</option>
                     </select>
                     <button type="button" id="apply-template" class="btn">应用模板</button>
@@ -136,60 +139,32 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="project-location">拍摄地:</label>
-                        <select id="project-location">
-                            <option value="">请选择拍摄地</option>
-                        </select>
-                        <input type="text" id="project-location-input" style="display: none;">
-                        <button type="button" id="add-location" class="btn" style="margin-top: 5px;">添加新拍摄地</button>
+                        <label>拍摄地:</label>
+                        <div id="project-location-options" class="checkbox-group radio-group"></div>
                     </div>
                     <div class="form-group">
-                        <label for="project-director">导演:</label>
-                        <select multiple id="project-director" size="3">
-                            <option value="">请选择导演</option>
-                        </select>
-                        <input type="text" id="project-director-input" style="display: none;">
-                        <button type="button" id="add-director" class="btn" style="margin-top: 5px;">添加新导演</button>
+                        <label>导演:</label>
+                        <div id="project-director-options" class="checkbox-group"></div>
                     </div>
                     <div class="form-group">
-                        <label for="project-photographer">摄影:</label>
-                        <select multiple id="project-photographer" size="3">
-                            <option value="">请选择摄影师</option>
-                        </select>
-                        <input type="text" id="project-photographer-input" style="display: none;">
-                        <button type="button" id="add-photographer" class="btn" style="margin-top: 5px;">添加新摄影师</button>
+                        <label>摄影:</label>
+                        <div id="project-photographer-options" class="checkbox-group"></div>
                     </div>
                     <div class="form-group">
-                        <label for="project-production">制片:</label>
-                        <select multiple id="project-production" size="3">
-                            <option value="">请选择制片</option>
-                        </select>
-                        <input type="text" id="project-production-input" style="display: none;">
-                        <button type="button" id="add-production" class="btn" style="margin-top: 5px;">添加新制片</button>
+                        <label>制片:</label>
+                        <div id="project-production-options" class="checkbox-group"></div>
                     </div>
                     <div class="form-group">
-                        <label for="project-operational">运营:</label>
-                        <select multiple id="project-operational" size="3">
-                            <option value="">请选择运营</option>
-                        </select>
-                        <input type="text" id="project-operational-input" style="display: none;">
-                        <button type="button" id="add-operational" class="btn" style="margin-top: 5px;">添加新运营</button>
+                        <label>运营:</label>
+                        <div id="project-operational-options" class="checkbox-group"></div>
                     </div>
                     <div class="form-group">
-                        <label for="project-rd">研发:</label>
-                        <select multiple id="project-rd" size="3">
-                            <option value="">请选择研发</option>
-                        </select>
-                        <input type="text" id="project-rd-input" style="display: none;">
-                        <button type="button" id="add-rd" class="btn" style="margin-top: 5px;">添加新研发</button>
+                        <label>研发:</label>
+                        <div id="project-rd-options" class="checkbox-group"></div>
                     </div>
                     <div class="form-group">
-                        <label for="project-audio">录音:</label>
-                        <select multiple id="project-audio" size="3">
-                            <option value="">请选择录音</option>
-                        </select>
-                        <input type="text" id="project-audio-input" style="display: none;">
-                        <button type="button" id="add-audio" class="btn" style="margin-top: 5px;">添加新录音</button>
+                        <label>录音:</label>
+                        <div id="project-audio-options" class="checkbox-group"></div>
                     </div>
                     <div class="form-group">
                         <label>
@@ -216,13 +191,13 @@
                 </div>
                 <div class="date-picker-calendar">
                     <div class="weekdays">
-                        <div>日</div>
                         <div>一</div>
                         <div>二</div>
                         <div>三</div>
                         <div>四</div>
                         <div>五</div>
                         <div>六</div>
+                        <div>日</div>
                     </div>
                     <div id="calendar-days" class="days"></div>
                 </div>
@@ -324,6 +299,7 @@
                 <div class="admin-tabs">
                     <button class="admin-tab-btn active" data-tab="backup">数据备份与恢复</button>
                     <button class="admin-tab-btn" data-tab="history">操作记录</button>
+                    <button class="admin-tab-btn" data-tab="webhook">Webhook 推送</button>
                 </div>
 
                 <!-- 备份与恢复标签页 -->
@@ -389,6 +365,7 @@
                     <div class="history-filters">
                         <input type="date" id="history-date-filter" placeholder="按日期筛选">
                         <button id="history-refresh-btn" class="btn">刷新</button>
+                        <button id="history-clear-btn" class="btn" style="background:#e74c3c;color:white;">清空记录</button>
                     </div>
                     <div id="history-table-container" class="history-table-container">
                         <table class="history-table">
@@ -404,6 +381,51 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- Webhook 推送标签页 -->
+                <div id="admin-tab-webhook" class="admin-tab-panel" style="display: none;">
+                    <div class="form-group">
+                        <label><input type="checkbox" id="webhook-enabled"> 启用 Webhook 推送</label>
+                    </div>
+                    <div class="form-group">
+                        <label>平台类型:</label>
+                        <select id="webhook-platform" class="toolbar-select" style="width:100%">
+                            <option value="dingtalk">钉钉</option>
+                            <option value="feishu">飞书</option>
+                            <option value="wecom">企业微信</option>
+                            <option value="custom" selected>自定义</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Webhook URL:</label>
+                        <input type="text" id="webhook-url" placeholder="https://oapi.dingtalk.com/robot/send?access_token=..." style="width:100%">
+                    </div>
+                    <div class="form-group">
+                        <label>日通告推送格式模板:</label>
+                        <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">
+                            <select id="webhook-daily-preset" class="toolbar-select" style="flex:1;">
+                                <option value="">-- 选择预设模板 --</option>
+                            </select>
+                            <button id="webhook-apply-daily-preset" class="btn" style="white-space:nowrap;">应用</button>
+                        </div>
+                        <textarea id="webhook-daily-template" rows="8" style="width:100%;font-family:monospace;font-size:12px;" placeholder="留空使用默认模板"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>周通告推送格式模板:</label>
+                        <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">
+                            <select id="webhook-weekly-preset" class="toolbar-select" style="flex:1;">
+                                <option value="">-- 选择预设模板 --</option>
+                            </select>
+                            <button id="webhook-apply-weekly-preset" class="btn" style="white-space:nowrap;">应用</button>
+                        </div>
+                        <textarea id="webhook-weekly-template" rows="8" style="width:100%;font-family:monospace;font-size:12px;" placeholder="留空使用默认模板"></textarea>
+                    </div>
+                    <div class="form-actions" style="gap:8px;">
+                        <button id="webhook-save" class="btn primary">保存设置</button>
+                        <button id="webhook-test" class="btn secondary">🔗 测试连通性</button>
+                        <button id="webhook-load-defaults" class="btn">加载默认模板</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -413,10 +435,13 @@
         <div class="modal-content heatmap-modal-content">
             <span class="close" id="close-heatmap-modal">&times;</span>
             <h2>工作量热力图</h2>
+            <div id="heatmap-chart" class="heatmap-chart"></div>
             <div class="heatmap-tabs">
                 <button class="heatmap-tab-btn active" data-range="today">今日</button>
                 <button class="heatmap-tab-btn" data-range="week">本周</button>
                 <button class="heatmap-tab-btn" data-range="month">本月</button>
+                <button class="heatmap-tab-btn" data-range="quarter">季度</button>
+                <button class="heatmap-tab-btn" data-range="year">年度</button>
             </div>
             <div id="heatmap-content">
                 <div class="heatmap-section">
@@ -427,6 +452,33 @@
                     <h3>每日项目数</h3>
                     <div id="heatmap-day-list" class="heatmap-day-list"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Webhook 推送模态框 -->
+    <div id="webhook-push-modal" class="modal">
+        <div class="modal-content" style="max-width:500px;">
+            <span class="close" id="close-webhook-push">&times;</span>
+            <h2>📤 Webhook 推送</h2>
+            <div class="form-group">
+                <label>推送类型:</label>
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                    <button id="webhook-push-daily-btn" class="btn primary" style="flex:1;">📅 日通告推送</button>
+                    <button id="webhook-push-weekly-btn" class="btn secondary" style="flex:1;">📋 周通告推送</button>
+                </div>
+            </div>
+            <div id="webhook-push-daily-section" class="form-group" style="display:none;">
+                <label>选择推送日期:</label>
+                <div id="webhook-daily-dates" class="checkbox-group" style="margin-top:8px;"></div>
+            </div>
+            <div id="webhook-push-weekly-section" class="form-group" style="display:none;">
+                <label>选择推送周:</label>
+                <div id="webhook-weekly-ranges" class="checkbox-group" style="margin-top:8px;"></div>
+            </div>
+            <div class="form-actions">
+                <button id="webhook-push-confirm" class="btn primary" disabled>确认推送</button>
+                <button id="webhook-push-cancel" class="btn">取消</button>
             </div>
         </div>
     </div>
