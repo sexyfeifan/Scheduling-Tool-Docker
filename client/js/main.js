@@ -112,6 +112,7 @@ const exportCrossWeekCheckbox = document.getElementById('export-cross-week');
 const exportDateRangeDiv = document.getElementById('export-date-range');
 const exportStartDateInput = document.getElementById('export-start-date');
 const exportEndDateInput = document.getElementById('export-end-date');
+const regenerateExportBtn = document.getElementById('regenerate-export');
 
 // 日期选择器变量
 let selectedDate = null;
@@ -1074,7 +1075,26 @@ function setupEventListeners() {
     // 跨周导出勾选切换
     if (exportCrossWeekCheckbox && exportDateRangeDiv) {
         exportCrossWeekCheckbox.addEventListener('change', () => {
-            exportDateRangeDiv.style.display = exportCrossWeekCheckbox.checked ? 'flex' : 'none';
+            exportDateRangeDiv.style.display = exportCrossWeekCheckbox.checked ? 'block' : 'none';
+        });
+    }
+
+    // 跨周导出生成按钮
+    if (regenerateExportBtn) {
+        regenerateExportBtn.addEventListener('click', () => {
+            if (!exportStartDateInput.value || !exportEndDateInput.value) {
+                showToast('请选择起始日和结束日', 'warning');
+                return;
+            }
+            if (exportStartDateInput.value > exportEndDateInput.value) {
+                showToast('起始日不能晚于结束日', 'warning');
+                return;
+            }
+            downloadImageBtn.disabled = true;
+            openInNewTabBtn.disabled = true;
+            downloadImageBtn.textContent = '生成中…';
+            openInNewTabBtn.textContent = '生成中…';
+            drawScheduleToCanvas();
         });
     }
 

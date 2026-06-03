@@ -205,11 +205,14 @@
                     <label>
                         <input type="checkbox" id="export-cross-week"> 跨周数导出
                     </label>
-                    <div id="export-date-range" style="display:none;margin-top:8px;display:flex;gap:8px;align-items:center;">
-                        <label style="font-size:13px;white-space:nowrap;">起始日：</label>
-                        <input type="date" id="export-start-date" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
-                        <label style="font-size:13px;white-space:nowrap;">结束日：</label>
-                        <input type="date" id="export-end-date" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                    <div id="export-date-range" style="display:none;margin-top:8px;">
+                        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+                            <label style="font-size:13px;white-space:nowrap;">起始日：</label>
+                            <input type="date" id="export-start-date" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                            <label style="font-size:13px;white-space:nowrap;">结束日：</label>
+                            <input type="date" id="export-end-date" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                        </div>
+                        <button id="regenerate-export" class="btn primary" style="width:100%;">生成图片</button>
                     </div>
                 </div>
                 <div class="export-preview">
