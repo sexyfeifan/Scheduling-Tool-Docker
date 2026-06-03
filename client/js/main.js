@@ -102,6 +102,17 @@ const confirmBackupRestoreBtn = document.getElementById('confirm-backup-restore'
 // 粘贴识别按钮
 const pasteRecognitionBtn = document.getElementById('paste-recognition');
 
+// 广告商单元素
+const projectAdvertiserCheckbox = document.getElementById('project-advertiser');
+const advertiserNoWrap = document.getElementById('advertiser-no-wrap');
+const projectAdvertiserNoInput = document.getElementById('project-advertiser-no');
+
+// 跨周导出元素
+const exportCrossWeekCheckbox = document.getElementById('export-cross-week');
+const exportDateRangeDiv = document.getElementById('export-date-range');
+const exportStartDateInput = document.getElementById('export-start-date');
+const exportEndDateInput = document.getElementById('export-end-date');
+
 // 日期选择器变量
 let selectedDate = null;
 let currentDate = new Date();
@@ -411,6 +422,13 @@ function applyTemplateToForm(template) {
 
     setCheckedValues(locationOptionsDiv, defaults.location || '');
     setProjectRoleValues(defaults);
+
+    // 广告商单
+    if (projectAdvertiserCheckbox) {
+        projectAdvertiserCheckbox.checked = Boolean(defaults.isAdvertiser);
+        if (advertiserNoWrap) advertiserNoWrap.style.display = defaults.isAdvertiser ? 'block' : 'none';
+    }
+    if (projectAdvertiserNoInput) projectAdvertiserNoInput.value = defaults.advertiserNo || '';
 }
 
 function applySelectedTemplate() {
@@ -437,6 +455,8 @@ async function saveTemplateFromCurrentForm() {
             name: projectNameInput.value,
             location: getCheckedValues(locationOptionsDiv),
             ...roleValues,
+            isAdvertiser: projectAdvertiserCheckbox ? projectAdvertiserCheckbox.checked : false,
+            advertiserNo: projectAdvertiserNoInput ? projectAdvertiserNoInput.value.trim() : '',
             type: projectTypeSelect.value,
             startTime: projectStartTimeSelect.value,
             laodao: projectLaodaoCheckbox.checked
@@ -819,6 +839,10 @@ function createProjectCard(project, dateStr, projectIndex) {
     // 添加老刀出镜标记
     const laodaoMark = project.laodao ? '<div class="laodao-mark">老刀出镜</div>' : '';
 
+    // 广告商单项目号
+    const advertiserMark = (project.isAdvertiser && project.advertiserNo)
+        ? `<div class="advertiser-no">商单 #${escapeHtml(project.advertiserNo)}</div>` : '';
+
     // 状态标签
     const statusClassMap = { '待确认': 'pending', '已确认': 'confirmed', '已完成': 'done', '取消': 'cancelled' };
     const statusClass = statusClassMap[project.status] || 'pending';
@@ -830,6 +854,7 @@ function createProjectCard(project, dateStr, projectIndex) {
             <button class="delete-btn" data-date="${escapeHtml(dateStr)}" data-index="${projectIndex}">×</button>
         </div>
         ${laodaoMark}
+        ${advertiserMark}
         ${statusBadge}
         ${staffInfo}
         <div class="project-location">📍 ${escapeHtml(project.location)}</div>
@@ -1036,6 +1061,20 @@ function setupEventListeners() {
             window.__currentSettings = settings;
             roleCategories = cats;
             renderRoleSettings(settings);
+        });
+    }
+
+    // 广告商单勾选切换
+    if (projectAdvertiserCheckbox && advertiserNoWrap) {
+        projectAdvertiserCheckbox.addEventListener('change', () => {
+            advertiserNoWrap.style.display = projectAdvertiserCheckbox.checked ? 'block' : 'none';
+        });
+    }
+
+    // 跨周导出勾选切换
+    if (exportCrossWeekCheckbox && exportDateRangeDiv) {
+        exportCrossWeekCheckbox.addEventListener('change', () => {
+            exportDateRangeDiv.style.display = exportCrossWeekCheckbox.checked ? 'flex' : 'none';
         });
     }
 
@@ -1365,6 +1404,17 @@ function editProject(dateStr, projectIndex) {
     // 设置老刀出镜选项
     projectLaodaoCheckbox.checked = project.laodao || false;
 
+    // 设置广告商单
+    if (projectAdvertiserCheckbox) {
+        projectAdvertiserCheckbox.checked = project.isAdvertiser || false;
+        if (advertiserNoWrap) {
+            advertiserNoWrap.style.display = projectAdvertiserCheckbox.checked ? 'block' : 'none';
+        }
+    }
+    if (projectAdvertiserNoInput) {
+        projectAdvertiserNoInput.value = project.advertiserNo || '';
+    }
+
     projectTypeSelect.value = project.type || '';
 
     // 设置项目状态
@@ -1385,6 +1435,8 @@ async function saveProject() {
         location: getCheckedValues(locationOptionsDiv),
         ...roleValues,
         laodao: projectLaodaoCheckbox.checked,
+        isAdvertiser: projectAdvertiserCheckbox ? projectAdvertiserCheckbox.checked : false,
+        advertiserNo: (projectAdvertiserCheckbox && projectAdvertiserCheckbox.checked && projectAdvertiserNoInput) ? projectAdvertiserNoInput.value.trim() : '',
         type: projectTypeSelect.value,
         startTime: projectStartTimeSelect.value,
         status: (document.getElementById('project-status') || {}).value || '已确认'
@@ -2903,8 +2955,14 @@ async function handleDrop(e) {
 
 // 显示导出模态框
 function showExportModal() {
+    // 设置默认日期
+    const weekDates = getWeekDates(currentMonday);
+    if (exportStartDateInput) exportStartDateInput.value = formatDate(weekDates[0]);
+    if (exportEndDateInput) exportEndDateInput.value = formatDate(weekDates[6]);
+    if (exportCrossWeekCheckbox) exportCrossWeekCheckbox.checked = false;
+    if (exportDateRangeDiv) exportDateRangeDiv.style.display = 'none';
+
     exportModal.style.display = 'block';
-    // 禁用按钮直到图片生成完成
     downloadImageBtn.disabled = true;
     openInNewTabBtn.disabled = true;
     downloadImageBtn.textContent = '生成中…';
@@ -2912,15 +2970,49 @@ function showExportModal() {
     drawScheduleToCanvas();
 }
 
-// 在canvas上绘制排期表（所见即所得版本 - Apple 风格）
+// 在canvas上绘制排期表（支持跨周导出）
 function drawScheduleToCanvas() {
-    // 创建临时的DOM元素用于渲染
+    // 确定日期范围
+    let startDate, endDate;
+    const isCrossWeek = exportCrossWeekCheckbox && exportCrossWeekCheckbox.checked;
+
+    if (isCrossWeek && exportStartDateInput && exportEndDateInput && exportStartDateInput.value && exportEndDateInput.value) {
+        startDate = new Date(exportStartDateInput.value + 'T00:00:00');
+        endDate = new Date(exportEndDateInput.value + 'T00:00:00');
+    } else {
+        const weekDates = getWeekDates(currentMonday);
+        startDate = weekDates[0];
+        endDate = weekDates[6];
+    }
+
+    // 生成所有日期
+    const allDates = [];
+    const d = new Date(startDate);
+    while (d <= endDate) {
+        allDates.push(new Date(d));
+        d.setDate(d.getDate() + 1);
+    }
+    const totalDays = allDates.length;
+
+    // 构建标题文本
+    function formatDateChinese(dt) {
+        return `${dt.getMonth() + 1}月${dt.getDate()}日`;
+    }
+    const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+
+    let headerText;
+    if (totalDays <= 7) {
+        const weekNumber = getWeekNumber(startDate);
+        headerText = `第${weekNumber}周通告 ${formatDateChinese(startDate)} - ${formatDateChinese(endDate)}`;
+    } else {
+        headerText = `通告排期 ${formatDateChinese(startDate)} - ${formatDateChinese(endDate)}`;
+    }
+
+    // 创建临时DOM
     const tempContainer = document.createElement('div');
     tempContainer.style.position = 'absolute';
     tempContainer.style.left = '-9999px';
     tempContainer.style.top = '-9999px';
-    tempContainer.style.width = '1680px';
-    // 与编辑页面底色一致 - 浅灰色背景
     tempContainer.style.background = '#f5f5f7';
     tempContainer.style.fontFamily = '"Noto Sans SC", "Source Han Sans SC", "Helvetica Neue", Arial, sans-serif';
     tempContainer.style.padding = '24px';
@@ -2929,9 +3021,14 @@ function drawScheduleToCanvas() {
     tempContainer.style.textRendering = 'optimizeSpeed';
     tempContainer.style.letterSpacing = '0';
     tempContainer.style.wordSpacing = '0';
-    tempContainer.style.fontVariantEastAsian = 'full-width';
-    
-    // 创建头部 - 使用实色背景（html2canvas 不支持 backdrop-filter）
+
+    // 根据列数计算宽度
+    const cols = totalDays;
+    const colWidth = Math.max(180, Math.min(240, 1680 / cols));
+    const containerWidth = colWidth * cols + 48;
+    tempContainer.style.width = containerWidth + 'px';
+
+    // 头部
     const header = document.createElement('div');
     header.style.background = 'rgba(255, 255, 255, 0.95)';
     header.style.borderRadius = '24px';
@@ -2940,194 +3037,125 @@ function drawScheduleToCanvas() {
     header.style.marginBottom = '24px';
     header.style.textAlign = 'center';
     header.style.border = '1px solid rgba(255, 255, 255, 0.3)';
-    
-    // 创建标题 - 白色毛玻璃效果
+
     const title = document.createElement('div');
     title.textContent = '罐头场通告排期';
     title.style.fontSize = '28px';
     title.style.fontWeight = '600';
     title.style.color = '#1d1d1f';
     title.style.marginBottom = '12px';
-    title.style.letterSpacing = '0';
-    
-    // 创建周信息（第二行：第X周通告 5月4日 - 5月10日）
-    const weekDates = getWeekDates(currentMonday);
-    const weekNumber = getWeekNumber(weekDates[0]);
-
-    function formatDateChinese(d) {
-        return `${d.getMonth() + 1}月${d.getDate()}日`;
-    }
-    const startDateChinese = formatDateChinese(weekDates[0]);
-    const endDateChinese = formatDateChinese(weekDates[6]);
 
     const weekInfoLine = document.createElement('div');
-    weekInfoLine.textContent = `第${weekNumber}周通告 ${startDateChinese} - ${endDateChinese}`;
+    weekInfoLine.textContent = headerText;
     weekInfoLine.style.fontWeight = '500';
     weekInfoLine.style.fontSize = '16px';
     weekInfoLine.style.color = '#6e6e73';
 
     header.appendChild(title);
     header.appendChild(weekInfoLine);
-    
-    // 创建主要内容区域 - 使用实色背景（html2canvas 不支持 backdrop-filter）
+
+    // 主内容区域
     const mainContent = document.createElement('div');
     mainContent.style.background = 'rgba(255, 255, 255, 0.95)';
     mainContent.style.borderRadius = '24px';
     mainContent.style.overflow = 'hidden';
     mainContent.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.15)';
     mainContent.style.border = '1px solid rgba(255, 255, 255, 0.3)';
-    
-    // 创建星期标题 - Apple 渐变风格
+
+    // 星期标题行
     const weekHeader = document.createElement('div');
     weekHeader.style.display = 'grid';
-    weekHeader.style.gridTemplateColumns = 'repeat(7, 1fr)';
+    weekHeader.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
     weekHeader.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
     weekHeader.style.color = 'white';
-    
-    const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-    for (let i = 0; i < 7; i++) {
+
+    for (let i = 0; i < totalDays; i++) {
         const dayHeader = document.createElement('div');
-        dayHeader.className = 'day-header';
         dayHeader.style.padding = '18px 12px';
         dayHeader.style.textAlign = 'center';
         dayHeader.style.fontWeight = '600';
-        dayHeader.style.fontSize = '14px';
-        dayHeader.style.letterSpacing = '0';
-        
-        const date = weekDates[i];
-        const month = date.getMonth() + 1;
-        const day = date.getDate();
-        dayHeader.textContent = `${weekdays[i]} (${month}/${day})`;
-        
-        // 今日高亮 - 在导出时保持原样
-        const today = new Date();
-        const todayStr = formatDate(today);
-        const dateStr = formatDate(date);
-        // 不再在导出时应用今日高亮
-        // if (dateStr === todayStr) {
-        //     dayHeader.style.background = 'linear-gradient(135deg, #34c759, #30d158)';
-        // }
-        
+        dayHeader.style.fontSize = cols > 10 ? '12px' : '14px';
+        const dt = allDates[i];
+        const dow = dt.getDay() === 0 ? 6 : dt.getDay() - 1;
+        dayHeader.textContent = `${weekdays[dow]} (${dt.getMonth() + 1}/${dt.getDate()})`;
         weekHeader.appendChild(dayHeader);
     }
-    
-    // 创建排期容器
+
+    // 排期容器
     const scheduleContainer = document.createElement('div');
     scheduleContainer.style.display = 'grid';
-    scheduleContainer.style.gridTemplateColumns = 'repeat(7, 1fr)';
+    scheduleContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
     scheduleContainer.style.minHeight = '600px';
     scheduleContainer.style.background = 'rgba(255, 255, 255, 0.5)';
-    
-    // 创建每天的列
-    for (let i = 0; i < 7; i++) {
+
+    for (let i = 0; i < totalDays; i++) {
         const dayColumn = document.createElement('div');
-        dayColumn.className = 'day-column';
-        dayColumn.style.borderRight = '1px solid rgba(0, 0, 0, 0.06)';
-        dayColumn.style.padding = '16px';
+        dayColumn.style.borderRight = (i === totalDays - 1) ? 'none' : '1px solid rgba(0, 0, 0, 0.06)';
+        dayColumn.style.padding = cols > 10 ? '8px' : '16px';
         dayColumn.style.minHeight = '600px';
         dayColumn.style.background = 'rgba(255, 255, 255, 0.3)';
-        
-        // 今日高亮列 - 在导出时保持原样
-        const today = new Date();
-        const todayStr = formatDate(today);
-        const dateStr = formatDate(weekDates[i]);
-        // 不再在导出时应用今日高亮
-        // if (dateStr === todayStr) {
-        //     dayColumn.style.background = 'linear-gradient(135deg, rgba(52, 199, 89, 0.1), rgba(48, 209, 88, 0.05))';
-        //     dayColumn.style.border = '2px solid rgba(52, 199, 89, 0.3)';
-        //     dayColumn.style.borderRadius = '12px';
-        // }
-        
-        if (i === 6) {
-            dayColumn.style.borderRight = 'none';
-        }
-        
-        const dateStr2 = formatDate(weekDates[i]);
-        const projects = scheduleData[dateStr2] || [];
-        
+
+        const dateStr = formatDate(allDates[i]);
+        const projects = scheduleData[dateStr] || [];
+
         if (projects.length > 0) {
             projects.forEach((project, projectIndex) => {
-                // 创建项目卡片 - Apple 风格
-                const projectCard = createProjectCard(project, dateStr2, projectIndex);
-                
-                // 克隆节点以移除所有事件监听器
+                const projectCard = createProjectCard(project, dateStr, projectIndex);
                 const cleanCard = projectCard.cloneNode(true);
-                
-                // 移除删除按钮
                 const deleteBtn = cleanCard.querySelector('.delete-btn');
-                if (deleteBtn) {
-                    deleteBtn.remove();
-                }
-                
-                // 移除复制按钮
+                if (deleteBtn) deleteBtn.remove();
                 const copyBtn = cleanCard.querySelector('.copy-btn');
-                if (copyBtn) {
-                    copyBtn.remove();
+                if (copyBtn) copyBtn.remove();
+                if (cols > 10) {
+                    cleanCard.style.fontSize = '11px';
+                    cleanCard.style.padding = '6px';
                 }
-                
                 dayColumn.appendChild(cleanCard);
             });
         } else {
-            // 显示空状态
             const emptyState = document.createElement('div');
             emptyState.className = 'empty-state';
             emptyState.style.color = '#6e6e73';
             emptyState.style.textAlign = 'center';
             emptyState.style.padding = '40px 20px';
-            emptyState.style.fontSize = '36px';
+            emptyState.style.fontSize = cols > 10 ? '24px' : '36px';
             emptyState.style.opacity = '0.6';
             emptyState.textContent = '🈚️';
             dayColumn.appendChild(emptyState);
         }
-        
+
         scheduleContainer.appendChild(dayColumn);
     }
-    
+
     mainContent.appendChild(weekHeader);
     mainContent.appendChild(scheduleContainer);
-    
     tempContainer.appendChild(header);
     tempContainer.appendChild(mainContent);
-    
-    // 添加到文档中
     document.body.appendChild(tempContainer);
-    
-    // 使用html2canvas库将DOM元素渲染到canvas
+
     html2canvas(tempContainer, {
-        scale: 2, // 提高分辨率
+        scale: 2,
         useCORS: true,
-        backgroundColor: '#f5f5f7', // 使用实色背景避免透明导致空白
+        backgroundColor: '#f5f5f7',
         logging: false,
         allowTaint: true
     }).then(canvas => {
-        // 将生成的canvas替换到导出canvas中
         const exportCtx = exportCanvas.getContext('2d');
         exportCanvas.width = canvas.width;
         exportCanvas.height = canvas.height;
         exportCtx.drawImage(canvas, 0, 0);
-        
-        // 移除临时元素
         document.body.removeChild(tempContainer);
-        
-        // 启用按钮
         downloadImageBtn.disabled = false;
         openInNewTabBtn.disabled = false;
         downloadImageBtn.textContent = '下载图片';
         openInNewTabBtn.textContent = '在新标签页打开';
     }).catch(error => {
         console.error('导出图片时出错:', error);
-        // 移除临时元素
-        if (tempContainer.parentNode) {
-            document.body.removeChild(tempContainer);
-        }
-        
-        // 恢复按钮状态
+        if (tempContainer.parentNode) document.body.removeChild(tempContainer);
         downloadImageBtn.disabled = false;
         openInNewTabBtn.disabled = false;
         downloadImageBtn.textContent = '下载图片';
         openInNewTabBtn.textContent = '在新标签页打开';
-        
-        // 出错时显示提示
         showToast('导出图片时出错，请重试', 'error');
     });
 }
@@ -3580,6 +3608,7 @@ function showNoticeModal(dateStr) {
                 if (val) meta.push(`${escapeHtml(cat.label)}: ${escapeHtml(val)}`);
             });
             if (p.type) meta.push(`类型: ${escapeHtml(p.type)}`);
+            if (p.isAdvertiser && p.advertiserNo) meta.push(`商单 #${escapeHtml(p.advertiserNo)}`);
             const metaFiltered = meta.filter(Boolean);
             return `<div class="notice-project-row">
                 <div class="notice-index">${i + 1}</div>
@@ -3617,13 +3646,16 @@ function showNoticeModal(dateStr) {
                     if (val) metaParts.push(`${cat.label}: ${val}`);
                 });
                 if (p.type) metaParts.push(`类型: ${p.type}`);
+                if (p.isAdvertiser && p.advertiserNo) metaParts.push(`商单 #${p.advertiserNo}`);
                 const meta = metaParts.filter(Boolean).join('　');
+                const advStyle = (p.isAdvertiser && p.advertiserNo) ? `<div style="font-size:11px;font-style:italic;color:#5856d6;margin-top:3px;">商单 #${p.advertiserNo}</div>` : '';
                 const border = i < projects.length - 1 ? 'border-bottom:1px solid #ececec;' : '';
                 return `<div style="display:flex;gap:18px;padding:18px 0;${border}align-items:flex-start">
                     <div style="font-size:13px;font-weight:600;color:#bbb;min-width:18px;padding-top:3px">${i + 1}</div>
                     <div style="flex:1">
                         <div style="font-size:18px;font-weight:700;color:#111;margin-bottom:6px;line-height:1.3">${p.name}</div>
                         <div style="font-size:13px;color:#666;line-height:1.7">${meta || '—'}</div>
+                        ${advStyle}
                     </div>
                 </div>`;
             }).join('');

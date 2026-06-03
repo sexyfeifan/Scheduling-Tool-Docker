@@ -79,6 +79,8 @@ function normalizeProject(project) {
     type: normalizeText(project && project.type, 40),
     startTime: normalizeText(project && project.startTime, 10),
     laodao: Boolean(project && project.laodao),
+    isAdvertiser: Boolean(project && project.isAdvertiser),
+    advertiserNo: normalizeText(project && project.advertiserNo, 60),
     status: validStatuses.includes(rawStatus) ? rawStatus : '待确认'
   };
 

@@ -604,6 +604,8 @@
             }
 
             const laodaoMark = project.laodao ? '<div class="laodao-mark">老刀出镜</div>' : '';
+            const advertiserMark = (project.isAdvertiser && project.advertiserNo)
+                ? `<div class="advertiser-no" style="font-size:11px;font-style:italic;color:#5856d6;margin-top:2px;padding:0 4px;">商单 #${project.advertiserNo}</div>` : '';
             const statusClassMap = { '待确认': 'pending', '已确认': 'confirmed', '已完成': 'done', '取消': 'cancelled' };
             const statusClass = statusClassMap[project.status] || 'pending';
             const statusBadge = `<span class="status-badge status-${statusClass}">${project.status || '待确认'}</span>`;
@@ -611,6 +613,7 @@
             card.innerHTML = `
                 <div class="project-title"><span>${project.name}</span></div>
                 ${laodaoMark}
+                ${advertiserMark}
                 ${statusBadge}
                 ${staffInfo}
                 <div class="project-location">📍 ${project.location}</div>

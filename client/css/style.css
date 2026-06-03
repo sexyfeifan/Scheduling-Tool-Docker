@@ -502,6 +502,14 @@ body {
     color: var(--text-secondary);
 }
 
+.advertiser-no {
+    font-size: 11px;
+    font-style: italic;
+    color: #5856d6;
+    margin-top: 2px;
+    padding: 0 4px;
+}
+
 /* 老刀标记 */
 .laodao-mark {
     color: var(--red-accent);

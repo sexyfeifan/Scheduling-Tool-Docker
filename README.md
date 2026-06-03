@@ -2,7 +2,7 @@
 
 > **作者**: 性感的非凡 | **邮箱**: zhoufeifan@gmail.com
 
-> 当前版本：**v2.58** | Docker Hub: `sexyfeifan/scheduling-tool:2.58`
+> 当前版本：**v2.59** | Docker Hub: `sexyfeifan/scheduling-tool:2.59`
 
 ## 简介
 

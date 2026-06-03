@@ -148,6 +148,14 @@
                             <input type="checkbox" id="project-laodao" value="1"> 老刀出镜
                         </label>
                     </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="project-advertiser" value="1"> 广告商单
+                        </label>
+                        <div id="advertiser-no-wrap" style="display:none;margin-top:6px;">
+                            <input type="text" id="project-advertiser-no" placeholder="请输入项目号" style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                        </div>
+                    </div>
                     <div class="form-actions">
                         <button type="submit" class="btn primary">保存</button>
                         <button type="button" id="cancel-edit" class="btn">取消</button>
@@ -193,6 +201,17 @@
             <div class="modal-content export-modal">
                 <span class="close" id="close-export">&times;</span>
                 <h2>导出图片</h2>
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label>
+                        <input type="checkbox" id="export-cross-week"> 跨周数导出
+                    </label>
+                    <div id="export-date-range" style="display:none;margin-top:8px;display:flex;gap:8px;align-items:center;">
+                        <label style="font-size:13px;white-space:nowrap;">起始日：</label>
+                        <input type="date" id="export-start-date" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                        <label style="font-size:13px;white-space:nowrap;">结束日：</label>
+                        <input type="date" id="export-end-date" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                    </div>
+                </div>
                 <div class="export-preview">
                     <canvas id="export-canvas" style="width: 100%; max-width: 600px; border: 1px solid #ddd;"></canvas>
                 </div>
