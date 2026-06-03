@@ -10,6 +10,11 @@ function createHistoryRouter({ requireAdminPassword, store }) {
     res.json(rows);
   });
 
+  router.delete('/', requireAdminPassword, (req, res) => {
+    store.clearHistory();
+    res.json({ message: '操作记录已清空' });
+  });
+
   return router;
 }
 

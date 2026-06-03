@@ -3,6 +3,13 @@ import { getMonday, formatDate, formatMonthDay, getWeekDates, getWeekNumber } fr
 import { createDefaultFilters, matchesProjectFilters } from './modules/filters.js';
 import { createUndoManager } from './modules/undo.js';
 
+// XSS 安全：转义 HTML 特殊字符
+function escapeHtml(str) {
+    const s = String(str == null ? '' : str);
+    const map = { '&': '\u0026amp;', '<': '\u0026lt;', '>': '\u0026gt;', '"': '\u0026quot;', "'": '\u0026#39;' };
+    return s.replace(/[&<>"']/g, (ch) => map[ch]);
+}
+
 // 当前周的周一
 let currentMonday = getMonday(new Date());
 
@@ -24,7 +31,6 @@ const settingsBtn = document.getElementById('settings');
 const undoActionBtn = document.getElementById('undo-action');
 const searchProjectsInput = document.getElementById('search-projects');
 const filterTypeSelect = document.getElementById('filter-type');
-const filterPersonInput = document.getElementById('filter-person');
 const clearFiltersBtn = document.getElementById('clear-filters');
 const healthBadge = document.getElementById('health-badge');
 const adminBtn = document.getElementById('admin-btn');
@@ -42,42 +48,20 @@ const projectForm = document.getElementById('project-form');
 const projectNameInput = document.getElementById('project-name');
 const projectDateInput = document.getElementById('project-date');
 const selectDateBtn = document.getElementById('select-date-btn');
-const projectLocationSelect = document.getElementById('project-location');
-const projectLocationInput = document.getElementById('project-location-input');
-const projectDirectorSelect = document.getElementById('project-director');
-const projectDirectorInput = document.getElementById('project-director-input');
-const projectPhotographerSelect = document.getElementById('project-photographer');
-const projectPhotographerInput = document.getElementById('project-photographer-input');
-const projectProductionSelect = document.getElementById('project-production');
-const projectProductionInput = document.getElementById('project-production-input');
-const projectRdSelect = document.getElementById('project-rd');
-const projectRdInput = document.getElementById('project-rd-input');
-const projectOperationalSelect = document.getElementById('project-operational');
-const projectOperationalInput = document.getElementById('project-operational-input');
-const projectAudioSelect = document.getElementById('project-audio');
-const projectAudioInput = document.getElementById('project-audio-input');
 const projectTypeSelect = document.getElementById('project-type');
 const projectStartTimeSelect = document.getElementById('project-start-time');
 const projectLaodaoCheckbox = document.getElementById('project-laodao');
-const addLocationBtn = document.getElementById('add-location');
-const addDirectorBtn = document.getElementById('add-director');
-const addPhotographerBtn = document.getElementById('add-photographer');
-const addProductionBtn = document.getElementById('add-production');
-const addRdBtn = document.getElementById('add-rd');
-const addOperationalBtn = document.getElementById('add-operational');
-const addAudioBtn = document.getElementById('add-audio');
 const projectTemplateSelect = document.getElementById('project-template-select');
 const applyTemplateBtn = document.getElementById('apply-template');
 const saveTemplateFromFormBtn = document.getElementById('save-template-from-form');
 
+// 复选框/单选容器
+const locationOptionsDiv = document.getElementById('project-location-options');
+const projectRoleFieldsDiv = document.getElementById('project-role-fields');
+
 // 设置元素
-const commonLocationsTextarea = document.getElementById('common-locations');
-const commonDirectorsTextarea = document.getElementById('common-directors');
-const commonPhotographersTextarea = document.getElementById('common-photographers');
-const commonProductionFacilitiesTextarea = document.getElementById('common-production-facilities');
-const commonRdFacilitiesTextarea = document.getElementById('common-rd-facilities');
-const commonOperationalFacilitiesTextarea = document.getElementById('common-operational-facilities');
-const commonAudioFacilitiesTextarea = document.getElementById('common-audio-facilities');
+const roleSettingsContainer = document.getElementById('role-settings-container');
+const addRoleCategoryBtn = document.getElementById('add-role-category');
 const templateList = document.getElementById('template-list');
 
 // 数据导出导入元素
@@ -141,6 +125,7 @@ let accessSettings = {
     shareUrl: ''
 };
 let filterState = createDefaultFilters();
+let roleCategories = [];
 const undoManager = createUndoManager();
 
 const apiClient = createApiClient({
@@ -235,6 +220,7 @@ const versionAPI = {
 const backupAPI = {
     createBackup: () => withEditAccess(() => apiClient.createBackup()),
     getBackups: () => apiClient.getBackups(),
+    deleteBackup: (backupPath) => withEditAccess(() => apiClient.deleteBackup(backupPath)),
     restoreBackup: (backupPath) => withEditAccess(() => apiClient.restoreBackup(backupPath)),
     fetchBackupPayload: (backupPath) => apiClient.fetchBackupPayload(backupPath),
     verifyPassword: (password) => apiClient.verifyAdminPassword(password)
@@ -364,12 +350,12 @@ function renderTemplateList() {
         item.className = 'template-item';
         item.innerHTML = `
             <div class="template-item-info">
-                <strong>${template.name}</strong>
-                <span>${template.defaults.type || '未设置类型'} · ${template.defaults.location || '未设置场地'}</span>
+                <strong>${escapeHtml(template.name)}</strong>
+                <span>${escapeHtml(template.defaults.type) || '未设置类型'} · ${escapeHtml(template.defaults.location) || '未设置场地'}</span>
             </div>
             <div class="template-item-actions">
-                <button class="btn use-template-btn" data-template-id="${template.id}">应用</button>
-                <button class="btn delete-template-btn" data-template-id="${template.id}">删除</button>
+                <button class="btn use-template-btn" data-template-id="${escapeHtml(template.id)}">应用</button>
+                <button class="btn delete-template-btn" data-template-id="${escapeHtml(template.id)}">删除</button>
             </div>
         `;
         templateList.appendChild(item);
@@ -423,53 +409,8 @@ function applyTemplateToForm(template) {
     projectStartTimeSelect.value = defaults.startTime || '';
     projectLaodaoCheckbox.checked = Boolean(defaults.laodao);
 
-    const setMultiField = (selectElement, inputElement, value) => {
-        Array.from(selectElement.options).forEach((option) => {
-            option.selected = false;
-        });
-
-        if (!value) {
-            selectElement.style.display = 'block';
-            inputElement.style.display = 'none';
-            inputElement.value = '';
-            return;
-        }
-
-        const parts = String(value).split(',').map((item) => item.trim()).filter(Boolean);
-        const matched = Array.from(selectElement.options).filter((option) => parts.includes(option.value));
-        if (matched.length === parts.length) {
-            matched.forEach((option) => {
-                option.selected = true;
-            });
-            selectElement.style.display = 'block';
-            inputElement.style.display = 'none';
-            inputElement.value = '';
-        } else {
-            selectElement.style.display = 'none';
-            inputElement.style.display = 'block';
-            inputElement.value = value;
-        }
-    };
-
-    if (defaults.location) {
-        const hasLocationOption = Array.from(projectLocationSelect.options).some((option) => option.value === defaults.location);
-        if (hasLocationOption) {
-            projectLocationSelect.style.display = 'block';
-            projectLocationInput.style.display = 'none';
-            projectLocationSelect.value = defaults.location;
-        } else {
-            projectLocationSelect.style.display = 'none';
-            projectLocationInput.style.display = 'block';
-            projectLocationInput.value = defaults.location;
-        }
-    }
-
-    setMultiField(projectDirectorSelect, projectDirectorInput, defaults.director);
-    setMultiField(projectPhotographerSelect, projectPhotographerInput, defaults.photographer);
-    setMultiField(projectProductionSelect, projectProductionInput, defaults.production);
-    setMultiField(projectRdSelect, projectRdInput, defaults.rd);
-    setMultiField(projectOperationalSelect, projectOperationalInput, defaults.operational);
-    setMultiField(projectAudioSelect, projectAudioInput, defaults.audio);
+    setCheckedValues(locationOptionsDiv, defaults.location || '');
+    setProjectRoleValues(defaults);
 }
 
 function applySelectedTemplate() {
@@ -489,17 +430,13 @@ async function saveTemplateFromCurrentForm() {
         return;
     }
 
+    const roleValues = getProjectRoleValues();
     const payload = {
         name: templateName,
         defaults: {
             name: projectNameInput.value,
-            location: projectLocationSelect.style.display !== 'none' ? projectLocationSelect.value : projectLocationInput.value,
-            director: Array.from(projectDirectorSelect.selectedOptions).map((option) => option.value).join(', ') || projectDirectorInput.value,
-            photographer: Array.from(projectPhotographerSelect.selectedOptions).map((option) => option.value).join(', ') || projectPhotographerInput.value,
-            production: Array.from(projectProductionSelect.selectedOptions).map((option) => option.value).join(', ') || projectProductionInput.value,
-            rd: Array.from(projectRdSelect.selectedOptions).map((option) => option.value).join(', ') || projectRdInput.value,
-            operational: Array.from(projectOperationalSelect.selectedOptions).map((option) => option.value).join(', ') || projectOperationalInput.value,
-            audio: Array.from(projectAudioSelect.selectedOptions).map((option) => option.value).join(', ') || projectAudioInput.value,
+            location: getCheckedValues(locationOptionsDiv),
+            ...roleValues,
             type: projectTypeSelect.value,
             startTime: projectStartTimeSelect.value,
             laodao: projectLaodaoCheckbox.checked
@@ -535,7 +472,7 @@ function updateFilterState() {
     filterState = {
         search: searchProjectsInput.value.trim(),
         type: filterTypeSelect.value,
-        person: filterPersonInput.value.trim()
+        person: ''
     };
     renderSchedule();
 }
@@ -605,6 +542,7 @@ async function initApp() {
     
     // 连接SSE实现实时同步
     connectSSE();
+    setupWebhookEvents();
     setInterval(loadHealthStatus, 30000);
 }
 
@@ -721,14 +659,9 @@ function connectSSE() {
                 break;
             case 'settingsUpdate':
                 // 更新本地设置
-                commonLocationsTextarea.value = (data.settings.commonLocations || []).join('\n');
-                commonDirectorsTextarea.value = (data.settings.commonDirectors || []).join('\n');
-                commonPhotographersTextarea.value = (data.settings.commonPhotographers || []).join('\n');
-                commonProductionFacilitiesTextarea.value = (data.settings.commonProductionFacilities || []).join('\n');
-                commonRdFacilitiesTextarea.value = (data.settings.commonRdFacilities || []).join('\n');
-                commonOperationalFacilitiesTextarea.value = (data.settings.commonOperationalFacilities || []).join('\n');
-                commonAudioFacilitiesTextarea.value = (data.settings.commonAudioFacilities || []).join('\n');
-                // 更新项目表单选项
+                window.__currentSettings = data.settings;
+                roleCategories = data.settings.roleCategories || [];
+                renderRoleSettings(data.settings);
                 updateProjectFormOptions();
                 break;
             case 'templateUpdate':
@@ -747,6 +680,12 @@ function connectSSE() {
     
     eventSource.onerror = function(err) {
         console.error('SSE连接错误:', err);
+        eventSource.close();
+        // 自动重连，延迟 5 秒
+        setTimeout(() => {
+            showToast('实时同步断开，正在重新连接…', 'warning', 5000);
+            connectSSE();
+        }, 5000);
     };
 }
 
@@ -854,31 +793,26 @@ function createProjectCard(project, dateStr, projectIndex) {
     
     const typeClass = typeClassMap[project.type] || 'plane';
     
-    // 构建工作人员信息
+    // 构建工作人员信息（动态）
+    const cats = (roleCategories || []).filter(c => c.key !== 'location');
     let staffInfo = '';
-    if (project.director || project.photographer || project.production || project.rd || project.operational || project.audio || project.startTime) {
+    const hasStartTime = project.startTime;
+    const hasAnyRole = hasStartTime || cats.some(cat => {
+        const val = project[cat.key] || (project.customFields && project.customFields[cat.key]);
+        return val;
+    });
+
+    if (hasAnyRole) {
         staffInfo = '<div class="staff-info">';
-        if (project.startTime) {
-            staffInfo += `<span class="staff-role start-time">⏰ ${project.startTime}</span>`;
+        if (hasStartTime) {
+            staffInfo += `<span class="staff-role start-time">⏰ ${escapeHtml(project.startTime)}</span>`;
         }
-        if (project.director) {
-            staffInfo += `<span class="staff-role director">导演：${project.director}</span>`;
-        }
-        if (project.photographer) {
-            staffInfo += `<span class="staff-role photographer">摄影：${project.photographer}</span>`;
-        }
-        if (project.production) {
-            staffInfo += `<span class="staff-role production">制片：${project.production}</span>`;
-        }
-        if (project.rd) {
-            staffInfo += `<span class="staff-role rd">研发：${project.rd}</span>`;
-        }
-        if (project.operational) {
-            staffInfo += `<span class="staff-role operational">运营：${project.operational}</span>`;
-        }
-        if (project.audio) {
-            staffInfo += `<span class="staff-role audio">录音：${project.audio}</span>`;
-        }
+        cats.forEach(cat => {
+            const val = project[cat.key] || (project.customFields && project.customFields[cat.key]);
+            if (val) {
+                staffInfo += `<span class="staff-role ${escapeHtml(cat.key)}">${escapeHtml(cat.label)}：${escapeHtml(val)}</span>`;
+            }
+        });
         staffInfo += '</div>';
     }
     
@@ -892,18 +826,18 @@ function createProjectCard(project, dateStr, projectIndex) {
     
     card.innerHTML = `
         <div class="project-title">
-            <span>${project.name}</span>
-            <button class="delete-btn" data-date="${dateStr}" data-index="${projectIndex}">×</button>
+            <span>${escapeHtml(project.name)}</span>
+            <button class="delete-btn" data-date="${escapeHtml(dateStr)}" data-index="${projectIndex}">×</button>
         </div>
         ${laodaoMark}
         ${statusBadge}
         ${staffInfo}
-        <div class="project-location">📍 ${project.location}</div>
+        <div class="project-location">📍 ${escapeHtml(project.location)}</div>
         <div>
-            <span class="project-type ${typeClass}">${project.type}</span>
+            <span class="project-type ${typeClass}">${escapeHtml(project.type)}</span>
         </div>
         <div class="card-actions">
-            <button class="copy-btn" data-date="${dateStr}" data-index="${projectIndex}">📋 复制</button>
+            <button class="copy-btn" data-date="${escapeHtml(dateStr)}" data-index="${projectIndex}">📋 复制</button>
         </div>
     `;
     
@@ -1057,11 +991,9 @@ function setupEventListeners() {
 
     searchProjectsInput.addEventListener('input', updateFilterState);
     filterTypeSelect.addEventListener('change', updateFilterState);
-    filterPersonInput.addEventListener('input', updateFilterState);
     clearFiltersBtn.addEventListener('click', () => {
         searchProjectsInput.value = '';
         filterTypeSelect.value = '';
-        filterPersonInput.value = '';
         updateFilterState();
     });
 
@@ -1091,6 +1023,21 @@ function setupEventListeners() {
     
     // 保存设置按钮
     saveSettingsBtn.addEventListener('click', saveSettings);
+
+    // 添加职能按钮
+    if (addRoleCategoryBtn) {
+        addRoleCategoryBtn.addEventListener('click', () => {
+            const settings = window.__currentSettings || {};
+            const cats = settings.roleCategories || [];
+            const newIndex = cats.length;
+            const newKey = `custom_${Date.now()}`;
+            cats.push({ key: newKey, label: '新职能', type: 'checkbox', optionsKey: `commonCustom_${newKey}` });
+            settings.roleCategories = cats;
+            window.__currentSettings = settings;
+            roleCategories = cats;
+            renderRoleSettings(settings);
+        });
+    }
 
     if (saveAccessSettingsBtn) {
         saveAccessSettingsBtn.addEventListener('click', async () => {
@@ -1167,34 +1114,6 @@ function setupEventListeners() {
     });
     
     // 添加新选项按钮
-    addLocationBtn.addEventListener('click', () => {
-        toggleInput(projectLocationSelect, projectLocationInput);
-    });
-    
-    addDirectorBtn.addEventListener('click', () => {
-        toggleInput(projectDirectorSelect, projectDirectorInput);
-    });
-    
-    addPhotographerBtn.addEventListener('click', () => {
-        toggleInput(projectPhotographerSelect, projectPhotographerInput);
-    });
-    
-    addProductionBtn.addEventListener('click', () => {
-        toggleInput(projectProductionSelect, projectProductionInput);
-    });
-    
-    addRdBtn.addEventListener('click', () => {
-        toggleInput(projectRdSelect, projectRdInput);
-    });
-    
-    addOperationalBtn.addEventListener('click', () => {
-        toggleInput(projectOperationalSelect, projectOperationalInput);
-    });
-    
-    addAudioBtn.addEventListener('click', () => {
-        toggleInput(projectAudioSelect, projectAudioInput);
-    });
-    
     // 日期选择功能
     selectDateBtn.addEventListener('click', showDatePicker);
     projectDateInput.addEventListener('click', showDatePicker);
@@ -1297,23 +1216,8 @@ function showProjectModal(dayColumn = null) {
     // 更新选项
     updateProjectFormOptions();
     
-    // 重置输入框显示状态
-    projectLocationSelect.style.display = 'block';
-    projectLocationInput.style.display = 'none';
-    projectDirectorSelect.style.display = 'block';
-    projectDirectorInput.style.display = 'none';
-    projectPhotographerSelect.style.display = 'block';
-    projectPhotographerInput.style.display = 'none';
-    projectProductionSelect.style.display = 'block';
-    projectProductionInput.style.display = 'none';
-    projectRdSelect.style.display = 'block';
-    projectRdInput.style.display = 'none';
-    projectOperationalSelect.style.display = 'block';
-    projectOperationalInput.style.display = 'none';
-    projectAudioSelect.style.display = 'block';
-    projectAudioInput.style.display = 'none';
-    
-    // 重置多选框
+    // 重置 tag 按钮
+    document.querySelectorAll('#project-modal .tag-btn').forEach(btn => btn.classList.remove('active'));
     projectLaodaoCheckbox.checked = false;
     projectTemplateSelect.value = '';
     
@@ -1361,8 +1265,8 @@ function renderCalendar() {
     const firstDay = new Date(currentYear, currentMonth, 1);
     const lastDay = new Date(currentYear, currentMonth + 1, 0);
     
-    // 获取第一天是星期几 (0=周日, 6=周六)
-    const firstDayOfWeek = firstDay.getDay();
+    // 获取第一天是星期几 (周一=0, 周日=6)
+    const firstDayOfWeek = (firstDay.getDay() + 6) % 7;
     
     // 获取上个月的最后一天
     const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
@@ -1452,63 +1356,11 @@ function editProject(dateStr, projectIndex) {
     projectDateInput.value = dateStr;
     projectStartTimeSelect.value = project.startTime || '';
     
-    // 设置拍摄地
-    if (Array.from(projectLocationSelect.options).some(option => option.value === project.location)) {
-        projectLocationSelect.value = project.location || '';
-        projectLocationSelect.style.display = 'block';
-        projectLocationInput.style.display = 'none';
-    } else {
-        projectLocationInput.value = project.location || '';
-        projectLocationSelect.style.display = 'none';
-        projectLocationInput.style.display = 'block';
-    }
+    // 设置拍摄地（单选）
+    setCheckedValues(locationOptionsDiv, project.location || '');
     
-    // 设置导演
-    if (Array.from(projectDirectorSelect.options).some(option => option.value === project.director)) {
-        projectDirectorSelect.value = project.director || '';
-        projectDirectorSelect.style.display = 'block';
-        projectDirectorInput.style.display = 'none';
-    } else {
-        projectDirectorInput.value = project.director || '';
-        projectDirectorSelect.style.display = 'none';
-        projectDirectorInput.style.display = 'block';
-    }
-    
-    // 设置导演（多选）
-    const directors = project.director ? project.director.split(', ').map(d => d.trim()) : [];
-    Array.from(projectDirectorSelect.options).forEach(option => {
-        option.selected = directors.includes(option.value);
-    });
-    
-    // 设置摄影师（多选）
-    const photographers = project.photographer ? project.photographer.split(', ').map(p => p.trim()) : [];
-    Array.from(projectPhotographerSelect.options).forEach(option => {
-        option.selected = photographers.includes(option.value);
-    });
-    
-    // 设置制片（多选）
-    const productions = project.production ? project.production.split(', ').map(p => p.trim()) : [];
-    Array.from(projectProductionSelect.options).forEach(option => {
-        option.selected = productions.includes(option.value);
-    });
-    
-    // 设置研发（多选）
-    const rds = project.rd ? project.rd.split(', ').map(r => r.trim()) : [];
-    Array.from(projectRdSelect.options).forEach(option => {
-        option.selected = rds.includes(option.value);
-    });
-    
-    // 设置运营（多选）
-    const operationals = project.operational ? project.operational.split(', ').map(o => o.trim()) : [];
-    Array.from(projectOperationalSelect.options).forEach(option => {
-        option.selected = operationals.includes(option.value);
-    });
-    
-    // 设置录音（多选）
-    const audios = project.audio ? project.audio.split(', ').map(a => a.trim()) : [];
-    Array.from(projectAudioSelect.options).forEach(option => {
-        option.selected = audios.includes(option.value);
-    });
+    // 设置各职能（动态）
+    setProjectRoleValues(project);
     
     // 设置老刀出镜选项
     projectLaodaoCheckbox.checked = project.laodao || false;
@@ -1526,69 +1378,12 @@ function editProject(dateStr, projectIndex) {
 // 保存项目
 async function saveProject() {
     const beforeState = cloneScheduleState();
-    // 获取摄影师值（多选）
-    let photographerValue = '';
-    const selectedPhotographerOptions = Array.from(projectPhotographerSelect.selectedOptions);
-    if (selectedPhotographerOptions.length > 0) {
-        photographerValue = selectedPhotographerOptions.map(option => option.value).join(', ');
-    } else if (projectPhotographerInput.style.display !== 'none') {
-        photographerValue = projectPhotographerInput.value;
-    }
     
-    // 获取导演值（多选）
-    let directorValue = '';
-    const selectedDirectorOptions = Array.from(projectDirectorSelect.selectedOptions);
-    if (selectedDirectorOptions.length > 0) {
-        directorValue = selectedDirectorOptions.map(option => option.value).join(', ');
-    } else if (projectDirectorInput.style.display !== 'none') {
-        directorValue = projectDirectorInput.value;
-    }
-    
-    // 获取制片值（多选）
-    let productionValue = '';
-    const selectedProductionOptions = Array.from(projectProductionSelect.selectedOptions);
-    if (selectedProductionOptions.length > 0) {
-        productionValue = selectedProductionOptions.map(option => option.value).join(', ');
-    } else if (projectProductionInput.style.display !== 'none') {
-        productionValue = projectProductionInput.value;
-    }
-    
-    // 获取研发值（多选）
-    let rdValue = '';
-    const selectedRdOptions = Array.from(projectRdSelect.selectedOptions);
-    if (selectedRdOptions.length > 0) {
-        rdValue = selectedRdOptions.map(option => option.value).join(', ');
-    } else if (projectRdInput.style.display !== 'none') {
-        rdValue = projectRdInput.value;
-    }
-    
-    // 获取运营值（多选）
-    let operationalValue = '';
-    const selectedOperationalOptions = Array.from(projectOperationalSelect.selectedOptions);
-    if (selectedOperationalOptions.length > 0) {
-        operationalValue = selectedOperationalOptions.map(option => option.value).join(', ');
-    } else if (projectOperationalInput.style.display !== 'none') {
-        operationalValue = projectOperationalInput.value;
-    }
-    
-    // 获取录音值（多选）
-    let audioValue = '';
-    const selectedAudioOptions = Array.from(projectAudioSelect.selectedOptions);
-    if (selectedAudioOptions.length > 0) {
-        audioValue = selectedAudioOptions.map(option => option.value).join(', ');
-    } else if (projectAudioInput.style.display !== 'none') {
-        audioValue = projectAudioInput.value;
-    }
-    
+    const roleValues = getProjectRoleValues();
     const project = {
         name: projectNameInput.value,
-        location: projectLocationSelect.style.display !== 'none' ? projectLocationSelect.value : projectLocationInput.value,
-        director: directorValue,
-        photographer: photographerValue,
-        production: productionValue,
-        rd: rdValue,
-        operational: operationalValue,
-        audio: audioValue,
+        location: getCheckedValues(locationOptionsDiv),
+        ...roleValues,
         laodao: projectLaodaoCheckbox.checked,
         type: projectTypeSelect.value,
         startTime: projectStartTimeSelect.value,
@@ -1665,6 +1460,74 @@ function showSettingsModal() {
     renderTemplateList();
 }
 
+/**
+ * 从备份数据渲染列表（供删除后直接刷新，无需重新请求）
+ */
+function renderBackupListFromData(backups) {
+    const backupList = document.getElementById('backup-list');
+    if (!backupList) return;
+
+    if (!backups || backups.length === 0) {
+        backupList.innerHTML = '<p class="no-backup">暂无备份记录</p>';
+        return;
+    }
+
+    backupList.innerHTML = '';
+    backups.slice(0, 10).forEach(backup => {
+        const nameMatch = (backup.name || '').match(/(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
+        const displayDate = nameMatch ? nameMatch[1] : backup.date;
+        const displayTime = nameMatch ? nameMatch[2].replace(/-/g, ':') : new Date(backup.time).toLocaleTimeString();
+
+        const item = document.createElement('div');
+        item.className = 'backup-item';
+        item.innerHTML = `
+            <div class="backup-item-info">
+                <span class="backup-item-date">${escapeHtml(displayDate)}</span>
+                <span class="backup-item-time">${escapeHtml(displayTime)} · ${backup.projectsCount || 0}个项目</span>
+            </div>
+            <div class="backup-item-actions">
+                <button class="btn restore-backup-btn" data-path="${escapeHtml(backup.path)}">预览并恢复</button>
+                <button class="btn delete-backup-btn" data-path="${escapeHtml(backup.path)}" style="color:#e74c3c;">🗑 删除</button>
+            </div>
+        `;
+        backupList.appendChild(item);
+    });
+
+    // 绑定恢复按钮事件
+    backupList.querySelectorAll('.restore-backup-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const backupPath = e.target.dataset.path;
+            try {
+                await openBackupPreview(backupPath);
+            } catch (error) {
+                showToast(error.message || '读取备份预览失败', 'error');
+            }
+        });
+    });
+
+    // 绑定删除按钮事件
+    backupList.querySelectorAll('.delete-backup-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const backupPath = e.target.dataset.path;
+            if (!confirm('确定要删除这个备份吗？此操作不可恢复。')) return;
+            try {
+                showLoading('正在删除...');
+                const result = await backupAPI.deleteBackup(backupPath);
+                hideLoading();
+                showToast('备份已删除', 'success');
+                if (result && result.backups) {
+                    renderBackupListFromData(result.backups);
+                } else {
+                    await loadBackupList();
+                }
+            } catch (error) {
+                hideLoading();
+                showToast(error.message || '删除备份失败', 'error');
+            }
+        });
+    });
+}
+
 // 加载备份列表
 async function loadBackupList() {
     const backupList = document.getElementById('backup-list');
@@ -1680,15 +1543,21 @@ async function loadBackupList() {
         
         backupList.innerHTML = '';
         backups.slice(0, 10).forEach(backup => {
+            // 从备份文件夹名解析日期（格式：backup_2026-05-10_00-13-00）
+            const nameMatch = (backup.name || '').match(/(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
+            const displayDate = nameMatch ? nameMatch[1] : backup.date;
+            const displayTime = nameMatch ? nameMatch[2].replace(/-/g, ':') : new Date(backup.time).toLocaleTimeString();
+
             const item = document.createElement('div');
             item.className = 'backup-item';
             item.innerHTML = `
                 <div class="backup-item-info">
-                    <span class="backup-item-date">${backup.date}</span>
-                    <span class="backup-item-time">${new Date(backup.time).toLocaleTimeString()} · ${backup.projectsCount || 0}个项目</span>
+                    <span class="backup-item-date">${escapeHtml(displayDate)}</span>
+                    <span class="backup-item-time">${escapeHtml(displayTime)} · ${backup.projectsCount || 0}个项目</span>
                 </div>
                 <div class="backup-item-actions">
-                    <button class="btn restore-backup-btn" data-path="${backup.path}">预览并恢复</button>
+                    <button class="btn restore-backup-btn" data-path="${escapeHtml(backup.path)}">预览并恢复</button>
+                    <button class="btn delete-backup-btn" data-path="${escapeHtml(backup.path)}" style="color:#e74c3c;">🗑 删除</button>
                 </div>
             `;
             backupList.appendChild(item);
@@ -1703,6 +1572,30 @@ async function loadBackupList() {
                 } catch (error) {
                     console.error('读取备份预览失败:', error);
                     showToast(error.message || '读取备份预览失败', 'error');
+                }
+            });
+        });
+
+        // 绑定删除按钮事件
+        document.querySelectorAll('.delete-backup-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const backupPath = e.target.dataset.path;
+                if (!confirm('确定要删除这个备份吗？此操作不可恢复。')) return;
+                try {
+                    showLoading('正在删除...');
+                    const result = await backupAPI.deleteBackup(backupPath);
+                    hideLoading();
+                    showToast('备份已删除', 'success');
+                    // 用返回的最新列表重新渲染
+                    if (result && result.backups) {
+                        renderBackupListFromData(result.backups);
+                    } else {
+                        await loadBackupList();
+                    }
+                } catch (error) {
+                    hideLoading();
+                    console.error('删除备份失败:', error);
+                    showToast(error.message || '删除备份失败', 'error');
                 }
             });
         });
@@ -1724,7 +1617,7 @@ function setupBackupEvents() {
                 hideLoading();
                 showToast('备份成功', 'success');
                 // 刷新备份列表
-                loadBackupList();
+                await loadBackupList();
             } catch (error) {
                 hideLoading();
                 showToast('备份失败: ' + error.message, 'error');
@@ -1761,6 +1654,7 @@ function showAdminModal() {
         loadBackupList();
         loadAccessSettings();
         loadHistoryRecords();
+        loadWebhookSettings();
     } else {
         passwordSection.style.display = 'block';
         unlockedContent.style.display = 'none';
@@ -1790,6 +1684,7 @@ function showAdminModal() {
                     loadBackupList();
                     loadAccessSettings();
                     loadHistoryRecords();
+                    loadWebhookSettings();
                     showToast('解锁成功', 'success');
                 } else {
                     showToast('密码错误', 'error');
@@ -1823,6 +1718,21 @@ function showAdminModal() {
         historyRefreshBtn.onclick = loadHistoryRecords;
     }
 
+    // 操作记录清空按钮
+    const historyClearBtn = document.getElementById('history-clear-btn');
+    if (historyClearBtn) {
+        historyClearBtn.onclick = async () => {
+            if (!confirm('确定要清空所有操作记录吗？此操作不可恢复。')) return;
+            try {
+                await apiClient.clearHistory();
+                loadHistoryRecords();
+                showToast('操作记录已清空', 'success');
+            } catch (err) {
+                showToast('清空失败: ' + (err.message || '未知错误'), 'error');
+            }
+        };
+    }
+
     modal.style.display = 'block';
 }
 
@@ -1836,48 +1746,174 @@ function showHeatmapModal() {
         closeBtn.onclick = () => { modal.style.display = 'none'; };
     }
 
-    // Tab 切换
+    // Tab 切换（只控制排行榜和每日项目数）
     modal.querySelectorAll('.heatmap-tab-btn').forEach(btn => {
         btn.onclick = () => {
             modal.querySelectorAll('.heatmap-tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            renderHeatmap(btn.dataset.range);
+            try {
+                renderHeatmapStats(btn.dataset.range);
+            } catch (err) {
+                console.error('热力图统计渲染失败:', err);
+            }
         };
     });
 
-    // 默认渲染"本周"
-    const defaultTab = modal.querySelector('.heatmap-tab-btn[data-range="week"]');
+    modal.style.display = 'block';
+
+    // 热力图固定为年度
+    try {
+        renderHeatmapChart('year');
+    } catch (err) {
+        console.error('热力图渲染失败:', err);
+        const chart = document.getElementById('heatmap-chart');
+        if (chart) chart.innerHTML = `<div class="heatmap-empty">渲染失败: ${escapeHtml(err.message)}</div>`;
+    }
+
+    // 默认渲染"今日"排行榜
+    const defaultTab = modal.querySelector('.heatmap-tab-btn[data-range="today"]');
     if (defaultTab) {
         modal.querySelectorAll('.heatmap-tab-btn').forEach(b => b.classList.remove('active'));
         defaultTab.classList.add('active');
     }
-    renderHeatmap('week');
-    modal.style.display = 'block';
+    try {
+        renderHeatmapStats('today');
+    } catch (err) {
+        console.error('热力图统计渲染失败:', err);
+    }
 }
 
-function renderHeatmap(range) {
+// 计算日期范围
+function getHeatmapDateRange(range) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    let startDate, endDate;
     if (range === 'today') {
-        startDate = endDate = today;
+        return { startDate: today, endDate: today };
     } else if (range === 'week') {
-        startDate = getMonday(today);
-        endDate = new Date(startDate);
+        const startDate = getMonday(today);
+        const endDate = new Date(startDate);
         endDate.setDate(startDate.getDate() + 6);
-    } else {
-        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        return { startDate, endDate };
+    } else if (range === 'month') {
+        return {
+            startDate: new Date(today.getFullYear(), today.getMonth(), 1),
+            endDate: new Date(today.getFullYear(), today.getMonth() + 1, 0)
+        };
+    } else if (range === 'quarter') {
+        const quarterStart = Math.floor(today.getMonth() / 3) * 3;
+        return {
+            startDate: new Date(today.getFullYear(), quarterStart, 1),
+            endDate: new Date(today.getFullYear(), quarterStart + 3, 0)
+        };
+    } else if (range === 'year') {
+        return {
+            startDate: new Date(today.getFullYear(), 0, 1),
+            endDate: new Date(today.getFullYear(), 11, 31)
+        };
+    }
+    return {
+        startDate: new Date(today.getFullYear(), today.getMonth(), 1),
+        endDate: new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    };
+}
+
+// 渲染热力图日历格子（固定年度）
+function renderHeatmapChart(range) {
+    const { startDate, endDate } = getHeatmapDateRange(range);
+    const dateProjectMap = {};
+    const dateNamesMap = {};
+
+    Object.entries(scheduleData).forEach(([dateStr, projects]) => {
+        const d = new Date(dateStr + 'T00:00:00');
+        if (d < startDate || d > endDate) return;
+        dateProjectMap[dateStr] = (projects || []).length;
+        dateNamesMap[dateStr] = (projects || []).map(p => p.name).filter(Boolean);
+    });
+
+    const container = document.getElementById('heatmap-chart');
+    if (!container) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const allCounts = Object.values(dateProjectMap);
+    const maxCount = allCounts.length > 0 ? Math.max(...allCounts) : 1;
+
+    function getHeatColor(count) {
+        if (count === 0) return '#ebedf0';
+        const ratio = count / maxCount;
+        if (ratio <= 0.25) return '#9be9a8';
+        if (ratio <= 0.5) return '#40c463';
+        if (ratio <= 0.75) return '#30a14e';
+        return '#216e39';
     }
 
+    const dates = [];
+    const d = new Date(startDate);
+    while (d <= endDate) {
+        dates.push(new Date(d));
+        d.setDate(d.getDate() + 1);
+    }
+
+    const weeks = [];
+    let currentWeek = [];
+    dates.forEach((date) => {
+        const dayOfWeek = (date.getDay() + 6) % 7;
+        if (dayOfWeek === 0 && currentWeek.length > 0) {
+            weeks.push(currentWeek);
+            currentWeek = [];
+        }
+        currentWeek.push(date);
+    });
+    if (currentWeek.length > 0) weeks.push(currentWeek);
+
+    const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
+
+    let html = '<div class="heatmap-chart-inner">';
+    html += '<div class="heatmap-chart-labels">';
+    weekdays.forEach(w => { html += `<div class="heatmap-label-cell">${w}</div>`; });
+    html += '</div>';
+    html += '<div class="heatmap-chart-grid">';
+    weeks.forEach(week => {
+        html += '<div class="heatmap-chart-week">';
+        const firstDayOfWeek = (week[0].getDay() + 6) % 7;
+        for (let i = 0; i < firstDayOfWeek; i++) {
+            html += '<div class="heatmap-cell heatmap-cell-empty"></div>';
+        }
+        week.forEach(date => {
+            const dateStr = formatDate(date);
+            const count = dateProjectMap[dateStr] || 0;
+            const color = getHeatColor(count);
+            const isToday = dateStr === formatDate(today);
+            const names = dateNamesMap[dateStr] || [];
+            const tooltip = names.length > 0
+                ? `${dateStr}\n${count}个项目: ${names.join(', ')}`
+                : `${dateStr}\n${count}个项目`;
+            html += `<div class="heatmap-cell${isToday ? ' heatmap-cell-today' : ''}" style="background:${color}" title="${escapeHtml(tooltip)}"></div>`;
+        });
+        html += '</div>';
+    });
+    html += '</div>';
+    html += '<div class="heatmap-chart-legend"><span>少</span>';
+    ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'].forEach(c => {
+        html += `<div class="heatmap-cell" style="background:${c}"></div>`;
+    });
+    html += '<span>多</span></div>';
+    html += '</div>';
+
+    container.innerHTML = html;
+}
+
+// 渲染排行榜和每日项目数（按时间范围切换）
+function renderHeatmapStats(range) {
+    const { startDate, endDate } = getHeatmapDateRange(range);
     const roles = ['director', 'photographer', 'production', 'operational', 'rd', 'audio'];
     const personCount = {};
     const dayCount = {};
 
     Object.entries(scheduleData).forEach(([dateStr, projects]) => {
-        const d = new Date(dateStr);
-        d.setHours(0, 0, 0, 0);
+        const d = new Date(dateStr + 'T00:00:00');
         if (d < startDate || d > endDate) return;
 
         (projects || []).forEach(project => {
@@ -1902,7 +1938,9 @@ function renderHeatmap(range) {
     const personList = document.getElementById('heatmap-person-list');
     const dayList = document.getElementById('heatmap-day-list');
 
-    function renderBars(container, dataObj, emptyMsg) {
+    const medals = ['🥇', '🥈', '🥉'];
+
+    function renderBars(container, dataObj, emptyMsg, showMedals) {
         if (!container) return;
         const entries = Object.entries(dataObj).sort((a, b) => b[1] - a[1]);
         if (entries.length === 0) {
@@ -1910,19 +1948,252 @@ function renderHeatmap(range) {
             return;
         }
         const maxVal = entries[0][1];
-        container.innerHTML = entries.map(([label, count]) => `
-            <div class="heatmap-bar-row">
-                <div class="heatmap-bar-label">${label}</div>
+        container.innerHTML = entries.map(([label, count], index) => {
+            const medal = showMedals && index < 3 ? medals[index] + ' ' : '';
+            return `
+            <div class="heatmap-bar-row${showMedals && index < 3 ? ' heatmap-bar-top' : ''}">
+                <div class="heatmap-bar-label">${medal}${escapeHtml(label)}</div>
                 <div class="heatmap-bar-track">
                     <div class="heatmap-bar-fill" style="width:${Math.round(count / maxVal * 100)}%"></div>
                 </div>
                 <div class="heatmap-bar-count">${count}</div>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
     }
 
-    renderBars(personList, personCount, '该时间段暂无人员排期');
-    renderBars(dayList, dayCount, '该时间段暂无项目');
+    renderBars(personList, personCount, '该时间段暂无人员排期', true);
+    renderBars(dayList, dayCount, '该时间段暂无项目', false);
+}
+
+// ── Webhook 推送 ──
+let webhookPushMode = null; // 'daily' or 'weekly'
+let webhookSelectedDate = null;
+let webhookSelectedRange = null;
+let webhookTemplatePresets = null; // 预设模板缓存
+
+function loadWebhookSettings() {
+    const settings = window.__currentSettings || {};
+    const wh = settings.webhook || {};
+    const enabledEl = document.getElementById('webhook-enabled');
+    const platformEl = document.getElementById('webhook-platform');
+    const urlEl = document.getElementById('webhook-url');
+    const dailyTplEl = document.getElementById('webhook-daily-template');
+    const weeklyTplEl = document.getElementById('webhook-weekly-template');
+    if (enabledEl) enabledEl.checked = Boolean(wh.enabled);
+    if (platformEl) platformEl.value = wh.platform || 'custom';
+    if (urlEl) urlEl.value = wh.url || '';
+    if (dailyTplEl) dailyTplEl.value = wh.dailyTemplate || '';
+    if (weeklyTplEl) weeklyTplEl.value = wh.weeklyTemplate || '';
+}
+
+async function saveWebhookSettings() {
+    const payload = {
+        webhook: {
+            enabled: document.getElementById('webhook-enabled').checked,
+            platform: document.getElementById('webhook-platform').value,
+            url: document.getElementById('webhook-url').value.trim(),
+            dailyTemplate: document.getElementById('webhook-daily-template').value,
+            weeklyTemplate: document.getElementById('webhook-weekly-template').value
+        }
+    };
+    try {
+        await settingAPI.saveSettings(payload);
+        showToast('Webhook 设置已保存', 'success');
+    } catch (err) {
+        showToast('保存失败: ' + (err.message || '未知错误'), 'error');
+    }
+}
+
+async function testWebhook() {
+    try {
+        showToast('正在测试连通性...', 'info');
+        const result = await apiClient.testWebhook();
+        showToast(result.message || '测试成功', 'success');
+    } catch (err) {
+        showToast('测试失败: ' + (err.message || '未知错误'), 'error');
+    }
+}
+
+async function loadDefaultWebhookTemplates() {
+    try {
+        const tpl = await apiClient.getWebhookTemplates();
+        document.getElementById('webhook-daily-template').value = tpl.daily || '';
+        document.getElementById('webhook-weekly-template').value = tpl.weekly || '';
+        // 缓存预设模板
+        if (tpl.presets) {
+            webhookTemplatePresets = tpl.presets;
+            populateWebhookPresetSelects(tpl.presets);
+        }
+        showToast('已加载默认模板', 'success');
+    } catch (err) {
+        showToast('加载失败: ' + (err.message || '未知错误'), 'error');
+    }
+}
+
+/**
+ * 填充预设模板下拉框
+ */
+function populateWebhookPresetSelects(presets) {
+    const dailySelect = document.getElementById('webhook-daily-preset');
+    const weeklySelect = document.getElementById('webhook-weekly-preset');
+
+    if (dailySelect && presets.daily) {
+        dailySelect.innerHTML = '<option value="">-- 选择预设模板 --</option>';
+        Object.entries(presets.daily).forEach(([key, item]) => {
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.textContent = item.name;
+            dailySelect.appendChild(opt);
+        });
+    }
+
+    if (weeklySelect && presets.weekly) {
+        weeklySelect.innerHTML = '<option value="">-- 选择预设模板 --</option>';
+        Object.entries(presets.weekly).forEach(([key, item]) => {
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.textContent = item.name;
+            weeklySelect.appendChild(opt);
+        });
+    }
+}
+
+function showWebhookPushModal() {
+    const modal = document.getElementById('webhook-push-modal');
+    if (!modal) return;
+    webhookPushMode = null;
+    webhookSelectedDate = null;
+    webhookSelectedRange = null;
+    document.getElementById('webhook-push-daily-section').style.display = 'none';
+    document.getElementById('webhook-push-weekly-section').style.display = 'none';
+    document.getElementById('webhook-push-confirm').disabled = true;
+
+    // 生成本周日期选项
+    const weekDates = getWeekDates(currentMonday);
+    const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    const dailyContainer = document.getElementById('webhook-daily-dates');
+    dailyContainer.innerHTML = '';
+    weekDates.forEach((date, i) => {
+        const dateStr = formatDate(date);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tag-btn';
+        btn.dataset.value = dateStr;
+        btn.textContent = `${weekdays[i]} ${date.getMonth()+1}/${date.getDate()}`;
+        btn.addEventListener('click', () => {
+            dailyContainer.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            webhookSelectedDate = dateStr;
+            document.getElementById('webhook-push-confirm').disabled = false;
+        });
+        dailyContainer.appendChild(btn);
+    });
+
+    // 生成周选项（前后各2周）
+    const weeklyContainer = document.getElementById('webhook-weekly-ranges');
+    weeklyContainer.innerHTML = '';
+    for (let i = -2; i <= 2; i++) {
+        const monday = new Date(currentMonday);
+        monday.setDate(monday.getDate() + (i * 7));
+        const dates = getWeekDates(monday);
+        const startStr = formatDate(dates[0]);
+        const endStr = formatDate(dates[6]);
+        const label = i === 0 ? '本周' : i === -1 ? '上一周' : i === 1 ? '下一周' : `${startStr.slice(5)} ~ ${endStr.slice(5)}`;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tag-btn';
+        btn.dataset.start = startStr;
+        btn.dataset.end = endStr;
+        btn.textContent = label;
+        btn.addEventListener('click', () => {
+            weeklyContainer.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            webhookSelectedRange = { startDate: startStr, endDate: endStr };
+            document.getElementById('webhook-push-confirm').disabled = false;
+        });
+        weeklyContainer.appendChild(btn);
+    }
+
+    modal.style.display = 'block';
+}
+
+function setupWebhookEvents() {
+    const webhookBtn = document.getElementById('webhook-btn');
+    if (webhookBtn) webhookBtn.addEventListener('click', showWebhookPushModal);
+
+    const closeBtn = document.getElementById('close-webhook-push');
+    if (closeBtn) closeBtn.onclick = () => { document.getElementById('webhook-push-modal').style.display = 'none'; };
+
+    const cancelBtn = document.getElementById('webhook-push-cancel');
+    if (cancelBtn) cancelBtn.onclick = () => { document.getElementById('webhook-push-modal').style.display = 'none'; };
+
+    const dailyBtn = document.getElementById('webhook-push-daily-btn');
+    if (dailyBtn) dailyBtn.onclick = () => {
+        webhookPushMode = 'daily';
+        document.getElementById('webhook-push-daily-section').style.display = 'block';
+        document.getElementById('webhook-push-weekly-section').style.display = 'none';
+        document.getElementById('webhook-push-confirm').disabled = !webhookSelectedDate;
+    };
+
+    const weeklyBtn = document.getElementById('webhook-push-weekly-btn');
+    if (weeklyBtn) weeklyBtn.onclick = () => {
+        webhookPushMode = 'weekly';
+        document.getElementById('webhook-push-daily-section').style.display = 'none';
+        document.getElementById('webhook-push-weekly-section').style.display = 'block';
+        document.getElementById('webhook-push-confirm').disabled = !webhookSelectedRange;
+    };
+
+    const confirmBtn = document.getElementById('webhook-push-confirm');
+    if (confirmBtn) confirmBtn.onclick = async () => {
+        try {
+            showLoading('正在推送...');
+            if (webhookPushMode === 'daily' && webhookSelectedDate) {
+                await apiClient.pushDailyNotice(webhookSelectedDate);
+                showToast('日通告推送成功', 'success');
+            } else if (webhookPushMode === 'weekly' && webhookSelectedRange) {
+                await apiClient.pushWeeklyNotice(webhookSelectedRange.startDate, webhookSelectedRange.endDate);
+                showToast('周通告推送成功', 'success');
+            } else {
+                showToast('请选择推送日期', 'warning');
+                return;
+            }
+            document.getElementById('webhook-push-modal').style.display = 'none';
+        } catch (err) {
+            showToast('推送失败: ' + (err.message || '未知错误'), 'error');
+        } finally {
+            hideLoading();
+        }
+    };
+
+    // 管理员设置中的 webhook 按钮
+    const webhookSaveBtn = document.getElementById('webhook-save');
+    if (webhookSaveBtn) webhookSaveBtn.onclick = saveWebhookSettings;
+    const webhookTestBtn = document.getElementById('webhook-test');
+    if (webhookTestBtn) webhookTestBtn.onclick = testWebhook;
+    const webhookLoadDefaultsBtn = document.getElementById('webhook-load-defaults');
+    if (webhookLoadDefaultsBtn) webhookLoadDefaultsBtn.onclick = loadDefaultWebhookTemplates;
+
+    // 预设模板应用按钮
+    const applyDailyPresetBtn = document.getElementById('webhook-apply-daily-preset');
+    if (applyDailyPresetBtn) applyDailyPresetBtn.onclick = () => {
+        const select = document.getElementById('webhook-daily-preset');
+        const key = select.value;
+        if (!key) { showToast('请先选择一个预设模板', 'warning'); return; }
+        if (webhookTemplatePresets && webhookTemplatePresets.daily && webhookTemplatePresets.daily[key]) {
+            document.getElementById('webhook-daily-template').value = webhookTemplatePresets.daily[key].template;
+            showToast(`已应用：${webhookTemplatePresets.daily[key].name}`, 'success');
+        }
+    };
+    const applyWeeklyPresetBtn = document.getElementById('webhook-apply-weekly-preset');
+    if (applyWeeklyPresetBtn) applyWeeklyPresetBtn.onclick = () => {
+        const select = document.getElementById('webhook-weekly-preset');
+        const key = select.value;
+        if (!key) { showToast('请先选择一个预设模板', 'warning'); return; }
+        if (webhookTemplatePresets && webhookTemplatePresets.weekly && webhookTemplatePresets.weekly[key]) {
+            document.getElementById('webhook-weekly-template').value = webhookTemplatePresets.weekly[key].template;
+            showToast(`已应用：${webhookTemplatePresets.weekly[key].name}`, 'success');
+        }
+    };
 }
 
 // 切换输入框显示
@@ -1939,29 +2210,58 @@ function toggleInput(selectElement, inputElement) {
 
 // 保存设置
 async function saveSettings() {
-    const locations = commonLocationsTextarea.value.split('\n').filter(item => item.trim() !== '');
-    const directors = commonDirectorsTextarea.value.split('\n').filter(item => item.trim() !== '');
-    const photographers = commonPhotographersTextarea.value.split('\n').filter(item => item.trim() !== '');
-    const productionFacilities = commonProductionFacilitiesTextarea.value.split('\n').filter(item => item.trim() !== '');
-    const rdFacilities = commonRdFacilitiesTextarea.value.split('\n').filter(item => item.trim() !== '');
-    const operationalFacilities = commonOperationalFacilitiesTextarea.value.split('\n').filter(item => item.trim() !== '');
-    const audioFacilities = commonAudioFacilitiesTextarea.value.split('\n').filter(item => item.trim() !== '');
-    
-    try {
-        // 保存到API
-        await settingAPI.saveSettings({
-            commonLocations: locations,
-            commonDirectors: directors,
-            commonPhotographers: photographers,
-            commonProductionFacilities: productionFacilities,
-            commonRdFacilities: rdFacilities,
-            commonOperationalFacilities: operationalFacilities,
-            commonAudioFacilities: audioFacilities
+    const cats = [];
+    const customRoleOptions = {};
+
+    if (roleSettingsContainer) {
+        const items = roleSettingsContainer.querySelectorAll('.role-category-item');
+        items.forEach((item, index) => {
+            const labelInput = item.querySelector('.role-label-input');
+            const typeSelect = item.querySelector('.role-type-select');
+            const textarea = item.querySelector('.role-options-textarea');
+            const label = (labelInput ? labelInput.value : '').trim();
+            const type = typeSelect ? typeSelect.value : 'checkbox';
+            const options = (textarea ? textarea.value : '').split('\n').filter(s => s.trim() !== '');
+
+            if (!label) return;
+
+            const existingCat = roleCategories[index];
+            const key = existingCat ? existingCat.key : `custom_${Date.now()}_${index}`;
+            const optionsKey = existingCat ? (existingCat.optionsKey || `commonCustom_${key}`) : `commonCustom_${key}`;
+
+            cats.push({ key, label, type, optionsKey });
+            customRoleOptions[key] = options;
         });
-        
-        // 更新项目表单中的选项
+    }
+
+    if (cats.length === 0) {
+        showToast('至少保留一个职能', 'warning');
+        return;
+    }
+
+    roleCategories = cats;
+
+    try {
+        const payload = {
+            roleCategories: cats,
+            customRoleOptions
+        };
+
+        // 保留 location 的 commonLocations 字段兼容
+        const locationCat = cats.find(c => c.key === 'location');
+        if (locationCat) {
+            payload.commonLocations = customRoleOptions.location || [];
+        }
+
+        await settingAPI.saveSettings(payload);
+
+        const settings = await settingAPI.getSettings();
+        window.__currentSettings = settings;
+        roleCategories = settings.roleCategories || [];
+
+        renderRoleSettings(settings);
         updateProjectFormOptions();
-        
+
         showToast('设置已保存', 'success');
         settingsModal.style.display = 'none';
     } catch (error) {
@@ -1974,99 +2274,192 @@ async function saveSettings() {
 async function loadSettings() {
     try {
         const settings = await settingAPI.getSettings();
-        
-        commonLocationsTextarea.value = settings.commonLocations.join('\n');
-        commonDirectorsTextarea.value = settings.commonDirectors.join('\n');
-        commonPhotographersTextarea.value = settings.commonPhotographers.join('\n');
-        commonProductionFacilitiesTextarea.value = settings.commonProductionFacilities ? settings.commonProductionFacilities.join('\n') : '';
-        commonRdFacilitiesTextarea.value = settings.commonRdFacilities ? settings.commonRdFacilities.join('\n') : '';
-        commonOperationalFacilitiesTextarea.value = settings.commonOperationalFacilities ? settings.commonOperationalFacilities.join('\n') : '';
-        commonAudioFacilitiesTextarea.value = settings.commonAudioFacilities ? settings.commonAudioFacilities.join('\n') : '';
-        
-        // 更新项目表单选项
+        window.__currentSettings = settings;
+        roleCategories = settings.roleCategories || [];
+
+        renderRoleSettings(settings);
         updateProjectFormOptions();
     } catch (error) {
         console.error('加载设置时出错:', error);
-        // 使用空数组作为默认值
-        commonLocationsTextarea.value = '';
-        commonDirectorsTextarea.value = '';
-        commonPhotographersTextarea.value = '';
-        commonProductionFacilitiesTextarea.value = '';
-        commonRdFacilitiesTextarea.value = '';
-        commonOperationalFacilitiesTextarea.value = '';
-        commonAudioFacilitiesTextarea.value = '';
     }
+}
+
+// 渲染 tag 按钮组（多选）
+function renderCheckboxGroup(container, items) {
+    if (!container) return;
+    container.innerHTML = '';
+    items.forEach(item => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tag-btn';
+        btn.dataset.value = item;
+        btn.textContent = item;
+        btn.addEventListener('click', () => btn.classList.toggle('active'));
+        container.appendChild(btn);
+    });
+    if (items.length === 0) {
+        container.innerHTML = '<span class="checkbox-empty">暂无选项，请在设置中添加</span>';
+    }
+}
+
+// 渲染 tag 按钮组（单选）
+function renderRadioGroup(container, items) {
+    if (!container) return;
+    container.innerHTML = '';
+    items.forEach(item => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tag-btn';
+        btn.dataset.value = item;
+        btn.textContent = item;
+        btn.addEventListener('click', () => {
+            container.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+        container.appendChild(btn);
+    });
+    if (items.length === 0) {
+        container.innerHTML = '<span class="checkbox-empty">暂无选项，请在设置中添加</span>';
+    }
+}
+
+// 获取 tag 按钮组选中值（逗号分隔）
+function getCheckedValues(container) {
+    if (!container) return '';
+    return Array.from(container.querySelectorAll('.tag-btn.active')).map(btn => btn.dataset.value).join(', ');
+}
+
+// 设置 tag 按钮组选中状态
+function setCheckedValues(container, valueStr) {
+    if (!container) return;
+    const values = valueStr ? valueStr.split(', ').map(s => s.trim()).filter(Boolean) : [];
+    container.querySelectorAll('.tag-btn').forEach(btn => {
+        btn.classList.toggle('active', values.includes(btn.dataset.value));
+    });
+}
+
+// 获取职能选项的 settings key
+function getRoleOptionsKey(cat) {
+    return cat.optionsKey || `commonCustom_${cat.key}`;
+}
+
+// 从 settings 对象中获取某个职能的选项数组
+function getRoleOptions(settings, cat) {
+    const key = getRoleOptionsKey(cat);
+    if (settings.customRoleOptions && settings.customRoleOptions[cat.key]) {
+        return settings.customRoleOptions[cat.key];
+    }
+    return settings[key] || [];
+}
+
+// 渲染设置页的职能管理区域
+function renderRoleSettings(settings) {
+    if (!roleSettingsContainer) return;
+    roleSettingsContainer.innerHTML = '';
+    const cats = settings.roleCategories || [];
+
+    cats.forEach((cat, index) => {
+        const options = getRoleOptions(settings, cat);
+        const item = document.createElement('div');
+        item.className = 'role-category-item';
+        item.innerHTML = `
+            <div class="role-category-header">
+                <input type="text" class="role-label-input" data-index="${index}" value="${escapeHtml(cat.label)}" placeholder="职能名称">
+                <select class="role-type-select" data-index="${index}">
+                    <option value="checkbox" ${cat.type === 'checkbox' ? 'selected' : ''}>多选</option>
+                    <option value="radio" ${cat.type === 'radio' ? 'selected' : ''}>单选</option>
+                </select>
+                <button type="button" class="role-category-remove" data-index="${index}" title="删除">×</button>
+            </div>
+            <div class="role-category-options">
+                <textarea class="role-options-textarea" data-index="${index}" placeholder="每行一个选项">${options.join('\n')}</textarea>
+            </div>
+        `;
+        roleSettingsContainer.appendChild(item);
+    });
+
+    roleSettingsContainer.querySelectorAll('.role-category-remove').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.index, 10);
+            if (cats.length <= 1) {
+                showToast('至少保留一个职能', 'warning');
+                return;
+            }
+            const removed = cats.splice(idx, 1)[0];
+            renderRoleSettings({ ...settings, roleCategories: cats });
+            showToast(`已删除职能「${removed.label}」`, 'success');
+        });
+    });
+}
+
+// 渲染项目表单中的动态职能字段
+function renderProjectRoleFields(settings, projectData) {
+    if (!projectRoleFieldsDiv) return;
+    projectRoleFieldsDiv.innerHTML = '';
+    const cats = (settings.roleCategories || []).filter(c => c.key !== 'location');
+
+    cats.forEach(cat => {
+        const options = getRoleOptions(settings, cat);
+        const group = document.createElement('div');
+        group.className = 'form-group';
+        const label = document.createElement('label');
+        label.textContent = cat.label + '：';
+        group.appendChild(label);
+
+        const container = document.createElement('div');
+        container.className = 'checkbox-group';
+        container.id = `project-role-${cat.key}`;
+        container.dataset.roleKey = cat.key;
+        container.dataset.roleType = cat.type || 'checkbox';
+
+        if (cat.type === 'radio') {
+            renderRadioGroup(container, options);
+        } else {
+            renderCheckboxGroup(container, options);
+        }
+
+        if (projectData) {
+            const value = projectData[cat.key] || (projectData.customFields && projectData.customFields[cat.key]) || '';
+            setCheckedValues(container, value);
+        }
+
+        group.appendChild(container);
+        projectRoleFieldsDiv.appendChild(group);
+    });
+}
+
+// 获取项目表单中所有动态职能的值
+function getProjectRoleValues() {
+    const values = {};
+    if (!projectRoleFieldsDiv) return values;
+    projectRoleFieldsDiv.querySelectorAll('.checkbox-group').forEach(container => {
+        const key = container.dataset.roleKey;
+        if (key) {
+            values[key] = getCheckedValues(container);
+        }
+    });
+    return values;
+}
+
+// 设置项目表单中所有动态职能的值
+function setProjectRoleValues(projectData) {
+    if (!projectRoleFieldsDiv) return;
+    projectRoleFieldsDiv.querySelectorAll('.checkbox-group').forEach(container => {
+        const key = container.dataset.roleKey;
+        if (key) {
+            const value = projectData[key] || (projectData.customFields && projectData.customFields[key]) || '';
+            setCheckedValues(container, value);
+        }
+    });
 }
 
 // 更新项目表单选项
 function updateProjectFormOptions() {
-    // 从文本区域获取选项
-    const locations = commonLocationsTextarea.value.split('\n').filter(item => item.trim() !== '');
-    const directors = commonDirectorsTextarea.value.split('\n').filter(item => item.trim() !== '');
-    const photographers = commonPhotographersTextarea.value.split('\n').filter(item => item.trim() !== '');
-    const productions = commonProductionFacilitiesTextarea.value.split('\n').filter(item => item.trim() !== '');
-    const rds = commonRdFacilitiesTextarea.value.split('\n').filter(item => item.trim() !== '');
-    const operationals = commonOperationalFacilitiesTextarea.value.split('\n').filter(item => item.trim() !== '');
-    const audios = commonAudioFacilitiesTextarea.value.split('\n').filter(item => item.trim() !== '');
-    
-    // 清空现有选项
-    projectLocationSelect.innerHTML = '<option value="">请选择拍摄地</option>';
-    projectDirectorSelect.innerHTML = '<option value="">请选择导演</option>';
-    projectPhotographerSelect.innerHTML = '<option value="">请选择摄影师</option>';
-    projectProductionSelect.innerHTML = '<option value="">请选择制片</option>';
-    projectRdSelect.innerHTML = '<option value="">请选择研发</option>';
-    projectOperationalSelect.innerHTML = '<option value="">请选择运营</option>';
-    projectAudioSelect.innerHTML = '<option value="">请选择录音</option>';
-    
-    // 添加新选项
-    locations.forEach(location => {
-        const option = document.createElement('option');
-        option.value = location;
-        option.textContent = location;
-        projectLocationSelect.appendChild(option);
-    });
-    
-    directors.forEach(director => {
-        const option = document.createElement('option');
-        option.value = director;
-        option.textContent = director;
-        projectDirectorSelect.appendChild(option);
-    });
-    
-    photographers.forEach(photographer => {
-        const option = document.createElement('option');
-        option.value = photographer;
-        option.textContent = photographer;
-        projectPhotographerSelect.appendChild(option);
-    });
-    
-    productions.forEach(production => {
-        const option = document.createElement('option');
-        option.value = production;
-        option.textContent = production;
-        projectProductionSelect.appendChild(option);
-    });
-    
-    rds.forEach(rd => {
-        const option = document.createElement('option');
-        option.value = rd;
-        option.textContent = rd;
-        projectRdSelect.appendChild(option);
-    });
-    
-    operationals.forEach(operational => {
-        const option = document.createElement('option');
-        option.value = operational;
-        option.textContent = operational;
-        projectOperationalSelect.appendChild(option);
-    });
-    
-    audios.forEach(audio => {
-        const option = document.createElement('option');
-        option.value = audio;
-        option.textContent = audio;
-        projectAudioSelect.appendChild(option);
-    });
+    const settings = window.__currentSettings || {};
+    const locations = (settings.commonLocations || []);
+
+    renderRadioGroup(locationOptionsDiv, locations);
+    renderProjectRoleFields(settings);
 }
 
 // 初始化开始时间选项
@@ -2135,7 +2528,7 @@ async function deleteProject(dateStr, projectIndex) {
     
     modalContent.innerHTML = `
         <h3 style="margin-top: 0; color: #e74c3c;">确认删除</h3>
-        <p style="color: #666; margin: 20px 0;">确定要删除项目 "<strong>${projectName}</strong>" 吗？</p>
+        <p style="color: #666; margin: 20px 0;">确定要删除项目 "<strong>${escapeHtml(projectName)}</strong>" 吗？</p>
         <p style="color: #999; font-size: 12px;">此操作无法撤销</p>
         <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
             <button id="confirm-delete-btn" class="btn" style="background-color: #e74c3c; color: white;">确认删除</button>
@@ -2178,43 +2571,6 @@ async function deleteProject(dateStr, projectIndex) {
             document.body.removeChild(modal);
         }
     });
-}
-
-// 复制项目
-async function copyProject(dateStr, projectIndex) {
-    const beforeState = cloneScheduleState();
-    try {
-        const project = scheduleData[dateStr][projectIndex];
-        
-        // 创建项目副本（在同一日期）
-        if (!scheduleData[dateStr]) {
-            scheduleData[dateStr] = [];
-        }
-        
-        // 创建副本项目（不添加后缀）
-        const copiedProject = {
-            ...project,
-            name: project.name
-        };
-        
-        // 添加到同一日期的项目列表末尾
-        scheduleData[dateStr].push(copiedProject);
-        
-        // 保存数据到API
-        await scheduleAPI.saveSchedule({
-            date: dateStr,
-            projects: scheduleData[dateStr]
-        });
-        
-        // 重新渲染
-        pushUndoSnapshot('复制项目', beforeState, scheduleData);
-        renderSchedule();
-        showToast('项目复制成功', 'success');
-    } catch (error) {
-        console.error('复制项目时出错:', error);
-        scheduleData = beforeState;
-        showToast(error.message || '复制项目时出错，请重试', 'error');
-    }
 }
 
 // 粘贴识别按钮事件处理函数
@@ -2406,6 +2762,7 @@ function showMultiProjectDateSelectionModal(projectNames) {
 
 // 创建多个新项目
 async function createMultipleProjects(projectNames, date) {
+    const beforeState = cloneScheduleState();
     try {
         const dateStr = formatDate(date);
         
@@ -2434,12 +2791,13 @@ async function createMultipleProjects(projectNames, date) {
         });
         
         // 重新渲染
+        pushUndoSnapshot('粘贴识别创建项目', beforeState, scheduleData);
         renderSchedule();
         
         showToast(`成功创建 ${projectNames.length} 个项目`, 'success');
-        console.log('项目创建成功');
     } catch (error) {
         console.error('创建项目时出错:', error);
+        scheduleData = beforeState;
         showToast('创建项目时出错，请重试', 'error');
     }
 }
@@ -2546,6 +2904,11 @@ async function handleDrop(e) {
 // 显示导出模态框
 function showExportModal() {
     exportModal.style.display = 'block';
+    // 禁用按钮直到图片生成完成
+    downloadImageBtn.disabled = true;
+    openInNewTabBtn.disabled = true;
+    downloadImageBtn.textContent = '生成中…';
+    openInNewTabBtn.textContent = '生成中…';
     drawScheduleToCanvas();
 }
 
@@ -2559,14 +2922,18 @@ function drawScheduleToCanvas() {
     tempContainer.style.width = '1680px';
     // 与编辑页面底色一致 - 浅灰色背景
     tempContainer.style.background = '#f5f5f7';
+    tempContainer.style.fontFamily = '"Noto Sans SC", "Source Han Sans SC", "Helvetica Neue", Arial, sans-serif';
     tempContainer.style.padding = '24px';
     tempContainer.style.minHeight = '800px';
+    tempContainer.style.fontKerning = 'none';
+    tempContainer.style.textRendering = 'optimizeSpeed';
+    tempContainer.style.letterSpacing = '0';
+    tempContainer.style.wordSpacing = '0';
+    tempContainer.style.fontVariantEastAsian = 'full-width';
     
-    // 创建头部 - 毛玻璃效果
+    // 创建头部 - 使用实色背景（html2canvas 不支持 backdrop-filter）
     const header = document.createElement('div');
-    header.style.background = 'rgba(255, 255, 255, 0.85)';
-    header.style.backdropFilter = 'blur(20px)';
-    header.style.webkitBackdropFilter = 'blur(20px)';
+    header.style.background = 'rgba(255, 255, 255, 0.95)';
     header.style.borderRadius = '24px';
     header.style.padding = '28px 32px';
     header.style.boxShadow = '0 4px 24px rgba(0, 0, 0, 0.15)';
@@ -2581,29 +2948,30 @@ function drawScheduleToCanvas() {
     title.style.fontWeight = '600';
     title.style.color = '#1d1d1f';
     title.style.marginBottom = '12px';
-    title.style.letterSpacing = '-0.5px';
+    title.style.letterSpacing = '0';
     
-    // 创建周信息
+    // 创建周信息（第二行：第X周通告 5月4日 - 5月10日）
     const weekDates = getWeekDates(currentMonday);
     const weekNumber = getWeekNumber(weekDates[0]);
-    const year = weekDates[0].getFullYear();
-    const startDate = formatMonthDay(weekDates[0]);
-    const endDate = formatMonthDay(weekDates[6]);
-    
-    const weekInfo = document.createElement('div');
-    weekInfo.textContent = `${year}年第${weekNumber}周 周通告 (${startDate} - ${endDate})`;
-    weekInfo.style.fontWeight = '500';
-    weekInfo.style.fontSize = '16px';
-    weekInfo.style.color = '#6e6e73';
-    
+
+    function formatDateChinese(d) {
+        return `${d.getMonth() + 1}月${d.getDate()}日`;
+    }
+    const startDateChinese = formatDateChinese(weekDates[0]);
+    const endDateChinese = formatDateChinese(weekDates[6]);
+
+    const weekInfoLine = document.createElement('div');
+    weekInfoLine.textContent = `第${weekNumber}周通告 ${startDateChinese} - ${endDateChinese}`;
+    weekInfoLine.style.fontWeight = '500';
+    weekInfoLine.style.fontSize = '16px';
+    weekInfoLine.style.color = '#6e6e73';
+
     header.appendChild(title);
-    header.appendChild(weekInfo);
+    header.appendChild(weekInfoLine);
     
-    // 创建主要内容区域 - 毛玻璃效果
+    // 创建主要内容区域 - 使用实色背景（html2canvas 不支持 backdrop-filter）
     const mainContent = document.createElement('div');
-    mainContent.style.background = 'rgba(255, 255, 255, 0.85)';
-    mainContent.style.backdropFilter = 'blur(20px)';
-    mainContent.style.webkitBackdropFilter = 'blur(20px)';
+    mainContent.style.background = 'rgba(255, 255, 255, 0.95)';
     mainContent.style.borderRadius = '24px';
     mainContent.style.overflow = 'hidden';
     mainContent.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.15)';
@@ -2624,7 +2992,7 @@ function drawScheduleToCanvas() {
         dayHeader.style.textAlign = 'center';
         dayHeader.style.fontWeight = '600';
         dayHeader.style.fontSize = '14px';
-        dayHeader.style.letterSpacing = '0.5px';
+        dayHeader.style.letterSpacing = '0';
         
         const date = weekDates[i];
         const month = date.getMonth() + 1;
@@ -2682,25 +3050,22 @@ function drawScheduleToCanvas() {
                 // 创建项目卡片 - Apple 风格
                 const projectCard = createProjectCard(project, dateStr2, projectIndex);
                 
-                // 移除事件监听器以避免干扰
-                projectCard.onclick = null;
-                projectCard.onmousedown = null;
-                projectCard.ondragstart = null;
-                projectCard.ondragend = null;
+                // 克隆节点以移除所有事件监听器
+                const cleanCard = projectCard.cloneNode(true);
                 
                 // 移除删除按钮
-                const deleteBtn = projectCard.querySelector('.delete-btn');
+                const deleteBtn = cleanCard.querySelector('.delete-btn');
                 if (deleteBtn) {
                     deleteBtn.remove();
                 }
                 
                 // 移除复制按钮
-                const copyBtn = projectCard.querySelector('.copy-btn');
+                const copyBtn = cleanCard.querySelector('.copy-btn');
                 if (copyBtn) {
                     copyBtn.remove();
                 }
                 
-                dayColumn.appendChild(projectCard);
+                dayColumn.appendChild(cleanCard);
             });
         } else {
             // 显示空状态
@@ -2731,7 +3096,9 @@ function drawScheduleToCanvas() {
     html2canvas(tempContainer, {
         scale: 2, // 提高分辨率
         useCORS: true,
-        backgroundColor: null // 使用透明背景
+        backgroundColor: '#f5f5f7', // 使用实色背景避免透明导致空白
+        logging: false,
+        allowTaint: true
     }).then(canvas => {
         // 将生成的canvas替换到导出canvas中
         const exportCtx = exportCanvas.getContext('2d');
@@ -2741,10 +3108,24 @@ function drawScheduleToCanvas() {
         
         // 移除临时元素
         document.body.removeChild(tempContainer);
+        
+        // 启用按钮
+        downloadImageBtn.disabled = false;
+        openInNewTabBtn.disabled = false;
+        downloadImageBtn.textContent = '下载图片';
+        openInNewTabBtn.textContent = '在新标签页打开';
     }).catch(error => {
         console.error('导出图片时出错:', error);
         // 移除临时元素
-        document.body.removeChild(tempContainer);
+        if (tempContainer.parentNode) {
+            document.body.removeChild(tempContainer);
+        }
+        
+        // 恢复按钮状态
+        downloadImageBtn.disabled = false;
+        openInNewTabBtn.disabled = false;
+        downloadImageBtn.textContent = '下载图片';
+        openInNewTabBtn.textContent = '在新标签页打开';
         
         // 出错时显示提示
         showToast('导出图片时出错，请重试', 'error');
@@ -2770,6 +3151,10 @@ function openImageInNewTab() {
         // 将canvas转换为数据URL并在新标签页打开
         const dataURL = canvas.toDataURL('image/png');
         const newWindow = window.open();
+        if (!newWindow) {
+            showToast('浏览器拦截了弹出窗口，请允许弹窗后重试，或使用下载功能', 'warning');
+            return;
+        }
         newWindow.document.write(`<img src="${dataURL}" alt="罐头场通告排期" style="width:100%;height:auto;" />`);
         newWindow.document.close();
     } catch (error) {
@@ -2792,7 +3177,7 @@ async function exportAllData() {
             settings: settings,
             schedules: schedules,
             exportDate: new Date().toISOString(),
-            version: '2.18'
+            version: '2.54'
         };
         
         // 创建Blob对象
@@ -3070,42 +3455,52 @@ async function loadHistoryRecords() {
             return;
         }
 
-        const actionLabels = { add: '新增', edit: '编辑', delete: '删除' };
-        const actionClasses = { add: 'history-action-add', edit: 'history-action-edit', delete: 'history-action-delete' };
+        const actionLabels = { saveSchedule: '保存排期', deleteSchedule: '删除排期', add: '新增', edit: '编辑', delete: '删除' };
+        const actionClasses = { saveSchedule: 'history-action-add', deleteSchedule: 'history-action-delete', add: 'history-action-add', edit: 'history-action-edit', delete: 'history-action-delete' };
 
         tbody.innerHTML = records.map(r => {
-            const ts = new Date(r.ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+            const ts = new Date(r.ts).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
             const actionLabel = actionLabels[r.action] || r.action;
             const actionClass = actionClasses[r.action] || '';
-            let detail = '';
-            if (r.action === 'edit' && r.before_json && r.after_json) {
-                try {
-                    const before = JSON.parse(r.before_json);
-                    const after = JSON.parse(r.after_json);
-                    const diffs = [];
-                    Object.keys(after).forEach(k => {
-                        if (JSON.stringify(before[k]) !== JSON.stringify(after[k])) {
-                            diffs.push(`${k}: <em>${after[k]}</em>`);
+
+            // 优先使用后端生成的 detail 字段
+            let detail = r.detail || '';
+
+            // 如果没有 detail，尝试从 before/after 推导
+            if (!detail) {
+                if (r.before_json && r.after_json) {
+                    try {
+                        const before = JSON.parse(r.before_json);
+                        const after = JSON.parse(r.after_json);
+                        if (Array.isArray(before) && Array.isArray(after)) {
+                            const beforeNames = before.map(p => p.name).filter(Boolean);
+                            const afterNames = after.map(p => p.name).filter(Boolean);
+                            const added = afterNames.filter(n => !beforeNames.includes(n));
+                            const removed = beforeNames.filter(n => !afterNames.includes(n));
+                            const parts = [];
+                            if (added.length) parts.push(`新增: ${added.join(', ')}`);
+                            if (removed.length) parts.push(`删除: ${removed.join(', ')}`);
+                            detail = parts.join(' | ') || `更新了 ${after.length} 个项目`;
                         }
-                    });
-                    detail = diffs.slice(0, 3).join(' · ');
-                } catch (e) { /* ignore */ }
-            } else if (r.action === 'add' && r.after_json) {
-                try {
-                    const after = JSON.parse(r.after_json);
-                    detail = after.name || '';
-                } catch (e) { /* ignore */ }
-            } else if (r.action === 'delete' && r.before_json) {
-                try {
-                    const before = JSON.parse(r.before_json);
-                    detail = before.name || '';
-                } catch (e) { /* ignore */ }
+                    } catch (e) { /* ignore */ }
+                } else if (r.after_json) {
+                    try {
+                        const after = JSON.parse(r.after_json);
+                        detail = Array.isArray(after) ? `${after.length} 个项目` : (after.name || '');
+                    } catch (e) { /* ignore */ }
+                } else if (r.before_json) {
+                    try {
+                        const before = JSON.parse(r.before_json);
+                        detail = Array.isArray(before) ? `${before.length} 个项目` : (before.name || '');
+                    } catch (e) { /* ignore */ }
+                }
             }
+
             return `<tr>
-                <td>${ts}</td>
-                <td class="${actionClass}">${actionLabel}</td>
-                <td>${r.date || ''}</td>
-                <td class="history-diff">${detail}</td>
+                <td style="white-space:nowrap;font-family:monospace;font-size:12px;">${ts}</td>
+                <td class="${actionClass}" style="white-space:nowrap;">${actionLabel}</td>
+                <td style="white-space:nowrap;">${r.date || ''}</td>
+                <td class="history-diff" style="font-size:13px;">${escapeHtml(detail)}</td>
             </tr>`;
         }).join('');
     } catch (err) {
@@ -3144,9 +3539,11 @@ async function sortDayProjects(dateStr) {
         return inPrevA - inPrevB;
     });
 
+    const beforeState = cloneScheduleState();
     scheduleData[dateStr] = sorted;
     try {
         await persistScheduleDate(dateStr);
+        pushUndoSnapshot('一键排序', beforeState, scheduleData);
         renderSchedule();
         showToast('排序完成', 'success');
     } catch (err) {
@@ -3174,18 +3571,21 @@ function showNoticeModal(dateStr) {
     } else {
         body.innerHTML = projects.map((p, i) => {
             const meta = [
-                p.startTime ? `⏰ ${p.startTime}` : '',
-                p.location ? `📍 ${p.location}` : '',
-                p.director ? `导演: ${p.director}` : '',
-                p.photographer ? `摄影: ${p.photographer}` : '',
-                p.production ? `制片: ${p.production}` : '',
-                p.type ? `类型: ${p.type}` : ''
-            ].filter(Boolean);
+                p.startTime ? `⏰ ${escapeHtml(p.startTime)}` : '',
+                p.location ? `📍 ${escapeHtml(p.location)}` : ''
+            ];
+            const cats = (roleCategories || []).filter(c => c.key !== 'location');
+            cats.forEach(cat => {
+                const val = p[cat.key] || (p.customFields && p.customFields[cat.key]);
+                if (val) meta.push(`${escapeHtml(cat.label)}: ${escapeHtml(val)}`);
+            });
+            if (p.type) meta.push(`类型: ${escapeHtml(p.type)}`);
+            const metaFiltered = meta.filter(Boolean);
             return `<div class="notice-project-row">
                 <div class="notice-index">${i + 1}</div>
                 <div class="notice-project-info">
-                    <div class="notice-project-name">${p.name}</div>
-                    <div class="notice-project-meta">${meta.map(m => `<span>${m}</span>`).join('')}</div>
+                    <div class="notice-project-name">${escapeHtml(p.name)}</div>
+                    <div class="notice-project-meta">${metaFiltered.map(m => `<span>${m}</span>`).join('')}</div>
                 </div>
             </div>`;
         }).join('');
@@ -3207,14 +3607,17 @@ function showNoticeModal(dateStr) {
         const rows = projects.length === 0
             ? '<p style="color:#999;text-align:center;padding:24px 0">当日暂无项目</p>'
             : projects.map((p, i) => {
-                const meta = [
+                const metaParts = [
                     p.startTime    ? `时间: ${p.startTime}`    : '',
-                    p.location     ? `地点: ${p.location}`     : '',
-                    p.director     ? `导演: ${p.director}`     : '',
-                    p.photographer ? `摄影: ${p.photographer}` : '',
-                    p.production   ? `制片: ${p.production}`   : '',
-                    p.type         ? `类型: ${p.type}`         : ''
-                ].filter(Boolean).join('　');
+                    p.location     ? `地点: ${p.location}`     : ''
+                ];
+                const cats = (roleCategories || []).filter(c => c.key !== 'location');
+                cats.forEach(cat => {
+                    const val = p[cat.key] || (p.customFields && p.customFields[cat.key]);
+                    if (val) metaParts.push(`${cat.label}: ${val}`);
+                });
+                if (p.type) metaParts.push(`类型: ${p.type}`);
+                const meta = metaParts.filter(Boolean).join('　');
                 const border = i < projects.length - 1 ? 'border-bottom:1px solid #ececec;' : '';
                 return `<div style="display:flex;gap:18px;padding:18px 0;${border}align-items:flex-start">
                     <div style="font-size:13px;font-weight:600;color:#bbb;min-width:18px;padding-top:3px">${i + 1}</div>

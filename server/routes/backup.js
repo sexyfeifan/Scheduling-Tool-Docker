@@ -37,6 +37,15 @@ function createBackupRouter({ backupPassword, backupService, requireAdminPasswor
     res.json({ message: '恢复成功' });
   }));
 
+  router.delete('/backups', requireEditAccess, asyncHandler(async (req, res) => {
+    if (!req.body || !req.body.backupPath) {
+      return res.status(400).json({ message: '请指定要删除的备份' });
+    }
+
+    await backupService.deleteBackup(req.body.backupPath);
+    res.json({ message: '备份已删除', backups: (await backupService.listBackups()).slice(0, 20) });
+  }));
+
   router.get('/backups/:folder/:file', requireAdminPassword, asyncHandler(async (req, res) => {
     const filePath = await backupService.resolveBackupFile(`/backups/${req.params.folder}/${req.params.file}`);
     const data = await fs.readFile(filePath);

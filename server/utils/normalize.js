@@ -2,7 +2,19 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { APP_CREATE_DATE, APP_VERSION, SCHEMA_VERSION } = require('../config');
 
+const DEFAULT_ROLE_CATEGORIES = [
+  { key: 'location', label: '拍摄地', type: 'radio', optionsKey: 'commonLocations' },
+  { key: 'director', label: '导演', type: 'checkbox', optionsKey: 'commonDirectors' },
+  { key: 'photographer', label: '摄影师', type: 'checkbox', optionsKey: 'commonPhotographers' },
+  { key: 'production', label: '制片', type: 'checkbox', optionsKey: 'commonProductionFacilities' },
+  { key: 'rd', label: '研发', type: 'checkbox', optionsKey: 'commonRdFacilities' },
+  { key: 'operational', label: '运营', type: 'checkbox', optionsKey: 'commonOperationalFacilities' },
+  { key: 'audio', label: '录音', type: 'checkbox', optionsKey: 'commonAudioFacilities' },
+  { key: 'business', label: '商务', type: 'checkbox', optionsKey: 'commonBusinessFacilities' }
+];
+
 const DEFAULT_SETTINGS = {
+  roleCategories: DEFAULT_ROLE_CATEGORIES,
   commonLocations: [],
   commonDirectors: [],
   commonPhotographers: [],
@@ -10,11 +22,20 @@ const DEFAULT_SETTINGS = {
   commonRdFacilities: [],
   commonOperationalFacilities: [],
   commonAudioFacilities: [],
+  commonBusinessFacilities: [],
+  customRoleOptions: {},
   projectTemplates: [],
   access: {
     editPasswordHash: '',
     shareEnabled: false,
     shareToken: ''
+  },
+  webhook: {
+    enabled: false,
+    url: '',
+    platform: 'custom',
+    dailyTemplate: '',
+    weeklyTemplate: ''
   }
 };
 
@@ -45,7 +66,7 @@ function normalizeTextArray(values, maxItems = 200, maxLength = 100) {
 function normalizeProject(project) {
   const validStatuses = ['待确认', '已确认', '已完成', '取消'];
   const rawStatus = project && project.status;
-  return {
+  const base = {
     name: normalizeText(project && project.name, 120),
     location: normalizeText(project && project.location, 120),
     director: normalizeText(project && project.director, 120),
@@ -54,11 +75,22 @@ function normalizeProject(project) {
     rd: normalizeText(project && project.rd, 120),
     operational: normalizeText(project && project.operational, 120),
     audio: normalizeText(project && project.audio, 120),
+    business: normalizeText(project && project.business, 120),
     type: normalizeText(project && project.type, 40),
     startTime: normalizeText(project && project.startTime, 10),
     laodao: Boolean(project && project.laodao),
     status: validStatuses.includes(rawStatus) ? rawStatus : '待确认'
   };
+
+  if (project && project.customFields && typeof project.customFields === 'object') {
+    const customFields = {};
+    for (const [key, value] of Object.entries(project.customFields)) {
+      customFields[normalizeText(key, 40)] = normalizeText(value, 120);
+    }
+    base.customFields = customFields;
+  }
+
+  return base;
 }
 
 function normalizeProjects(projects) {
@@ -118,12 +150,55 @@ function normalizeAccessConfig(rawAccess) {
   };
 }
 
+function normalizeWebhookConfig(rawWebhook) {
+  const wh = rawWebhook && typeof rawWebhook === 'object' ? rawWebhook : {};
+  const validPlatforms = ['dingtalk', 'feishu', 'wecom', 'custom'];
+  const platform = validPlatforms.includes(wh.platform) ? wh.platform : 'custom';
+  return {
+    enabled: Boolean(wh.enabled),
+    url: normalizeText(wh.url, 500),
+    platform,
+    dailyTemplate: normalizeText(wh.dailyTemplate, 5000),
+    weeklyTemplate: normalizeText(wh.weeklyTemplate, 5000)
+  };
+}
+
+function normalizeRoleCategories(rawCategories) {
+  if (!Array.isArray(rawCategories)) {
+    return DEFAULT_ROLE_CATEGORIES;
+  }
+
+  const seen = new Set();
+  const result = [];
+  for (const cat of rawCategories) {
+    if (!cat || typeof cat !== 'object') continue;
+    const key = normalizeText(cat.key, 40);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    const label = normalizeText(cat.label, 40) || key;
+    const type = cat.type === 'radio' ? 'radio' : 'checkbox';
+    const optionsKey = normalizeText(cat.optionsKey, 80) || `commonCustom_${key}`;
+    result.push({ key, label, type, optionsKey });
+  }
+  return result.length > 0 ? result : DEFAULT_ROLE_CATEGORIES;
+}
+
 function normalizeSettingsPayload(rawSettings) {
   const base = rawSettings && typeof rawSettings === 'object'
     ? (Array.isArray(rawSettings) ? (rawSettings[0] || {}) : rawSettings)
     : {};
 
+  const roleCategories = normalizeRoleCategories(base.roleCategories);
+
+  const customRoleOptions = {};
+  if (base.customRoleOptions && typeof base.customRoleOptions === 'object') {
+    for (const [key, values] of Object.entries(base.customRoleOptions)) {
+      customRoleOptions[normalizeText(key, 40)] = normalizeTextArray(values);
+    }
+  }
+
   return {
+    roleCategories,
     commonLocations: normalizeTextArray(base.commonLocations),
     commonDirectors: normalizeTextArray(base.commonDirectors),
     commonPhotographers: normalizeTextArray(base.commonPhotographers),
@@ -131,8 +206,11 @@ function normalizeSettingsPayload(rawSettings) {
     commonRdFacilities: normalizeTextArray(base.commonRdFacilities),
     commonOperationalFacilities: normalizeTextArray(base.commonOperationalFacilities),
     commonAudioFacilities: normalizeTextArray(base.commonAudioFacilities),
+    commonBusinessFacilities: normalizeTextArray(base.commonBusinessFacilities),
+    customRoleOptions,
     projectTemplates: normalizeTemplateList(base.projectTemplates),
-    access: normalizeAccessConfig(base.access)
+    access: normalizeAccessConfig(base.access),
+    webhook: normalizeWebhookConfig(base.webhook)
   };
 }
 
@@ -184,6 +262,7 @@ function normalizeVersionData(rawVersion) {
 
 function sanitizeSettingsForClient(settings) {
   return {
+    roleCategories: settings.roleCategories || DEFAULT_ROLE_CATEGORIES,
     commonLocations: settings.commonLocations || [],
     commonDirectors: settings.commonDirectors || [],
     commonPhotographers: settings.commonPhotographers || [],
@@ -191,10 +270,13 @@ function sanitizeSettingsForClient(settings) {
     commonRdFacilities: settings.commonRdFacilities || [],
     commonOperationalFacilities: settings.commonOperationalFacilities || [],
     commonAudioFacilities: settings.commonAudioFacilities || [],
+    commonBusinessFacilities: settings.commonBusinessFacilities || [],
+    customRoleOptions: settings.customRoleOptions || {},
     projectTemplates: settings.projectTemplates || [],
     access: {
       shareEnabled: Boolean(settings.access && settings.access.shareEnabled)
-    }
+    },
+    webhook: settings.webhook || { enabled: false, url: '', platform: 'custom', dailyTemplate: '', weeklyTemplate: '' }
   };
 }
 
@@ -230,6 +312,7 @@ function wrapStructuredData(data) {
 }
 
 module.exports = {
+  DEFAULT_ROLE_CATEGORIES,
   DEFAULT_SETTINGS,
   SCHEMA_VERSION,
   generateId,
@@ -240,6 +323,7 @@ module.exports = {
   normalizeBackupPayload,
   normalizeProject,
   normalizeProjects,
+  normalizeRoleCategories,
   normalizeScheduleList,
   normalizeSettingsPayload,
   normalizeTemplate,

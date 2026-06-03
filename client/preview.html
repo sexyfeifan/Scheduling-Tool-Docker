@@ -414,6 +414,7 @@
         let currentMonday = getMonday(new Date());
         let currentMonthDate = new Date(); // 任意该月内的日期
         let scheduleData = {};
+        let roleCategories = [];
 
         // ── DOM ───────────────────────────────────────────────────
 
@@ -584,14 +585,21 @@
             const typeClassMap = { '平面': 'plane', '视频': 'video', '直播': 'live', '试做': 'test' };
             const typeClass = typeClassMap[project.type] || 'plane';
 
+            const cats = (roleCategories || []).filter(c => c.key !== 'location');
             let staffInfo = '';
-            if (project.director || project.photographer || project.production || project.rd || project.startTime) {
+            const hasStartTime = project.startTime;
+            const hasAnyRole = hasStartTime || cats.some(cat => {
+                const val = project[cat.key] || (project.customFields && project.customFields[cat.key]);
+                return val;
+            });
+
+            if (hasAnyRole) {
                 staffInfo = '<div class="staff-info">';
                 if (project.startTime) staffInfo += `<span class="staff-role start-time">⏰ ${project.startTime}</span>`;
-                if (project.director)   staffInfo += `<span class="staff-role director">导演：${project.director}</span>`;
-                if (project.photographer) staffInfo += `<span class="staff-role photographer">摄影：${project.photographer}</span>`;
-                if (project.production) staffInfo += `<span class="staff-role production">制片：${project.production}</span>`;
-                if (project.rd)         staffInfo += `<span class="staff-role rd">研发：${project.rd}</span>`;
+                cats.forEach(cat => {
+                    const val = project[cat.key] || (project.customFields && project.customFields[cat.key]);
+                    if (val) staffInfo += `<span class="staff-role ${cat.key}">${cat.label}：${val}</span>`;
+                });
                 staffInfo += '</div>';
             }
 
@@ -697,11 +705,22 @@
             }
         }
 
+        async function loadSettingsData() {
+            try {
+                const res = await fetch('/api/settings');
+                if (!res.ok) return;
+                const settings = await res.json();
+                roleCategories = settings.roleCategories || [];
+            } catch (err) {
+                console.error('加载设置时出错:', err);
+            }
+        }
+
         // ── 初始化 ────────────────────────────────────────────────
 
         async function initPreview() {
             setupEventListeners();
-            await loadScheduleData();
+            await Promise.all([loadScheduleData(), loadSettingsData()]);
             switchToWeek(); // 默认周视图
             connectSSE();
         }

@@ -11,6 +11,7 @@ const { createSchedulesRouter } = require('./routes/schedules');
 const { createSettingsRouter } = require('./routes/settings');
 const { createSystemRouter } = require('./routes/system');
 const { createHistoryRouter } = require('./routes/history');
+const { createWebhookRouter } = require('./routes/webhook');
 const { createBackupService } = require('./services/backupService');
 const { createSqliteStore } = require('./services/sqliteStore');
 const { verifyPassword } = require('./utils/normalize');
@@ -132,6 +133,7 @@ function createApp(options = {}) {
     store
   }));
   app.use('/api/history', createHistoryRouter({ requireAdminPassword, store }));
+  app.use('/api/webhook', createWebhookRouter({ requireAdminPassword, store }));
   app.use('/api', createSystemRouter({ store }));
 
   app.use(express.static(CLIENT_DIR));

@@ -1,6 +1,8 @@
 # 罐头场通告排期 - Docker版本
 
-> 当前版本：**v2.31** | Docker Hub: `sexyfeifan/scheduling-tool:2.31`
+> **作者**: 性感的非凡 | **邮箱**: zhoufeifan@gmail.com
+
+> 当前版本：**v2.58** | Docker Hub: `sexyfeifan/scheduling-tool:2.58`
 
 ## 简介
 
@@ -20,7 +22,7 @@
 - 👀 只读预览页面（`/notice`）
 - 📋 卡片复制功能
 
-## 最新特性（v2.31）
+## 最新特性（v2.54）
 
 ### 月视图优化
 - **完整显示所有项目**：每个日期格不再限制最多3条，所有项目全部展开显示
@@ -51,7 +53,7 @@
 
 ```bash
 # 下载发布目录后进入项目
-cd scheduling-tool-docker-v2.18
+cd scheduling-tool-docker-v2.54
 
 # 可选：先设置备份密码
 export BACKUP_PASSWORD='your-strong-password'
@@ -90,7 +92,7 @@ docker compose pull && docker compose up -d
 ```bash
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -t sexyfeifan/scheduling-tool:2.31 \
+  -t sexyfeifan/scheduling-tool:2.54 \
   -t sexyfeifan/scheduling-tool:latest \
   --push .
 ```

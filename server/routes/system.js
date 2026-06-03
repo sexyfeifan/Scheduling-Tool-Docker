@@ -9,7 +9,7 @@ function createSystemRouter({ store }) {
   router.get('/version', (req, res) => {
     const version = store.readVersion();
     res.json({
-      version: version.version || APP_VERSION,
+      version: APP_VERSION,
       createDate: version.createDate || APP_CREATE_DATE,
       buildDate: version.buildDate || new Date().toISOString().split('T')[0]
     });

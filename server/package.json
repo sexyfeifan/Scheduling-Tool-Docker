@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "2.31.0",
+  "version": "2.54.0",
   "description": "罐头场通告排期Web版后端服务",
   "main": "server.js",
   "scripts": {
@@ -13,7 +13,7 @@
     "排期",
     "通告"
   ],
-  "author": "Scheduling Tool Team",
+  "author": "性感的非凡 <zhoufeifan@gmail.com>",
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {

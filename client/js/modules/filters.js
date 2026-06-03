@@ -16,18 +16,13 @@ export function matchesProjectFilters(project, filters) {
     }
 
     if (filters.search) {
-        const combined = [
-            project.name,
-            project.location,
-            project.director,
-            project.photographer,
-            project.production,
-            project.rd,
-            project.operational,
-            project.audio
-        ].join(' ');
-
-        if (!includesIgnoreCase(combined, filters.search)) {
+        const parts = [project.name, project.location];
+        const roleKeys = ['director', 'photographer', 'production', 'rd', 'operational', 'audio', 'business'];
+        roleKeys.forEach(k => { if (project[k]) parts.push(project[k]); });
+        if (project.customFields) {
+            for (const v of Object.values(project.customFields)) { if (v) parts.push(v); }
+        }
+        if (!includesIgnoreCase(parts.join(' '), filters.search)) {
             return false;
         }
     }
@@ -37,16 +32,13 @@ export function matchesProjectFilters(project, filters) {
     }
 
     if (filters.person) {
-        const personText = [
-            project.director,
-            project.photographer,
-            project.production,
-            project.rd,
-            project.operational,
-            project.audio
-        ].join(' ');
-
-        if (!includesIgnoreCase(personText, filters.person)) {
+        const parts = [];
+        const roleKeys = ['director', 'photographer', 'production', 'rd', 'operational', 'audio', 'business'];
+        roleKeys.forEach(k => { if (project[k]) parts.push(project[k]); });
+        if (project.customFields) {
+            for (const v of Object.values(project.customFields)) { if (v) parts.push(v); }
+        }
+        if (!includesIgnoreCase(parts.join(' '), filters.person)) {
             return false;
         }
     }
