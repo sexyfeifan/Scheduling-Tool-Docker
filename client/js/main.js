@@ -26,6 +26,7 @@ import { createDragdropModule } from './modules/dragdrop.js';
 import { createMobileModule } from './modules/mobile.js';
 import { createSseModule } from './modules/sse.js';
 import { createHeatmapModule } from './modules/heatmap.js';
+import { initViewSwitcher } from './modules/viewSwitcher.js';
 
 // ── 共享状态 ──
 let currentMonday = getMonday(new Date());
@@ -296,6 +297,9 @@ async function initApp() {
     sse.connectSSE();
     webhook.setupWebhookEvents();
     setInterval(settings.loadHealthStatus, 30000);
+
+    // 初始化视图切换器
+    initViewSwitcher();
 
     // 快捷键
     ui.setupKeyboardShortcuts({

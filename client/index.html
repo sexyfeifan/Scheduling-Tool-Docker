@@ -30,6 +30,13 @@
                 <button id="webhook-btn" class="btn icon-btn" title="Webhook 推送">📤 推送</button>
                 <button id="settings" class="btn icon-btn" title="设置">⚙ 设置</button>
                 <button id="admin-btn" class="btn icon-btn" title="管理员设置">🔐 管理</button>
+                <span class="toolbar-divider"></span>
+                <div id="view-switcher" class="view-switcher">
+                    <button class="view-btn active" data-view="week" title="周视图（主视图）">📅 周</button>
+                    <button class="view-btn" data-view="month" title="月视图甘特图">📆 月</button>
+                    <button class="view-btn" data-view="personnel" title="人员排期视图">👥 人员</button>
+                    <button class="view-btn" data-view="dashboard" title="数据看板">📊 看板</button>
+                </div>
             </div>
             <div class="toolbar filters-toolbar">
                 <input id="search-projects" class="toolbar-input" type="search" placeholder="搜索项目 / 场地 / 人员">
@@ -53,6 +60,8 @@
 
         <!-- 主要内容区域 -->
         <main class="main-content">
+            <!-- 📅 周视图（主视图，保持现状） -->
+            <div id="week-view" class="view-panel active">
             <!-- 星期标题 -->
             <div class="week-header">
                 <div class="day-header" id="monday-header">周一</div>
@@ -88,6 +97,80 @@
                     <div class="empty-state">🈚️</div>
                 </div>
             </div>
+            </div><!-- /week-view -->
+
+            <!-- 📆 月视图（辅助视图，新增） -->
+            <div id="month-view" class="view-panel" style="display:none">
+                <div class="view-header">
+                    <button id="month-prev" class="btn icon-btn">◀</button>
+                    <span id="month-display" class="month-display">2026年6月</span>
+                    <button id="month-next" class="btn icon-btn">▶</button>
+                    <span class="toolbar-divider"></span>
+                    <select id="month-filter-type" class="toolbar-select">
+                        <option value="">全部类型</option>
+                        <option value="平面">平面</option>
+                        <option value="视频">视频</option>
+                        <option value="直播">直播</option>
+                        <option value="试做">试做</option>
+                        <option value="外拍">外拍</option>
+                    </select>
+                    <div class="month-legend">
+                        <span class="legend-item"><span class="legend-color" style="background:#3B82F6"></span>视频</span>
+                        <span class="legend-item"><span class="legend-color" style="background:#10B981"></span>外拍</span>
+                        <span class="legend-item"><span class="legend-color" style="background:#F59E0B"></span>试做</span>
+                        <span class="legend-item"><span class="legend-color" style="background:#8B5CF6"></span>平面</span>
+                        <span class="legend-item"><span class="legend-color" style="background:#EF4444"></span>直播</span>
+                    </div>
+                </div>
+                <div id="month-grid" class="month-grid"></div>
+                <div id="month-stats" class="month-stats"></div>
+            </div>
+
+            <!-- 👥 人员排期视图（辅助视图，新增） -->
+            <div id="personnel-view" class="view-panel" style="display:none">
+                <div class="view-header">
+                    <button id="personnel-prev" class="btn icon-btn">◀</button>
+                    <span id="personnel-display" class="personnel-display">2026年6月23日-29日</span>
+                    <button id="personnel-next" class="btn icon-btn">▶</button>
+                    <span class="toolbar-divider"></span>
+                    <button class="btn icon-btn personnel-range-btn active" data-range="week">周</button>
+                    <button class="btn icon-btn personnel-range-btn" data-range="biweek">双周</button>
+                    <button class="btn icon-btn personnel-range-btn" data-range="month">月</button>
+                    <span class="toolbar-divider"></span>
+                    <input id="personnel-search" class="toolbar-input" type="search" placeholder="搜索人员">
+                    <select id="personnel-filter-role" class="toolbar-select">
+                        <option value="">全部职能</option>
+                        <option value="director">🎬 导演</option>
+                        <option value="photographer">📷 摄影</option>
+                        <option value="production">🎬 制片</option>
+                        <option value="rd">🔬 研发</option>
+                        <option value="operational">📢 运营</option>
+                        <option value="audio">🎤 录音</option>
+                        <option value="business">💼 商务</option>
+                    </select>
+                    <label class="personnel-conflict-toggle">
+                        <input type="checkbox" id="personnel-conflict-only"> 仅显示冲突
+                    </label>
+                </div>
+                <div id="personnel-conflict-summary" class="personnel-conflict-summary"></div>
+                <div id="personnel-grid" class="personnel-grid"></div>
+                <div id="personnel-stats" class="personnel-stats"></div>
+            </div>
+
+            <!-- 📊 数据看板（辅助视图，新增） -->
+            <div id="dashboard-view" class="view-panel" style="display:none">
+                <div class="view-header">
+                    <span class="dashboard-title">📊 数据看板</span>
+                    <span class="toolbar-divider"></span>
+                    <button class="btn icon-btn dashboard-range-btn active" data-range="week">本周</button>
+                    <button class="btn icon-btn dashboard-range-btn" data-range="month">本月</button>
+                    <button class="btn icon-btn dashboard-range-btn" data-range="quarter">本季</button>
+                    <button class="btn icon-btn dashboard-range-btn" data-range="all">全部</button>
+                </div>
+                <div id="dashboard-overview" class="dashboard-overview"></div>
+                <div id="dashboard-charts" class="dashboard-charts"></div>
+            </div>
+
         </main>
 
         <!-- 项目编辑模态框 -->
