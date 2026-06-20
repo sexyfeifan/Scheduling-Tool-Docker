@@ -307,7 +307,7 @@ function setupEventListeners() {
                     if (adminUnlockedContent) adminUnlockedContent.style.display = 'block';
                     ui.showToast('密码验证成功', 'success');
                     // 加载备份列表
-                    if (typeof modal.loadBackupList === 'function') modal.loadBackupList();
+                    if (typeof modalBackup.loadBackupList === 'function') modalBackup.loadBackupList();
                 } else {
                     ui.showToast('密码错误', 'error');
                 }
@@ -324,6 +324,32 @@ function setupEventListeners() {
                 e.preventDefault();
                 if (confirmAdminPwdBtn) confirmAdminPwdBtn.click();
             }
+        });
+    }
+
+    // ── 管理员标签页切换 ──
+    const adminTabBtns = document.querySelectorAll('.admin-tab-btn');
+    const adminTabPanels = document.querySelectorAll('.admin-tab-panel');
+
+    adminTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.dataset.tab;
+            
+            // 更新按钮状态
+            adminTabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // 更新面板显示
+            adminTabPanels.forEach(panel => {
+                panel.style.display = panel.id === `admin-tab-${tabId}` ? 'block' : 'none';
+            });
+        });
+    });
+
+    // 初始化：显示第一个标签页，隐藏其他
+    if (adminTabPanels.length > 0) {
+        adminTabPanels.forEach((panel, index) => {
+            panel.style.display = index === 0 ? 'block' : 'none';
         });
     }
 
