@@ -126,6 +126,18 @@ export function createApiClient({
                 throw new Error('读取备份预览失败');
             }
             return response.json();
+        },
+        get: (path) => request(path),
+        post: (path, body) => request(path, { method: 'POST', body: JSON.stringify(body) }),
+        getBlob: async (path) => {
+            const adminPassword = getAdminPassword ? getAdminPassword() : '';
+            const editPassword = getEditPassword ? getEditPassword() : '';
+            const headers = {};
+            if (adminPassword) headers['x-admin-password'] = adminPassword;
+            if (editPassword) headers['x-edit-password'] = editPassword;
+            const response = await fetch(`${baseUrl}${path}`, { headers });
+            if (!response.ok) throw new Error(`请求失败: ${response.status}`);
+            return response.blob();
         }
     };
 }

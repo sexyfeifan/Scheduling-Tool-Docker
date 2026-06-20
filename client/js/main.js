@@ -33,6 +33,7 @@ import { createDashboardViewModule } from './modules/dashboardView.js';
 import { createQuickAddModule } from './modules/quickAdd.js';
 import { createHistoryPanelModule } from './modules/historyPanel.js';
 import { createSearchModule } from './modules/search.js';
+import { createClientExportModule } from './modules/clientExport.js';
 
 // ── 共享状态 ──
 let currentMonday = getMonday(new Date());
@@ -105,6 +106,7 @@ const monthView = createMonthViewModule({
         import('./modules/viewSwitcher.js').then(m => m.switchView('week'));
     }
 });
+const clientExport = createClientExportModule({ apiClient });
 const personnelView = createPersonnelViewModule({
     api: { fetchSchedules: (start, end) => apiClient.get(`/schedules?start=${start}&end=${end}`) },
     onJumpToWeek: (date) => {
@@ -114,6 +116,7 @@ const personnelView = createPersonnelViewModule({
         import('./modules/viewSwitcher.js').then(m => m.switchView('week'));
     }
 });
+const clientExport = createClientExportModule({ apiClient });
 const dashboardView = createDashboardViewModule({
     api: { fetchSchedules: (start, end) => apiClient.get(`/schedules?start=${start}&end=${end}`) }
 });
@@ -137,6 +140,7 @@ const searchModule = createSearchModule({
         }
     }
 });
+const clientExport = createClientExportModule({ apiClient });
 
 // 合并所有模态框函数到统一接口
 const allModals = { ...modal, ...modalProject, ...modalExport, ...modalBackup };
@@ -359,6 +363,7 @@ async function initApp() {
     quickAdd.init();
     historyPanel.init();
     searchModule.init();
+    clientExport.init();
 
     // 快捷键
     ui.setupKeyboardShortcuts({
