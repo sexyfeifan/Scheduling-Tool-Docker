@@ -1,194 +1,245 @@
 /**
- * 数据看板模块
- * 展示排期数据的统计分析
+ * 数据看板视图模块
+ * 统计面板：项目类型分布、场地使用频率、人员工作量、状态分布、周趋势
  */
 
 /**
- * 创建数据看板模块
+ * 创建数据看板视图模块
  */
 export function createDashboardViewModule({ api }) {
-  let currentRange = 'week';
+  const STATUS_COLORS = {
+    '待确认': '#94A3B8',
+    '已确认': '#3B82F6',
+    '已完成': '#10B981',
+    '取消': '#EF4444'
+  };
+  const TYPE_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316'];
 
   function init() {
-    document.querySelectorAll('.dashboard-range-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.dashboard-range-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentRange = btn.dataset.range;
-        render();
-      });
-    });
-
-    document.addEventListener('viewInit', (e) => {
-      if (e.detail.view === 'dashboard') render();
-    });
+    // 看板在切换到该视图时自动渲染
   }
 
   async function render() {
-    const { start, end } = getDateRange(currentRange);
-    try {
-      const schedules = await api.fetchSchedules(start, end) || {};
-      const stats = computeStats(schedules);
-      renderOverview(stats);
-      renderCharts(stats);
-    } catch (e) {
-      console.error('[dashboard] 加载数据失败:', e);
-    }
-  }
+    const container = document.getElementById('dashboard-view');
+    if (!container) return;
 
-  function getDateRange(range) {
+    // 获取过去 4 周数据
     const now = new Date();
-    let start;
-    switch (range) {
-      case 'week':
-        start = getMonday(new Date(now));
-        break;
-      case 'month':
-        start = new Date(now.getFullYear(), now.getMonth(), 1);
-        break;
-      case 'quarter':
-        start = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
-        break;
-      default: // 'all'
-        start = new Date(2020, 0, 1);
+    const startDate = new Date(now);
+    startDate.setDate(startDate.getDate() - 28);
+    const endDate = new Date(now);
+    endDate.setDate(endDate.getDate() + 7);
+
+    let schedules = [];
+    try {
+      const response = await api.fetchSchedules(formatDate(startDate), formatDate(endDate));
+      if (Array.isArray(response)) schedules = response;
+    } catch (e) {
+      console.error('[dashboard] 获取数据失败:', e);
     }
-    return { start: formatDate(start), end: formatDate(now) };
+
+    // 统计数据
+    const stats = computeStats(schedules);
+
+    // 渲染看板
+    let html = '<div class="dashboard-grid">';
+
+    // 概览卡片
+    html += renderOverviewCards(stats);
+
+    // 状态分布饼图（CSS 实现）
+    html += renderStatusChart(stats);
+
+    // 项目类型分布
+    html += renderTypeChart(stats);
+
+    // 场地使用 Top 10
+    html += renderTopList('📍 场地使用 Top 10', stats.locationTop, '#3B82F6');
+
+    // 人员工作量 Top 10
+    html += renderTopList('👤 人员工作量 Top 10', stats.personTop, '#10B981');
+
+    // 周趋势折线（简化表格）
+    html += renderWeeklyTrend(stats);
+
+    html += '</div>';
+    container.innerHTML = html;
   }
 
   function computeStats(schedules) {
-    const typeMap = {};
-    const directorMap = {};
-    const locationMap = {};
-    const weeklyMap = {};
-    let total = 0;
-    let pending = 0;
-    const daysWithProjects = new Set();
+    const stats = {
+      totalProjects: 0,
+      statusCounts: {},
+      typeCounts: {},
+      locationCounts: {},
+      personCounts: {},
+      weeklyCounts: {}
+    };
 
-    Object.entries(schedules).forEach(([date, dayData]) => {
-      if (!dayData || !dayData.projects) return;
-      if (dayData.projects.length > 0) daysWithProjects.add(date);
+    schedules.forEach(item => {
+      const weekKey = getWeekKey(item.date);
+      if (!stats.weeklyCounts[weekKey]) stats.weeklyCounts[weekKey] = 0;
 
-      dayData.projects.forEach(proj => {
-        total++;
-        if (proj.status === '待确认') pending++;
+      (item.projects || []).forEach(proj => {
+        stats.totalProjects++;
+        stats.weeklyCounts[weekKey]++;
 
-        const type = proj.type || '其他';
-        typeMap[type] = (typeMap[type] || 0) + 1;
+        // 状态
+        const status = proj.status || '待确认';
+        stats.statusCounts[status] = (stats.statusCounts[status] || 0) + 1;
 
-        if (proj.director) {
-          directorMap[proj.director] = (directorMap[proj.director] || 0) + 1;
-        }
+        // 类型
+        const type = proj.type || '未分类';
+        stats.typeCounts[type] = (stats.typeCounts[type] || 0) + 1;
+
+        // 场地
         if (proj.location) {
-          locationMap[proj.location] = (locationMap[proj.location] || 0) + 1;
+          stats.locationCounts[proj.location] = (stats.locationCounts[proj.location] || 0) + 1;
         }
 
-        // 按周统计
-        const d = new Date(date + 'T00:00:00');
-        const weekKey = `${d.getFullYear()}-W${getWeekNumber(d)}`;
-        weeklyMap[weekKey] = (weeklyMap[weekKey] || 0) + 1;
+        // 人员（所有角色）
+        ['director', 'photographer', 'production', 'rd', 'operational', 'audio', 'business'].forEach(role => {
+          const name = proj[role];
+          if (name) {
+            stats.personCounts[name] = (stats.personCounts[name] || 0) + 1;
+          }
+        });
       });
     });
 
-    const totalDays = Object.keys(schedules).length || 1;
-    const locationUsage = Math.round((daysWithProjects.size / totalDays) * 100);
+    // 排序 Top 10
+    stats.locationTop = Object.entries(stats.locationCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    stats.personTop = Object.entries(stats.personCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    stats.weeklySorted = Object.entries(stats.weeklyCounts).sort((a, b) => a[0].localeCompare(b[0]));
 
-    return {
-      overview: { total, monthNew: total, locationUsage, pending },
-      typeDistribution: Object.entries(typeMap).map(([type, count]) => ({
-        type, count, percent: Math.round((count / (total || 1)) * 100)
-      })).sort((a, b) => b.count - a.count),
-      directorWorkload: Object.entries(directorMap)
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5),
-      locationRanking: Object.entries(locationMap)
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5),
-      weeklyTrend: Object.entries(weeklyMap)
-        .sort((a, b) => a[0].localeCompare(b[0]))
-        .slice(-5)
-        .map(([week, count]) => ({ week: week.split('-W')[1] || week, count }))
-    };
+    return stats;
   }
 
-  function renderOverview(stats) {
-    const el = document.getElementById('dashboard-overview');
-    if (!el) return;
+  function renderOverviewCards(stats) {
+    const confirmed = stats.statusCounts['已确认'] || 0;
+    const pending = stats.statusCounts['待确认'] || 0;
+    const completed = stats.statusCounts['已完成'] || 0;
+    const cancelled = stats.statusCounts['取消'] || 0;
 
-    const cards = [
-      { icon: '📋', value: stats.overview.total, label: '项目总数', trend: null },
-      { icon: '📅', value: stats.overview.monthNew, label: '当前周期', trend: null },
-      { icon: '🏢', value: `${stats.overview.locationUsage}%`, label: '场地使用率', trend: null },
-      { icon: '⏳', value: stats.overview.pending, label: '待确认', trend: null }
-    ];
-
-    el.innerHTML = cards.map(c => `
-      <div class="dashboard-card">
-        <div class="card-icon">${c.icon}</div>
-        <div class="card-value">${c.value}</div>
-        <div class="card-label">${c.label}</div>
-      </div>
-    `).join('');
-  }
-
-  function renderCharts(stats) {
-    const el = document.getElementById('dashboard-charts');
-    if (!el) return;
-
-    const maxType = Math.max(...stats.typeDistribution.map(t => t.count), 1);
-    const maxDirector = Math.max(...stats.directorWorkload.map(d => d.count), 1);
-    const maxLocation = Math.max(...stats.locationRanking.map(l => l.count), 1);
-    const maxWeekly = Math.max(...stats.weeklyTrend.map(w => w.count), 1);
-
-    const typeColors = { '视频': '#3B82F6', '外拍': '#10B981', '试做': '#F59E0B', '平面': '#8B5CF6', '直播': '#EF4444' };
-
-    el.innerHTML = `
-      <div class="dashboard-chart">
-        <h3>项目类型分布</h3>
-        ${stats.typeDistribution.map(t => `
-          <div class="chart-bar-row">
-            <span class="chart-bar-label">${t.type}</span>
-            <div class="chart-bar-track">
-              <div class="chart-bar-fill" style="width:${(t.count / maxType) * 100}%;background:${typeColors[t.type] || '#6B7280'}">${t.percent}%</div>
-            </div>
-            <span class="chart-bar-value">${t.count}</span>
-          </div>
-        `).join('')}
-      </div>
-      <div class="dashboard-chart">
-        <h3>导演工作量 TOP5</h3>
-        ${stats.directorWorkload.map(d => `
-          <div class="chart-bar-row">
-            <span class="chart-bar-label">${d.name}</span>
-            <div class="chart-bar-track">
-              <div class="chart-bar-fill" style="width:${(d.count / maxDirector) * 100}%;background:#3B82F6">${d.count}个</div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-      <div class="dashboard-chart">
-        <h3>场地使用排行</h3>
-        ${stats.locationRanking.map(l => `
-          <div class="chart-bar-row">
-            <span class="chart-bar-label">${l.name}</span>
-            <div class="chart-bar-track">
-              <div class="chart-bar-fill" style="width:${(l.count / maxLocation) * 100}%;background:#10B981">${l.count}次</div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-      <div class="dashboard-chart">
-        <h3>每周项目数趋势</h3>
-        <div style="display:flex;align-items:flex-end;gap:8px;height:120px;padding-top:10px">
-          ${stats.weeklyTrend.map(w => `
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-              <div style="font-size:10px;color:#666">${w.count}</div>
-              <div style="width:100%;background:#3B82F6;border-radius:4px 4px 0 0;height:${(w.count / maxWeekly) * 80}px;min-height:4px"></div>
-              <div style="font-size:10px;color:#999">W${w.week}</div>
-            </div>
-          `).join('')}
+    return `
+      <div class="dashboard-overview">
+        <div class="dashboard-card overview-total">
+          <div class="card-number">${stats.totalProjects}</div>
+          <div class="card-label">总项目数</div>
         </div>
+        <div class="dashboard-card" style="border-left:4px solid #3B82F6">
+          <div class="card-number">${confirmed}</div>
+          <div class="card-label">已确认</div>
+        </div>
+        <div class="dashboard-card" style="border-left:4px solid #94A3B8">
+          <div class="card-number">${pending}</div>
+          <div class="card-label">待确认</div>
+        </div>
+        <div class="dashboard-card" style="border-left:4px solid #10B981">
+          <div class="card-number">${completed}</div>
+          <div class="card-label">已完成</div>
+        </div>
+        <div class="dashboard-card" style="border-left:4px solid #EF4444">
+          <div class="card-number">${cancelled}</div>
+          <div class="card-label">已取消</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderStatusChart(stats) {
+    const total = stats.totalProjects || 1;
+    const entries = Object.entries(stats.statusCounts);
+
+    let segments = '';
+    let offset = 0;
+    entries.forEach(([status, count]) => {
+      const pct = (count / total * 100);
+      const color = STATUS_COLORS[status] || '#94A3B8';
+      segments += `<div class="pie-segment" style="--start:${offset}%;--pct:${pct}%;background:${color}" title="${status}: ${count}"></div>`;
+      offset += pct;
+    });
+
+    let legend = '';
+    entries.forEach(([status, count]) => {
+      const color = STATUS_COLORS[status] || '#94A3B8';
+      const pct = Math.round(count / total * 100);
+      legend += `<div class="chart-legend-item"><span class="legend-dot" style="background:${color}"></span>${status}: ${count} (${pct}%)</div>`;
+    });
+
+    return `
+      <div class="dashboard-card chart-card">
+        <h3 class="dashboard-card-title">📊 状态分布</h3>
+        <div class="chart-container">
+          <div class="pie-chart">${segments}</div>
+          <div class="chart-legend">${legend}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderTypeChart(stats) {
+    const entries = Object.entries(stats.typeCounts).sort((a, b) => b[1] - a[1]);
+    const max = entries.length > 0 ? entries[0][1] : 1;
+
+    let bars = '';
+    entries.forEach(([type, count], i) => {
+      const pct = Math.round(count / max * 100);
+      const color = TYPE_COLORS[i % TYPE_COLORS.length];
+      bars += `
+        <div class="bar-item">
+          <div class="bar-label">${escapeHtml(type)}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+          <div class="bar-value">${count}</div>
+        </div>
+      `;
+    });
+
+    return `
+      <div class="dashboard-card chart-card">
+        <h3 class="dashboard-card-title">📋 项目类型分布</h3>
+        <div class="bar-chart">${bars || '<p style="color:#999;font-size:13px">暂无数据</p>'}</div>
+      </div>
+    `;
+  }
+
+  function renderTopList(title, data, color) {
+    const max = data.length > 0 ? data[0][1] : 1;
+
+    let items = '';
+    data.forEach(([name, count], i) => {
+      const pct = Math.round(count / max * 100);
+      items += `
+        <div class="top-item">
+          <span class="top-rank">${i + 1}</span>
+          <span class="top-name">${escapeHtml(name)}</span>
+          <div class="top-bar-track"><div class="top-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+          <span class="top-count">${count}</span>
+        </div>
+      `;
+    });
+
+    return `
+      <div class="dashboard-card chart-card">
+        <h3 class="dashboard-card-title">${title}</h3>
+        <div class="top-list">${items || '<p style="color:#999;font-size:13px">暂无数据</p>'}</div>
+      </div>
+    `;
+  }
+
+  function renderWeeklyTrend(stats) {
+    let rows = '';
+    stats.weeklySorted.forEach(([week, count]) => {
+      rows += `<tr><td>${week}</td><td style="font-weight:600">${count}</td></tr>`;
+    });
+
+    return `
+      <div class="dashboard-card chart-card">
+        <h3 class="dashboard-card-title">📈 周趋势</h3>
+        <table class="trend-table">
+          <thead><tr><th>周</th><th>项目数</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="2" style="color:#999">暂无数据</td></tr>'}</tbody>
+        </table>
       </div>
     `;
   }
@@ -198,14 +249,6 @@ export function createDashboardViewModule({ api }) {
 
 // ── 工具函数 ──
 
-function getMonday(date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  return d;
-}
-
 function formatDate(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -213,10 +256,13 @@ function formatDate(date) {
   return `${y}-${m}-${d}`;
 }
 
-function getWeekNumber(date) {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+function getWeekKey(dateStr) {
+  const d = new Date(dateStr);
+  const jan1 = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return `${d.getFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

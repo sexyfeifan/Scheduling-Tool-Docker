@@ -1,203 +1,142 @@
 /**
- * 月视图甘特图模块
- * 展示整月排期，项目以彩色条形跨越多天显示
+ * 月视图模块 — 甘特图式展示
+ * 显示当月每天的项目条，支持点击查看、点击日期跳转
  */
-
-import { getMonday } from './date.js';
-
-const TYPE_COLORS = {
-  '视频': '#3B82F6',
-  '外拍': '#10B981',
-  '试做': '#F59E0B',
-  '平面': '#8B5CF6',
-  '直播': '#EF4444'
-};
-const DEFAULT_COLOR = '#6B7280';
 
 /**
  * 创建月视图模块
  */
 export function createMonthViewModule({ api, onJumpToWeek }) {
   let currentDate = new Date();
-  let scheduleCache = {};
+  let cachedData = {};
+  const PERSON_COLORS = {
+    director: '#3B82F6',
+    photographer: '#10B981',
+    production: '#F59E0B',
+    rd: '#8B5CF6',
+    operational: '#EC4899',
+    audio: '#06B6D4',
+    business: '#F97316'
+  };
+  const STATUS_COLORS = {
+    '待确认': '#94A3B8',
+    '已确认': '#3B82F6',
+    '已完成': '#10B981',
+    '取消': '#EF4444'
+  };
 
-  /**
-   * 初始化月视图
-   */
   function init() {
-    document.getElementById('month-prev')?.addEventListener('click', () => {
-      currentDate.setMonth(currentDate.getMonth() - 1);
-      render();
-    });
-    document.getElementById('month-next')?.addEventListener('click', () => {
-      currentDate.setMonth(currentDate.getMonth() + 1);
-      render();
-    });
-    document.getElementById('month-filter-type')?.addEventListener('change', () => {
-      render();
-    });
-
-    // 监听视图切换事件
-    document.addEventListener('viewInit', (e) => {
-      if (e.detail.view === 'month') {
-        currentDate = new Date();
-        render();
-      }
-    });
+    const prevBtn = document.getElementById('month-prev');
+    const nextBtn = document.getElementById('month-next');
+    const todayBtn = document.getElementById('month-today');
+    if (prevBtn) prevBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); render(); });
+    if (nextBtn) nextBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); render(); });
+    if (todayBtn) todayBtn.addEventListener('click', () => { currentDate = new Date(); render(); });
   }
 
-  /**
-   * 渲染月视图
-   */
   async function render() {
+    const container = document.getElementById('month-view');
+    if (!container) return;
+
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
-
-    // 更新标题
-    const display = document.getElementById('month-display');
-    if (display) display.textContent = `${year}年${month + 1}月`;
-
-    // 获取当月数据
-    const startDate = new Date(year, month, 1);
-    const endDate = new Date(year, month + 1, 0);
-    const startStr = formatDate(startDate);
-    const endStr = formatDate(endDate);
-
-    try {
-      const data = await api.fetchSchedules(startStr, endStr);
-      scheduleCache = data || {};
-    } catch (e) {
-      console.error('[monthview] 加载数据失败:', e);
-      scheduleCache = {};
-    }
-
-    renderGrid(year, month);
-    renderStats(year, month);
-  }
-
-  /**
-   * 渲染月历网格
-   */
-  function renderGrid(year, month) {
-    const grid = document.getElementById('month-grid');
-    if (!grid) return;
-
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    const startMonday = getMonday(new Date(firstDay));
-    const filterType = document.getElementById('month-filter-type')?.value || '';
+    const startDate = formatDate(firstDay);
+    const endDate = formatDate(lastDay);
 
-    let html = '';
+    // 更新标题
+    const title = document.getElementById('month-title');
+    if (title) title.textContent = `${year}年${month + 1}月`;
 
-    // 表头：周几
-    const dayLabels = ['', '一', '二', '三', '四', '五', '六', '日'];
-    dayLabels.forEach(label => {
-      html += `<div class="month-day-header">${label}</div>`;
-    });
-
-    // 计算所有周
-    const weeks = [];
-    let currentWeekStart = new Date(startMonday);
-    while (currentWeekStart <= lastDay || currentWeekStart.getDay() !== 1) {
-      const weekEnd = new Date(currentWeekStart);
-      weekEnd.setDate(weekEnd.getDate() + 6);
-      weeks.push(new Date(currentWeekStart));
-      currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-      if (weeks.length > 6) break;
+    // 获取数据
+    try {
+      const response = await api.fetchSchedules(startDate, endDate);
+      cachedData = {};
+      if (Array.isArray(response)) {
+        response.forEach(item => { cachedData[item.date] = item.projects || []; });
+      }
+    } catch (e) {
+      console.error('[monthview] 获取数据失败:', e);
     }
 
+    // 构建日历网格
+    const firstDayOfWeek = firstDay.getDay(); // 0=周日
+    const totalDays = lastDay.getDate();
     const today = formatDate(new Date());
 
-    // 渲染每周
-    weeks.forEach((weekStart, weekIdx) => {
-      // 周标签
-      const weekNum = weekIdx + 1;
-      html += `<div class="month-week-label">W${weekNum}</div>`;
+    let html = '<div class="month-gantt">';
 
-      // 7天
-      for (let d = 0; d < 7; d++) {
-        const cellDate = new Date(weekStart);
-        cellDate.setDate(cellDate.getDate() + d);
-        const dateStr = formatDate(cellDate);
-        const isCurrentMonth = cellDate.getMonth() === month;
-        const isToday = dateStr === today;
+    // 星期头部
+    html += '<div class="month-header">';
+    ['日', '一', '二', '三', '四', '五', '六'].forEach(d => {
+      html += `<div class="month-header-cell">${d}</div>`;
+    });
+    html += '</div>';
 
-        let classes = 'month-day-cell';
-        if (!isCurrentMonth) classes += ' other-month';
-        if (isToday) classes += ' today';
+    // 日期网格
+    html += '<div class="month-grid">';
+    // 填充月初空白
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      html += '<div class="month-cell empty"></div>';
+    }
 
-        html += `<div class="${classes}" data-date="${dateStr}">`;
-        html += `<div class="month-day-number">${cellDate.getDate()}</div>`;
+    for (let day = 1; day <= totalDays; day++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const projects = cachedData[dateStr] || [];
+      const isToday = dateStr === today;
+      const dayOfWeek = new Date(year, month, day).getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-        // 渲染该天的项目条形
-        const dayData = scheduleCache[dateStr];
-        if (dayData && dayData.projects) {
-          const projects = filterType
-            ? dayData.projects.filter(p => p.type === filterType)
-            : dayData.projects;
+      html += `<div class="month-cell ${isToday ? 'today' : ''} ${isWeekend ? 'weekend' : ''}" data-date="${dateStr}">`;
+      html += `<div class="month-cell-header">`;
+      html += `<span class="month-day-number">${day}</span>`;
+      if (projects.length > 0) {
+        html += `<span class="month-project-count">${projects.length}</span>`;
+      }
+      html += `</div>`;
 
-          projects.forEach(proj => {
-            const colorClass = TYPE_COLORS[proj.type] ? `type-${proj.type}` : 'type-other';
-            const label = `${proj.name}(${proj.type || '-'})`;
-            html += `<div class="month-bar ${colorClass}" title="${escapeHtml(proj.name)} | ${escapeHtml(proj.type || '-')} | ${escapeHtml(proj.location || '-')} | ${escapeHtml(proj.director || '-')}" data-date="${dateStr}">${escapeHtml(label)}</div>`;
-          });
+      // 甘特条
+      if (projects.length > 0) {
+        html += '<div class="month-gantt-bars">';
+        projects.slice(0, 4).forEach(proj => {
+          const color = STATUS_COLORS[proj.status] || STATUS_COLORS['待确认'];
+          const persons = [proj.director, proj.photographer, proj.production].filter(Boolean);
+          html += `<div class="month-gantt-bar" style="background:${color}" title="${escapeAttr(proj.name)}${persons.length ? ' · ' + persons.join(', ') : ''}">`;
+          html += `<span class="gantt-bar-name">${escapeHtml(proj.name)}</span>`;
+          html += `</div>`;
+        });
+        if (projects.length > 4) {
+          html += `<div class="month-gantt-more">+${projects.length - 4} 个</div>`;
         }
-
         html += '</div>';
       }
+
+      html += '</div>';
+    }
+
+    html += '</div>';
+
+    // 图例
+    html += '<div class="month-legend">';
+    Object.entries(STATUS_COLORS).forEach(([status, color]) => {
+      html += `<span class="month-legend-item"><span class="legend-dot" style="background:${color}"></span>${status}</span>`;
     });
+    html += '</div>';
 
-    grid.innerHTML = html;
+    html += '</div>';
+    container.innerHTML = html;
 
-    // 点击条形跳转到周视图
-    grid.querySelectorAll('.month-bar').forEach(bar => {
-      bar.addEventListener('click', () => {
-        const dateStr = bar.dataset.date;
-        if (dateStr && onJumpToWeek) {
-          onJumpToWeek(new Date(dateStr + 'T00:00:00'));
-        }
+    // 绑定点击事件
+    container.querySelectorAll('.month-cell[data-date]').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const date = cell.dataset.date;
+        if (onJumpToWeek) onJumpToWeek(date);
       });
     });
   }
 
-  /**
-   * 渲染统计信息
-   */
-  function renderStats(year, month) {
-    const statsEl = document.getElementById('month-stats');
-    if (!statsEl) return;
-
-    const typeCounts = {};
-    let total = 0;
-
-    Object.values(scheduleCache).forEach(dayData => {
-      if (dayData && dayData.projects) {
-        dayData.projects.forEach(proj => {
-          total++;
-          const t = proj.type || '其他';
-          typeCounts[t] = (typeCounts[t] || 0) + 1;
-        });
-      }
-    });
-
-    const parts = [`本月共 ${total} 个项目`];
-    Object.entries(typeCounts)
-      .sort((a, b) => b[1] - a[1])
-      .forEach(([type, count]) => {
-        parts.push(`${type} ${count}`);
-      });
-
-    statsEl.textContent = parts.join(' · ');
-  }
-
-  /**
-   * 更新当前日期（从外部调用）
-   */
-  function setCurrentDate(date) {
-    currentDate = new Date(date);
-  }
-
-  return { init, render, setCurrentDate };
+  return { init, render };
 }
 
 // ── 工具函数 ──
@@ -210,9 +149,9 @@ function formatDate(date) {
 }
 
 function escapeHtml(str) {
-  return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function escapeAttr(str) {
+  return String(str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }

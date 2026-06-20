@@ -365,6 +365,20 @@ async function initApp() {
     searchModule.init();
     clientExport.init();
 
+    // 监听视图切换事件，触发各视图渲染
+    document.addEventListener('viewInit', (e) => {
+        const view = e.detail.view;
+        if (view === 'month') monthView.render();
+        if (view === 'personnel') personnelView.render();
+        if (view === 'dashboard') dashboardView.render();
+    });
+    document.addEventListener('viewChanged', (e) => {
+        const view = e.detail.to;
+        if (view === 'month') monthView.render();
+        if (view === 'personnel') personnelView.render();
+        if (view === 'dashboard') dashboardView.render();
+    });
+
     // 快捷键
     ui.setupKeyboardShortcuts({
         undo: () => undoManager.undo().catch(err => { ui.showToast(err.message || '撤销失败', 'error'); }),

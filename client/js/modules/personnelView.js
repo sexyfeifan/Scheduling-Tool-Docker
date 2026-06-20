@@ -1,109 +1,54 @@
 /**
  * 人员排期视图模块
- * 按人员×日期展示排期，支持冲突检测和筛选
+ * 以人员为行、日期为列的矩阵，显示每个人的排期
  */
-
-const ROLE_CONFIG = {
-  director: { label: '导演', icon: '🎬', order: 1 },
-  photographer: { label: '摄影', icon: '📷', order: 2 },
-  production: { label: '制片', icon: '🎬', order: 3 },
-  rd: { label: '研发', icon: '🔬', order: 4 },
-  operational: { label: '运营', icon: '📢', order: 5 },
-  audio: { label: '录音', icon: '🎤', order: 6 },
-  business: { label: '商务', icon: '💼', order: 7 }
-};
-
-const TYPE_STYLES = {
-  '视频': { bg: '#DBEAFE', color: '#1E40AF', darkBg: '#1e3a5f', darkColor: '#93c5fd' },
-  '外拍': { bg: '#D1FAE5', color: '#065F46', darkBg: '#1a3a2a', darkColor: '#6ee7b7' },
-  '试做': { bg: '#FEF3C7', color: '#92400E', darkBg: '#3a2a0a', darkColor: '#fcd34d' },
-  '平面': { bg: '#EDE9FE', color: '#5B21B6', darkBg: '#2d1b4e', darkColor: '#c4b5fd' },
-  '直播': { bg: '#FEE2E2', color: '#991B1B', darkBg: '#3b1b1b', darkColor: '#fca5a5' }
-};
 
 /**
  * 创建人员排期视图模块
  */
 export function createPersonnelViewModule({ api, onJumpToWeek }) {
-  let currentStart = null;
-  let currentRange = 'week';
-  let cachedData = null;
+  let currentDate = new Date();
+  let cachedData = {};
+  let viewMode = 'week'; // 'week' | 'month'
+  const ROLES = [
+    { key: 'director', label: '导演', color: '#3B82F6' },
+    { key: 'photographer', label: '摄影师', color: '#10B981' },
+    { key: 'production', label: '制片', color: '#F59E0B' },
+    { key: 'rd', label: '研发', color: '#8B5CF6' },
+    { key: 'operational', label: '运营', color: '#EC4899' },
+    { key: 'audio', label: '录音', color: '#06B6D4' },
+    { key: 'business', label: '商务', color: '#F97316' }
+  ];
 
   function init() {
-    // 日期导航
-    document.getElementById('personnel-prev')?.addEventListener('click', () => {
-      shiftRange(-1);
-    });
-    document.getElementById('personnel-next')?.addEventListener('click', () => {
-      shiftRange(1);
-    });
-
-    // 范围切换
-    document.querySelectorAll('.personnel-range-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.personnel-range-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentRange = btn.dataset.range;
-        initDates();
-        render();
-      });
-    });
-
-    // 筛选
-    document.getElementById('personnel-search')?.addEventListener('input', () => applyFilters());
-    document.getElementById('personnel-filter-role')?.addEventListener('change', () => applyFilters());
-    document.getElementById('personnel-conflict-only')?.addEventListener('change', () => applyFilters());
-
-    // 监听视图初始化
-    document.addEventListener('viewInit', (e) => {
-      if (e.detail.view === 'personnel') {
-        initDates();
-        render();
-      }
+    const prevBtn = document.getElementById('personnel-prev');
+    const nextBtn = document.getElementById('personnel-next');
+    const todayBtn = document.getElementById('personnel-today');
+    const toggleBtn = document.getElementById('personnel-toggle');
+    if (prevBtn) prevBtn.addEventListener('click', () => { shiftDate(-1); render(); });
+    if (nextBtn) nextBtn.addEventListener('click', () => { shiftDate(1); render(); });
+    if (todayBtn) todayBtn.addEventListener('click', () => { currentDate = new Date(); render(); });
+    if (toggleBtn) toggleBtn.addEventListener('click', () => {
+      viewMode = viewMode === 'week' ? 'month' : 'week';
+      toggleBtn.textContent = viewMode === 'week' ? '📅 切月视图' : '📅 切周视图';
+      render();
     });
   }
 
-  function initDates() {
-    const today = new Date();
-    currentStart = getMonday(new Date(today));
-  }
-
-  function shiftRange(direction) {
-    const days = currentRange === 'week' ? 7 : currentRange === 'biweek' ? 14 : 30;
-    currentStart.setDate(currentStart.getDate() + direction * days);
-    render();
+  function shiftDate(direction) {
+    if (viewMode === 'week') {
+      currentDate.setDate(currentDate.getDate() + direction * 7);
+    } else {
+      currentDate.setMonth(currentDate.getMonth() + direction);
+    }
   }
 
   async function render() {
-    if (!currentStart) initDates();
+    const container = document.getElementById('personnel-view');
+    if (!container) return;
 
-    const days = currentRange === 'week' ? 7 : currentRange === 'biweek' ? 14 : 30;
-    const endDate = new Date(currentStart);
-    endDate.setDate(endDate.getDate() + days - 1);
-
-    // 更新显示
-    const display = document.getElementById('personnel-display');
-    if (display) {
-      display.textContent = `${formatDateShort(currentStart)} - ${formatDateShort(endDate)}`;
-    }
-
-    const startStr = formatDate(currentStart);
-    const endStr = formatDate(endDate);
-
-    try {
-      // 获取排期数据
-      const schedules = await api.fetchSchedules(startStr, endStr) || {};
-      cachedData = buildPersonnelData(schedules, currentStart, days);
-      renderGrid(cachedData);
-      renderConflictSummary(cachedData);
-      renderStats(cachedData);
-      applyFilters();
-    } catch (e) {
-      console.error('[personnel] 加载数据失败:', e);
-    }
-  }
-
-  function buildPersonnelData(schedules, startDate, days) {
+    const startDate = getMonday(new Date(currentDate));
+    const days = viewMode === 'week' ? 7 : 35;
     const dates = [];
     for (let i = 0; i < days; i++) {
       const d = new Date(startDate);
@@ -111,191 +56,125 @@ export function createPersonnelViewModule({ api, onJumpToWeek }) {
       dates.push(formatDate(d));
     }
 
-    const roles = {};
-    const conflicts = [];
+    const endDate = dates[dates.length - 1];
 
-    // 初始化职能分组
-    Object.entries(ROLE_CONFIG).forEach(([key, cfg]) => {
-      roles[key] = { ...cfg, personnel: {} };
-    });
+    // 更新标题
+    const title = document.getElementById('personnel-title');
+    if (title) {
+      if (viewMode === 'week') {
+        title.textContent = `${dates[0]} ~ ${dates[6]}`;
+      } else {
+        title.textContent = `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月 人员排期`;
+      }
+    }
 
-    // 遍历排期数据
-    dates.forEach(dateStr => {
-      const dayData = schedules[dateStr];
-      if (!dayData || !dayData.projects) return;
+    // 获取数据
+    try {
+      const response = await api.fetchSchedules(dates[0], endDate);
+      cachedData = {};
+      if (Array.isArray(response)) {
+        response.forEach(item => { cachedData[item.date] = item.projects || []; });
+      }
+    } catch (e) {
+      console.error('[personnel] 获取数据失败:', e);
+    }
 
-      dayData.projects.forEach(proj => {
-        Object.entries(ROLE_CONFIG).forEach(([roleKey]) => {
-          const personName = proj[roleKey];
-          if (!personName) return;
-
-          if (!roles[roleKey].personnel[personName]) {
-            roles[roleKey].personnel[personName] = { totalCount: 0, schedule: {} };
-          }
-          const person = roles[roleKey].personnel[personName];
-          person.totalCount++;
-          if (!person.schedule[dateStr]) person.schedule[dateStr] = [];
-          person.schedule[dateStr].push({
-            projectName: proj.name,
-            type: proj.type,
-            startTime: proj.startTime
-          });
-        });
-      });
-    });
-
-    // 冲突检测
-    Object.values(roles).forEach(role => {
-      Object.entries(role.personnel).forEach(([name, person]) => {
-        Object.entries(person.schedule).forEach(([date, projects]) => {
-          if (projects.length > 1) {
-            conflicts.push({ person: name, date, count: projects.length });
-            person.conflictCount = (person.conflictCount || 0) + 1;
+    // 收集所有出现的人员
+    const personMap = new Map(); // name -> { role, count }
+    dates.forEach(date => {
+      (cachedData[date] || []).forEach(proj => {
+        ROLES.forEach(r => {
+          const name = proj[r.key];
+          if (name) {
+            const key = `${name}|${r.key}`;
+            if (!personMap.has(key)) {
+              personMap.set(key, { name, role: r.key, roleLabel: r.label, color: r.color, count: 0 });
+            }
+            personMap.get(key).count++;
           }
         });
       });
     });
 
-    return { dates, roles, conflicts };
-  }
+    const persons = Array.from(personMap.values()).sort((a, b) => b.count - a.count);
 
-  function renderGrid(data) {
-    const grid = document.getElementById('personnel-grid');
-    if (!grid) return;
-
-    const isDark = document.body.classList.contains('dark-mode');
-    let html = '<table><thead><tr>';
-    html += '<th style="min-width:120px">人员</th>';
-
-    data.dates.forEach(dateStr => {
-      const d = new Date(dateStr + 'T00:00:00');
-      const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-      html += `<th>${dayNames[d.getDay()]} ${d.getDate()}</th>`;
-    });
-    html += '</tr></thead><tbody>';
-
-    Object.entries(data.roles).forEach(([roleKey, role]) => {
-      const persons = Object.entries(role.personnel);
-      if (persons.length === 0) return;
-
-      // 职能标题行
-      html += `<tr><td class="role-header" colspan="${data.dates.length + 1}">${role.icon} ${role.label}</td></tr>`;
-
-      // 每个人员一行
-      persons.sort((a, b) => b[1].totalCount - a[1].totalCount);
-      persons.forEach(([name, person]) => {
-        html += `<tr data-person="${escapeHtml(name)}" data-role="${roleKey}">`;
-        html += `<td><span class="person-name">${escapeHtml(name)}</span><span class="person-count">(${person.totalCount})</span></td>`;
-
-        data.dates.forEach(dateStr => {
-          const projects = person.schedule[dateStr] || [];
-          const hasConflict = projects.length > 1;
-          const cellClass = hasConflict ? 'personnel-cell has-conflict' : 'personnel-cell';
-
-          html += `<td class="${cellClass}">`;
-          if (hasConflict) {
-            html += '<div style="font-size:10px;color:#DC2626;margin-bottom:2px">⚠️ 冲突</div>';
-          }
-          projects.forEach(proj => {
-            const style = TYPE_STYLES[proj.type] || { bg: '#F3F4F6', color: '#374151', darkBg: '#2a2a3e', darkColor: '#ddd' };
-            const bgColor = isDark ? style.darkBg : style.bg;
-            const textColor = isDark ? style.darkColor : style.color;
-            html += `<div class="personnel-project" style="background:${bgColor};color:${textColor}" data-date="${dateStr}" title="${escapeHtml(proj.projectName)} | ${escapeHtml(proj.type)} | ${proj.startTime || '-'}">${escapeHtml(proj.projectName)}</div>`;
-          });
-          html += '</td>';
-        });
-
-        html += '</tr>';
-      });
-    });
-
-    html += '</tbody></table>';
-    grid.innerHTML = html;
-
-    // 点击项目跳转到周视图
-    grid.querySelectorAll('.personnel-project').forEach(el => {
-      el.addEventListener('click', () => {
-        const dateStr = el.dataset.date;
-        if (dateStr && onJumpToWeek) onJumpToWeek(new Date(dateStr + 'T00:00:00'));
-      });
-    });
-  }
-
-  function renderConflictSummary(data) {
-    const el = document.getElementById('personnel-conflict-summary');
-    if (!el) return;
-
-    if (data.conflicts.length === 0) {
-      el.className = 'personnel-conflict-summary';
-      el.textContent = '';
+    if (persons.length === 0) {
+      container.innerHTML = '<p style="color:#999;padding:24px;text-align:center">当前时间范围内没有排期数据</p>';
       return;
     }
 
-    el.className = 'personnel-conflict-summary has-conflicts';
-    const parts = data.conflicts.map(c => {
-      const d = new Date(c.date + 'T00:00:00');
-      const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-      return `${c.person}(${dayNames[d.getDay()]} ${c.count}个项目)`;
+    // 构建矩阵表格
+    let html = '<div class="personnel-matrix">';
+
+    // 表头：日期
+    html += '<div class="personnel-header">';
+    html += '<div class="personnel-header-cell personnel-name-col">人员</div>';
+    dates.forEach(date => {
+      const d = new Date(date);
+      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+      const isToday = date === formatDate(new Date());
+      const dayLabel = `${d.getMonth() + 1}/${d.getDate()}\n${'日一二三四五六'[d.getDay()]}`;
+      html += `<div class="personnel-header-cell ${isWeekend ? 'weekend' : ''} ${isToday ? 'today' : ''}" title="${date}">${dayLabel}</div>`;
     });
-    el.textContent = `⚠️ 本周冲突：${parts.join(' · ')}`;
-  }
+    html += '</div>';
 
-  function renderStats(data) {
-    const el = document.getElementById('personnel-stats');
-    if (!el) return;
+    // 每个人员一行
+    persons.forEach(person => {
+      html += '<div class="personnel-row">';
+      html += `<div class="personnel-name-cell"><span class="person-role-dot" style="background:${person.color}"></span>${escapeHtml(person.name)}<span class="person-role-label">${person.roleLabel}</span></div>`;
 
-    const parts = [];
-    Object.values(data.roles).forEach(role => {
-      Object.entries(role.personnel).forEach(([name, person]) => {
-        const conflictStr = person.conflictCount ? `(含${person.conflictCount}冲突)` : '';
-        parts.push(`${name} ${person.totalCount}个${conflictStr}`);
+      dates.forEach(date => {
+        const projects = (cachedData[date] || []).filter(p => p[person.role] === person.name);
+        const isToday = date === formatDate(new Date());
+        const d = new Date(date);
+        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+
+        html += `<div class="personnel-cell ${isToday ? 'today' : ''} ${isWeekend ? 'weekend' : ''}" data-date="${date}">`;
+        if (projects.length > 0) {
+          projects.forEach(proj => {
+            const statusColor = STATUS_COLORS[proj.status] || '#94A3B8';
+            html += `<div class="personnel-project-tag" style="border-left:3px solid ${statusColor}" title="${escapeAttr(proj.name)} · ${proj.startTime || ''} · ${proj.status || '待确认'}">`;
+            html += escapeHtml(proj.name);
+            html += `</div>`;
+          });
+        }
+        html += '</div>';
+      });
+
+      html += '</div>';
+    });
+
+    html += '</div>';
+
+    // 统计摘要
+    html += '<div class="personnel-summary">';
+    html += `<span>共 ${persons.length} 人</span>`;
+    html += `<span>${dates.length} 天</span>`;
+    const totalSlots = dates.reduce((sum, d) => sum + (cachedData[d] || []).length, 0);
+    html += `<span>${totalSlots} 个排期</span>`;
+    html += '</div>';
+
+    container.innerHTML = html;
+
+    // 绑定点击跳转
+    container.querySelectorAll('.personnel-cell').forEach(cell => {
+      cell.addEventListener('click', () => {
+        if (onJumpToWeek) onJumpToWeek(cell.dataset.date);
       });
     });
-    el.textContent = `📊 统计：${parts.join(' · ')}`;
   }
 
-  function applyFilters() {
-    const searchText = (document.getElementById('personnel-search')?.value || '').toLowerCase();
-    const roleFilter = document.getElementById('personnel-filter-role')?.value || '';
-    const conflictOnly = document.getElementById('personnel-conflict-only')?.checked || false;
-
-    const grid = document.getElementById('personnel-grid');
-    if (!grid) return;
-
-    grid.querySelectorAll('tr[data-person]').forEach(row => {
-      const person = row.dataset.person?.toLowerCase() || '';
-      const role = row.dataset.role || '';
-      const hasConflict = row.querySelector('.has-conflict') !== null;
-
-      let visible = true;
-      if (searchText && !person.includes(searchText)) visible = false;
-      if (roleFilter && role !== roleFilter) visible = false;
-      if (conflictOnly && !hasConflict) visible = false;
-
-      row.style.display = visible ? '' : 'none';
-    });
-
-    // 隐藏空的职能分组
-    grid.querySelectorAll('tr td.role-header').forEach(header => {
-      const row = header.closest('tr');
-      let nextRow = row.nextElementSibling;
-      let hasVisible = false;
-      while (nextRow && nextRow.dataset.person) {
-        if (nextRow.style.display !== 'none') hasVisible = true;
-        nextRow = nextRow.nextElementSibling;
-      }
-      row.style.display = hasVisible ? '' : 'none';
-    });
-  }
-
-  function setCurrentDate(date) {
-    currentStart = getMonday(new Date(date));
-  }
-
-  return { init, render, setCurrentDate };
+  return { init, render };
 }
 
 // ── 工具函数 ──
+
+const STATUS_COLORS = {
+  '待确认': '#94A3B8',
+  '已确认': '#3B82F6',
+  '已完成': '#10B981',
+  '取消': '#EF4444'
+};
 
 function getMonday(date) {
   const d = new Date(date);
@@ -312,10 +191,10 @@ function formatDate(date) {
   return `${y}-${m}-${d}`;
 }
 
-function formatDateShort(date) {
-  return `${date.getMonth() + 1}月${date.getDate()}日`;
-}
-
 function escapeHtml(str) {
   return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function escapeAttr(str) {
+  return String(str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
