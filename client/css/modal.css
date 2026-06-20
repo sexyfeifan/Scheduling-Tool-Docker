@@ -6,9 +6,11 @@
 /* ========================================
  * modal.css — 模态框、表单、日期选择器、通告、管理、热力图
  * 罐头场通告排期系统 v2.59
- * ======================================== *//* ========================================
+ * ======================================== */
+/* ========================================
    模态框 - 毛玻璃效果
-   ======================================== */.modal {
+   ======================================== */
+.modal {
     display: none;
     position: fixed;
     z-index: 1000;
@@ -21,6 +23,7 @@
     -webkit-backdrop-filter: blur(4px);
     animation: fadeIn 0.2s ease;
 }
+
 .modal-content {
     background: var(--glass-bg);
     backdrop-filter: blur(40px);
@@ -38,6 +41,7 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
+
 .modal-content h2 {
     margin-top: 0;
     margin-bottom: 24px;
@@ -46,13 +50,17 @@
     font-weight: 600;
     padding-right: 40px;
 }
+
 .modal-content.date-picker {
     max-width: 380px;
 }
+
 .modal-content.copy-modal-content {
     max-width: 520px;
 }
-/* 关闭按钮 */.close {
+
+/* 关闭按钮 */
+.close {
     color: var(--text-tertiary);
     float: right;
     font-size: 28px;
@@ -69,13 +77,17 @@
     border-radius: 50%;
     transition: all 0.2s ease;
 }
+
 .close:hover {
     background: rgba(0, 0, 0, 0.06);
     color: var(--text-primary);
 }
-/* 表单样式 */.form-group {
+
+/* 表单样式 */
+.form-group {
     margin-bottom: 20px;
 }
+
 .form-group label {
     display: block;
     margin-bottom: 8px;
@@ -83,6 +95,7 @@
     color: var(--text-primary);
     font-size: 14px;
 }
+
 .form-group input,
 .form-group select,
 .form-group textarea {
@@ -95,6 +108,7 @@
     background: rgba(255, 255, 255, 0.9);
     color: var(--text-primary);
 }
+
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
@@ -102,10 +116,12 @@
     border-color: var(--blue-accent);
     box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
 }
+
 .form-group textarea {
     min-height: 100px;
     resize: vertical;
 }
+
 .form-group input[type="checkbox"] {
     width: 20px;
     height: 20px;
@@ -113,7 +129,9 @@
     cursor: pointer;
     accent-color: var(--blue-accent);
 }
-/* 表单操作按钮 */.form-actions {
+
+/* 表单操作按钮 */
+.form-actions {
     display: flex;
     gap: 12px;
     justify-content: flex-end;
@@ -121,24 +139,29 @@
     padding-top: 20px;
     border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
+
 .date-picker .form-actions,
 .export-modal .form-actions {
     justify-content: center;
 }
+
 .template-toolbar {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     margin-bottom: 18px;
 }
+
 .template-toolbar select {
     flex: 1;
     min-width: 180px;
 }
+
 .template-list {
     display: grid;
     gap: 12px;
 }
+
 .template-item {
     display: flex;
     justify-content: space-between;
@@ -149,19 +172,23 @@
     background: rgba(255, 255, 255, 0.8);
     border: 1px solid rgba(0, 0, 0, 0.06);
 }
+
 .template-item-info {
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
+
 .template-item-info span {
     color: var(--text-secondary);
     font-size: 13px;
 }
+
 .template-item-actions {
     display: flex;
     gap: 8px;
 }
+
 .share-link-display {
     margin-top: 8px;
     padding: 10px 12px;
@@ -171,11 +198,13 @@
     font-size: 13px;
     word-break: break-all;
 }
+
 .backup-preview-body {
     display: grid;
     gap: 10px;
     padding: 12px 0;
 }
+
 .backup-preview-warning {
     margin-top: 8px;
     padding: 10px 12px;
@@ -183,22 +212,27 @@
     background: rgba(255, 149, 0, 0.12);
     color: #9a5b00;
 }
+
 /* ========================================
    日期选择器
-   ======================================== */.date-picker-header {
+   ======================================== */
+.date-picker-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
 }
+
 .date-picker-header span {
     font-weight: 600;
     font-size: 18px;
     color: var(--text-primary);
 }
+
 .date-picker-calendar {
     margin-bottom: 20px;
 }
+
 .weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -208,12 +242,15 @@
     color: var(--text-secondary);
     font-size: 12px;
 }
-/* ── Tag 按钮组（项目表单） ── */.checkbox-group {
+
+/* ── Tag 按钮组（项目表单） ── */
+.checkbox-group {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     padding: 8px 0;
 }
+
 .tag-btn {
     display: inline-flex;
     align-items: center;
@@ -229,26 +266,32 @@
     user-select: none;
     white-space: nowrap;
 }
+
 .tag-btn:hover {
     border-color: var(--primary-color);
     background: rgba(102, 126, 234, 0.06);
     color: var(--primary-color);
 }
+
 .tag-btn.active {
     background: var(--primary-gradient);
     border-color: transparent;
     color: white;
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.35);
 }
+
 .tag-btn.active:hover {
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
 }
+
 .checkbox-empty {
     color: var(--text-secondary);
     font-size: 13px;
     font-style: italic;
 }
-/* 职能管理样式 */.role-category-item {
+
+/* 职能管理样式 */
+.role-category-item {
     border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: var(--radius-sm);
     padding: 12px;
@@ -256,12 +299,14 @@
     background: rgba(0, 0, 0, 0.01);
     position: relative;
 }
+
 .role-category-header {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-bottom: 8px;
 }
+
 .role-category-header input[type="text"] {
     flex: 1;
     padding: 6px 10px;
@@ -270,6 +315,7 @@
     font-size: 14px;
     font-weight: 600;
 }
+
 .role-category-header select {
     padding: 6px 10px;
     border: 1px solid #ddd;
@@ -277,6 +323,7 @@
     font-size: 13px;
     background: white;
 }
+
 .role-category-remove {
     background: none;
     border: none;
@@ -287,9 +334,11 @@
     border-radius: 4px;
     line-height: 1;
 }
+
 .role-category-remove:hover {
     background: rgba(255, 59, 48, 0.1);
 }
+
 .role-category-options textarea {
     width: 100%;
     min-height: 60px;
@@ -299,14 +348,17 @@
     font-size: 13px;
     resize: vertical;
 }
+
 /* ========================================
  * extra_components.css — Toast、Loading、导出、Webhook、设置、标签
  * 罐头场通告排期系统 v2.59
- * ======================================== */.days {
+ * ======================================== */
+.days {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 8px;
 }
+
 .day {
     height: 44px;
     display: flex;
@@ -319,22 +371,27 @@
     font-weight: 500;
     color: var(--text-primary);
 }
+
 .day:hover {
     background: rgba(0, 0, 0, 0.06);
 }
+
 .day.selected {
     background: var(--blue-accent);
     color: white;
     box-shadow: 0 4px 12px rgba(0, 113, 227, 0.4);
 }
+
 .day.other-month {
     color: var(--text-tertiary);
 }
+
 .day.today {
     background: var(--green-accent);
     color: white;
     box-shadow: 0 4px 12px rgba(52, 199, 89, 0.4);
 }
+
 .selected-date-info {
     text-align: center;
     padding: 12px;
@@ -344,38 +401,47 @@
     font-weight: 500;
     color: var(--text-secondary);
 }
+
 /* ========================================
    设置区域
-   ======================================== */.settings-section {
+   ======================================== */
+.settings-section {
     margin-bottom: 24px;
     padding-bottom: 20px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
+
 .settings-section:last-child {
     border-bottom: none;
 }
+
 .settings-section h3 {
     margin-bottom: 16px;
     color: var(--text-primary);
     font-size: 16px;
     font-weight: 600;
 }
+
 .settings-section p {
     color: var(--text-secondary);
     font-size: 13px;
     margin-top: 8px;
 }
+
 /* ========================================
    备份列表样式
-   ======================================== */.backup-list-container {
+   ======================================== */
+.backup-list-container {
     margin-top: 16px;
 }
+
 .backup-list-container h4 {
     font-size: 13px;
     font-weight: 600;
     color: var(--text-secondary);
     margin-bottom: 10px;
 }
+
 .backup-list {
     max-height: 180px;
     overflow-y: auto;
@@ -383,6 +449,7 @@
     border-radius: var(--radius-md);
     background: rgba(0, 0, 0, 0.02);
 }
+
 .backup-list .no-backup {
     color: var(--text-tertiary);
     font-size: 12px;
@@ -390,6 +457,7 @@
     padding: 20px;
     margin: 0;
 }
+
 .backup-item {
     display: flex;
     justify-content: space-between;
@@ -398,39 +466,49 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.04);
     transition: background 0.2s ease;
 }
+
 .backup-item:last-child {
     border-bottom: none;
 }
+
 .backup-item:hover {
     background: rgba(0, 0, 0, 0.04);
 }
+
 .backup-item-info {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
+
 .backup-item-date {
     font-size: 13px;
     font-weight: 500;
     color: var(--text-primary);
 }
+
 .backup-item-time {
     font-size: 11px;
     color: var(--text-tertiary);
 }
+
 .backup-item-actions {
     display: flex;
     gap: 8px;
 }
+
 .backup-item-actions .btn {
     padding: 6px 12px;
     font-size: 12px;
 }
+
 /* ========================================
    导出预览
-   ======================================== */.export-modal {
+   ======================================== */
+.export-modal {
     max-width: 720px;
 }
+
 .export-preview {
     text-align: center;
     margin: 24px 0;
@@ -439,14 +517,17 @@
     padding: 16px;
     box-shadow: var(--shadow-sm);
 }
+
 #export-canvas {
     max-width: 100%;
     height: auto;
     border-radius: var(--radius-md);
 }
+
 /* ========================================
    复制日期选项
-   ======================================== */.copy-date-options {
+   ======================================== */
+.copy-date-options {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 10px;
@@ -455,6 +536,7 @@
     overflow-y: auto;
     padding: 4px;
 }
+
 .copy-week-label {
     grid-column: 1 / -1;
     padding: 10px 0 8px;
@@ -469,11 +551,13 @@
     justify-content: space-between;
     align-items: center;
 }
+
 .copy-week-label span:last-child {
     font-weight: 400;
     color: var(--text-tertiary);
     font-size: 11px;
 }
+
 .copy-date-option {
     padding: 10px 6px;
     text-align: center;
@@ -489,16 +573,19 @@
     justify-content: center;
     gap: 4px;
 }
+
 .copy-date-option:hover {
     background: rgba(0, 113, 227, 0.1);
     transform: translateY(-2px);
 }
+
 .copy-date-option.selected {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border-color: transparent;
     box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
 }
+
 .copy-date-option .date-label {
     font-weight: 600;
     font-size: 14px;
@@ -507,21 +594,28 @@
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum" 1;
 }
+
 .copy-date-option .day-label {
     font-size: 11px;
     opacity: 0.8;
 }
-/* 在导出图片时隐藏今日高亮 */.export-modal .day-header.today-highlight,
+
+/* 在导出图片时隐藏今日高亮 */
+.export-modal .day-header.today-highlight,
 .modal-content.export-modal .day-header.today-highlight {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
 }
+
 .export-modal .day-header.today-highlight::after,
 .modal-content.export-modal .day-header.today-highlight::after {
     display: none;
 }
+
 .export-modal .day-column.today-highlight,
 .modal-content.export-modal .day-column.today-highlight {
     background: rgba(255, 255, 255, 0.3) !important;
     border: none !important;
     border-radius: 0 !important;
 }
+
+/* ========================================

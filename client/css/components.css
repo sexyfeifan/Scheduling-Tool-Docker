@@ -6,9 +6,11 @@
 /* ========================================
  * components.css — 按钮、主内容区、星期标题、排期网格、备份状态
  * 罐头场通告排期系统 v2.59
- * ======================================== *//* ========================================
+ * ======================================== */
+/* ========================================
    按钮样式 - Apple 风格
-   ======================================== */.btn {
+   ======================================== */
+.btn {
     padding: 10px 20px;
     border: none;
     border-radius: var(--radius-md);
@@ -22,42 +24,52 @@
     gap: 6px;
     box-shadow: var(--shadow-sm);
 }
+
 .btn:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
+
 .btn:active {
     transform: translateY(0);
     box-shadow: var(--shadow-sm);
 }
+
 .btn.primary {
     background: var(--primary-gradient);
     color: white;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
+
 .btn.primary:hover {
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
 }
+
 .btn.secondary {
     background: var(--secondary-gradient);
     color: white;
     box-shadow: 0 4px 12px rgba(56, 239, 125, 0.4);
 }
+
 .btn.secondary:hover {
     box-shadow: 0 6px 20px rgba(56, 239, 125, 0.5);
 }
+
 .btn:not(.primary):not(.secondary):not(.delete-btn) {
     background: rgba(255, 255, 255, 0.8);
     color: var(--text-primary);
     border: 1px solid rgba(0, 0, 0, 0.08);
 }
+
 .btn:not(.primary):not(.secondary):not(.delete-btn):hover {
     background: rgba(255, 255, 255, 1);
     border-color: rgba(0, 0, 0, 0.12);
 }
+
 /* ========================================
    主内容区域
-   ======================================== */.main-content {
+   ======================================== */
+.main-content {
     background: var(--glass-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -66,13 +78,16 @@
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--glass-border);
 }
-/* 星期标题 */.week-header {
+
+/* 星期标题 */
+.week-header {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     box-shadow: var(--shadow-sm);
 }
+
 .day-header {
     padding: 18px 12px;
     text-align: center;
@@ -86,9 +101,12 @@
     transition: all 0.2s ease;
     min-width: 0;
 }
-/* 移动端日期切换选中状态 */.day-header.active {
+
+/* 移动端日期切换选中状态 */
+.day-header.active {
     position: relative;
 }
+
 .day-header.active::after {
     content: '';
     position: absolute;
@@ -101,15 +119,20 @@
     border-right: 6px solid transparent;
     border-top: 6px solid var(--green-accent);
 }
-/* 移动端显示今日日期 */.day-column.active-day {
+
+/* 移动端显示今日日期 */
+.day-column.active-day {
     display: block !important;
 }
-/* 排期容器 */.schedule-container {
+
+/* 排期容器 */
+.schedule-container {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     min-height: 600px;
     background: rgba(255, 255, 255, 0.5);
 }
+
 .day-column {
     border-right: 1px solid rgba(0, 0, 0, 0.06);
     padding: 20px;
@@ -118,24 +141,31 @@
     transition: all 0.3s ease;
     background: rgba(255, 255, 255, 0.3);
 }
+
 .day-column:last-child {
     border-right: none;
 }
+
 .day-column:hover {
     background: rgba(255, 255, 255, 0.6);
 }
+
 .day-column.drag-over {
     background: rgba(102, 126, 234, 0.1);
     border-radius: var(--radius-md);
 }
-/* 空状态 */.empty-state {
+
+/* 空状态 */
+.empty-state {
     color: var(--text-tertiary);
     text-align: center;
     padding: 40px 20px;
     font-size: 48px;
     opacity: 0.6;
 }
-/* ── 项目状态标签 ── */.status-badge {
+
+/* ── 项目状态标签 ── */
+.status-badge {
     display: inline-block;
     padding: 2px 8px;
     border-radius: 10px;
@@ -145,11 +175,17 @@
     margin-top: 4px;
     line-height: 1.6;
 }
+
 .status-pending   { background: #f0f0f0; color: #666; }
+
 .status-confirmed { background: #d4edda; color: #155724; }
+
 .status-done      { background: #cce5ff; color: #004085; }
+
 .status-cancelled { background: #f8d7da; color: #721c24; }
-/* ── 暗色模式切换按钮 ── */.theme-toggle {
+
+/* ── 暗色模式切换按钮 ── */
+.theme-toggle {
   position: fixed;
   bottom: 20px;
   right: 20px;
@@ -168,10 +204,12 @@
   transition: all 0.3s ease;
   box-shadow: var(--shadow-md);
 }
+
 .theme-toggle:hover {
   transform: scale(1.1);
   box-shadow: var(--shadow-lg);
 }
+
 .history-item {
   padding: 8px 12px;
   font-size: 13px;
@@ -181,12 +219,17 @@
   justify-content: space-between;
   align-items: center;
 }
+
 .history-item:hover { background: rgba(0,0,0,0.05); }
+
 .history-item-label { color: var(--text-primary); }
+
 .history-item-time { color: var(--text-tertiary); font-size: 11px; }
+
 /* ========================================
    星期列添加按钮
-   ======================================== */.day-column .add-btn {
+   ======================================== */
+.day-column .add-btn {
     position: absolute;
     top: 8px;
     right: 8px;
@@ -205,19 +248,24 @@
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
     transition: all 0.2s ease;
 }
+
 .day-column:hover .add-btn {
     display: flex;
 }
+
 .day-column .add-btn:hover {
     transform: scale(1.1);
     box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5);
 }
+
 /* ========================================
    今日高亮 - 编辑页面显示
-   ======================================== */.day-header.today-highlight {
+   ======================================== */
+.day-header.today-highlight {
     background: linear-gradient(135deg, #ff3b30, #ff6961) !important;
     position: relative;
 }
+
 .day-header.today-highlight::after {
     content: '';
     position: absolute;
@@ -230,18 +278,22 @@
     border-right: 6px solid transparent;
     border-top: 6px solid #ff3b30;
 }
+
 .day-column.today-highlight {
     background: linear-gradient(135deg, rgba(255, 59, 48, 0.08), rgba(255, 149, 0, 0.05));
     border: 2px solid rgba(255, 59, 48, 0.3);
     border-radius: var(--radius-md);
 }
+
 /* ========================================
    日期输入容器
-   ======================================== */.date-input-container {
+   ======================================== */
+.date-input-container {
     display: flex;
     gap: 12px;
     align-items: center;
 }
+
 .date-input-container input {
     flex: 1;
     cursor: pointer;

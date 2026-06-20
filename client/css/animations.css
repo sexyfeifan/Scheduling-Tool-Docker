@@ -7,6 +7,7 @@
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
 @keyframes slideUp {
     from {
         opacity: 0;
@@ -17,10 +18,12 @@
         transform: translateY(0) scale(1);
     }
 }
+
 /* ========================================
  * animations.css — 动画关键帧
  * 罐头场通告排期系统 v2.59
- * ======================================== */@keyframes toastIn {
+ * ======================================== */
+@keyframes toastIn {
     from {
         transform: translateX(100%);
         opacity: 0;
@@ -30,22 +33,27 @@
         opacity: 1;
     }
 }
+
 @keyframes toastOut {
     to {
         transform: translateX(100%);
         opacity: 0;
     }
 }
+
 @keyframes spin {
     to {
         transform: rotate(360deg);
     }
 }
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
 }
-/* ── 骨架屏 ── */@keyframes shimmer {
+
+/* ── 骨架屏 ── */
+@keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }

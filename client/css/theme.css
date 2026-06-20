@@ -3,7 +3,8 @@
  * 罐头场通告排期系统 v2.59
  * ======================================== */
 
-/* ── 暗色模式（手动 toggle） ── */[data-theme="dark"] {
+/* ── 暗色模式（手动 toggle） ── */
+[data-theme="dark"] {
   --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   --glass-bg: rgba(30, 30, 46, 0.85);
   --glass-border: rgba(255, 255, 255, 0.1);
@@ -15,28 +16,63 @@
   --text-secondary: #a1a1a6;
   --text-tertiary: #6e6e73;
 }
+
 [data-theme="dark"] body { background: var(--bg-gradient); color: var(--text-primary); }
+
 [data-theme="dark"] .project-card,
 [data-theme="dark"] .modal-content,
 [data-theme="dark"] .settings-section,
 [data-theme="dark"] .backup-item,
 [data-theme="dark"] .template-item { background: var(--glass-bg); border-color: var(--glass-border); color: var(--text-primary); }
+
 [data-theme="dark"] input,
 [data-theme="dark"] select,
 [data-theme="dark"] textarea { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: var(--text-primary); }
+
 [data-theme="dark"] input::placeholder,
 [data-theme="dark"] textarea::placeholder { color: var(--text-tertiary); }
+
 [data-theme="dark"] .day-column { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); }
+
 [data-theme="dark"] .day-header { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
 [data-theme="dark"] .week-navigation { background: rgba(255,255,255,0.05); }
+
 [data-theme="dark"] .header { background: rgba(255,255,255,0.08); }
+
 [data-theme="dark"] .toast { background: rgba(30,30,46,0.95); color: var(--text-primary); }
+
 [data-theme="dark"] .modal { background-color: rgba(0,0,0,0.7); }
+
 [data-theme="dark"] table { background: rgba(255,255,255,0.05); }
+
 [data-theme="dark"] th { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
 [data-theme="dark"] td { border-color: rgba(255,255,255,0.08); color: var(--text-primary); }
+
 [data-theme="dark"] .skeleton {
   background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
   background-size: 200% 100%;
 }
+
 [data-theme="dark"] .history-item:hover { background: rgba(255,255,255,0.05); }
+
+/* ========================================
+ * theme.css — 暗色模式（待实现）
+ * 罐头场通告排期系统 v2.59
+ * ======================================== */
+/* 暗色模式 — 待实现 */
+/* @media (prefers-color-scheme: dark) {
+    :root {
+        --glass-bg: rgba(30, 30, 30, 0.85);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --text-primary: #f5f5f7;
+        --text-secondary: #a1a1a6;
+        --text-tertiary: #6e6e73;
+        --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.3);
+    }
+    body { background: var(--bg-gradient); }
+    .project-card { background: rgba(40, 40, 40, 0.9); border-color: rgba(255,255,255,0.08); }
+    .day-column { background: rgba(30, 30, 30, 0.3); }
+} */

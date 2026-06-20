@@ -6,7 +6,9 @@
 /* ========================================
  * mobile.css — 响应式媒体查询
  * 罐头场通告排期系统 v2.59
- * ======================================== *//* ── 响应式设计 - 移动端优化 ── */@media (max-width: 768px) {
+ * ======================================== */
+/* ── 响应式设计 - 移动端优化 ── */
+@media (max-width: 768px) {
     /* 安全区域 */
     .container {
         padding: 12px;
@@ -250,7 +252,9 @@
         opacity: 0.9;
     }
 }
-/* 更小屏幕 */@media (max-width: 480px) {
+
+/* 更小屏幕 */
+@media (max-width: 480px) {
     .container {
         padding: 8px;
     }
@@ -280,7 +284,9 @@
         font-size: 13px;
     }
 }
-/* 横屏模式 */@media (max-width: 768px) and (orientation: landscape) {
+
+/* 横屏模式 */
+@media (max-width: 768px) and (orientation: landscape) {
     .header {
         padding: 12px 20px;
     }
@@ -289,9 +295,11 @@
         max-height: 90vh;
     }
 }
+
 /* ========================================
    大屏幕优化 - 笔记本/桌面
-   ======================================== */@media (min-width: 1200px) {
+   ======================================== */
+@media (min-width: 1200px) {
     .container {
         padding: 32px 40px;
     }
@@ -331,9 +339,11 @@
         font-size: 16px;
     }
 }
+
 /* ========================================
    超宽屏幕优化 - 大显示器
-   ======================================== */@media (min-width: 1600px) {
+   ======================================== */
+@media (min-width: 1600px) {
     .container {
         max-width: 1900px;
         padding: 40px 48px;
@@ -392,9 +402,11 @@
         font-size: 13px;
     }
 }
+
 /* ========================================
    平板横屏专项优化
-   ======================================== */@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+   ======================================== */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
     .container {
         padding: 16px 20px;
     }
@@ -463,7 +475,9 @@
         font-size: 10px;
     }
 }
-/* ── 通告单打印样式 ── */@media print {
+
+/* ── 通告单打印样式 ── */
+@media print {
     body > *:not(#notice-modal) { display: none !important; }
     #notice-modal { position: static !important; background: none !important; }
     .notice-modal-content {
@@ -476,7 +490,9 @@
     .notice-modal-content .form-actions { display: none !important; }
     .notice-body { overflow: visible !important; }
 }
-/* ── 暗色模式（系统偏好） ── */@media (prefers-color-scheme: dark) {
+
+/* ── 暗色模式（系统偏好） ── */
+@media (prefers-color-scheme: dark) {
   :root {
     --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     --glass-bg: rgba(30, 30, 46, 0.85);
