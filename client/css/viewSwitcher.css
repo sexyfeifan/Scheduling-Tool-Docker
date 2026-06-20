@@ -755,3 +755,28 @@ body.dark-mode .chart-bar-track { background: #2a2a3e; }
 [data-theme="dark"] .dashboard-card-title { color: #e2e8f0; }
 [data-theme="dark"] .bar-track { background: #334155; }
 [data-theme="dark"] .top-bar-track { background: #334155; }
+
+/* ── 键盘导航焦点样式 ── */
+.keyboard-focus {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.2) !important;
+  transition: outline 0.15s, box-shadow 0.15s;
+}
+
+/* ── 快捷键提示 ── */
+.shortcut-hint {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.shortcut-hint.visible { opacity: 1; }

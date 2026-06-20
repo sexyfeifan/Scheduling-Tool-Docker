@@ -35,6 +35,7 @@ import { createHistoryPanelModule } from './modules/historyPanel.js';
 import { createSearchModule } from './modules/search.js';
 import { createClientExportModule } from './modules/clientExport.js';
 import { createConflictModule } from './modules/conflict.js';
+import { createKeyboardNavModule } from './modules/keyboardNav.js';
 
 // ── 共享状态 ──
 let currentMonday = getMonday(new Date());
@@ -109,6 +110,23 @@ const monthView = createMonthViewModule({
 });
 const clientExport = createClientExportModule({ apiClient });
 const conflictModule = createConflictModule({ apiClient });
+const keyboardNav = createKeyboardNavModule({
+    onNavigate: (action, param) => {
+        if (action === 'prev-week') {
+            document.getElementById('prev-week')?.click();
+        } else if (action === 'next-week') {
+            document.getElementById('next-week')?.click();
+        } else if (action === 'today') {
+            document.getElementById('today')?.click();
+        } else if (action === 'switch-view') {
+            import('./modules/viewSwitcher.js').then(m => m.switchView(param));
+        }
+    },
+    onAction: (action) => {
+        if (action === 'undo') undoManager.undo();
+        if (action === 'redo') undoManager.redo();
+    }
+});
 const personnelView = createPersonnelViewModule({
     api: { fetchSchedules: (start, end) => apiClient.get(`/schedules?start=${start}&end=${end}`) },
     onJumpToWeek: (date) => {
@@ -120,6 +138,23 @@ const personnelView = createPersonnelViewModule({
 });
 const clientExport = createClientExportModule({ apiClient });
 const conflictModule = createConflictModule({ apiClient });
+const keyboardNav = createKeyboardNavModule({
+    onNavigate: (action, param) => {
+        if (action === 'prev-week') {
+            document.getElementById('prev-week')?.click();
+        } else if (action === 'next-week') {
+            document.getElementById('next-week')?.click();
+        } else if (action === 'today') {
+            document.getElementById('today')?.click();
+        } else if (action === 'switch-view') {
+            import('./modules/viewSwitcher.js').then(m => m.switchView(param));
+        }
+    },
+    onAction: (action) => {
+        if (action === 'undo') undoManager.undo();
+        if (action === 'redo') undoManager.redo();
+    }
+});
 const dashboardView = createDashboardViewModule({
     api: { fetchSchedules: (start, end) => apiClient.get(`/schedules?start=${start}&end=${end}`) }
 });
@@ -145,6 +180,23 @@ const searchModule = createSearchModule({
 });
 const clientExport = createClientExportModule({ apiClient });
 const conflictModule = createConflictModule({ apiClient });
+const keyboardNav = createKeyboardNavModule({
+    onNavigate: (action, param) => {
+        if (action === 'prev-week') {
+            document.getElementById('prev-week')?.click();
+        } else if (action === 'next-week') {
+            document.getElementById('next-week')?.click();
+        } else if (action === 'today') {
+            document.getElementById('today')?.click();
+        } else if (action === 'switch-view') {
+            import('./modules/viewSwitcher.js').then(m => m.switchView(param));
+        }
+    },
+    onAction: (action) => {
+        if (action === 'undo') undoManager.undo();
+        if (action === 'redo') undoManager.redo();
+    }
+});
 
 // 合并所有模态框函数到统一接口
 const allModals = { ...modal, ...modalProject, ...modalExport, ...modalBackup };
@@ -369,6 +421,7 @@ async function initApp() {
     searchModule.init();
     clientExport.init();
     conflictModule.init();
+    keyboardNav.init();
 
     // 监听视图切换事件，触发各视图渲染
     document.addEventListener('viewInit', (e) => {
