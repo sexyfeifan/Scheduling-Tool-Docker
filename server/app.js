@@ -6,6 +6,7 @@ const cron = require('node-cron');
 
 const { BACKUP_PASSWORD, CLIENT_DIR } = require('./config');
 const { securityHeaders } = require('./middleware/securityHeaders');
+const { createRequireAdminPassword, createRequireEditAccess } = require('./middleware/auth');
 const { createBackupRouter } = require('./routes/backup');
 const { createSchedulesRouter } = require('./routes/schedules');
 const { createSettingsRouter } = require('./routes/settings');
@@ -14,7 +15,6 @@ const { createHistoryRouter } = require('./routes/history');
 const { createWebhookRouter } = require('./routes/webhook');
 const { createBackupService } = require('./services/backupService');
 const { createSqliteStore } = require('./services/sqliteStore');
-const { verifyPassword } = require('./utils/normalize');
 
 const passwordLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -79,40 +79,9 @@ function createApp(options = {}) {
     });
   }
 
-  function requireAdminPassword(req, res, next) {
-    const headerPassword = req.headers['x-admin-password'];
-    if (String(headerPassword || '') !== String(backupPassword)) {
-      return res.status(401).json({ message: '管理员密码无效' });
-    }
-    next();
-  }
-
-  function resolveEditPasswordHash() {
-    const settings = store.readSettings();
-    return settings.access && settings.access.editPasswordHash
-      ? settings.access.editPasswordHash
-      : '';
-  }
-
-  function requireEditAccess(req, res, next) {
-    try {
-      const expectedHash = resolveEditPasswordHash();
-      if (!expectedHash) {
-        next();
-        return;
-      }
-
-      const candidate = String(req.headers['x-edit-password'] || '');
-      if (!candidate || !verifyPassword(candidate, expectedHash)) {
-        res.status(401).json({ message: '编辑密码无效' });
-        return;
-      }
-
-      next();
-    } catch (err) {
-      next(err);
-    }
-  }
+  // 认证中间件（从 middleware/auth.js 加载）
+  const requireAdminPassword = createRequireAdminPassword(backupPassword);
+  const requireEditAccess = createRequireEditAccess(store);
 
   function baseUrlFromRequest(req) {
     return `${req.protocol}://${req.get('host')}`;
