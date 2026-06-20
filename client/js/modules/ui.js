@@ -87,5 +87,62 @@ export function createUiModule(ctx) {
         }
     }
 
-    return { escapeHtml, showToast, showLoading, hideLoading, isAuthError, promptForEditPassword, withEditAccess, updateUndoButton, toggleInput };
+    // 快捷键支持
+    function setupKeyboardShortcuts(handlers) {
+        document.addEventListener('keydown', (e) => {
+            // 忽略输入框内的快捷键
+            const tag = e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+            // Ctrl/Cmd + Z: 撤销
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                e.preventDefault();
+                handlers.undo && handlers.undo();
+                return;
+            }
+            // N: 新增项目
+            if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                e.preventDefault();
+                handlers.addProject && handlers.addProject();
+                return;
+            }
+            // 左方向键: 上一周
+            if (e.key === 'ArrowLeft' && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                handlers.prevWeek && handlers.prevWeek();
+                return;
+            }
+            // 右方向键: 下一周
+            if (e.key === 'ArrowRight' && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                handlers.nextWeek && handlers.nextWeek();
+                return;
+            }
+            // T: 跳转到今天
+            if (e.key === 't' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                e.preventDefault();
+                handlers.today && handlers.today();
+                return;
+            }
+            // E: 导出图片
+            if (e.key === 'e' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                e.preventDefault();
+                handlers.exportImage && handlers.exportImage();
+                return;
+            }
+            // Escape: 关闭模态框
+            if (e.key === 'Escape') {
+                handlers.closeModal && handlers.closeModal();
+                return;
+            }
+            // ?: 显示快捷键帮助
+            if (e.key === '?') {
+                e.preventDefault();
+                handlers.showHelp && handlers.showHelp();
+                return;
+            }
+        });
+    }
+
+    return { escapeHtml, showToast, showLoading, hideLoading, isAuthError, promptForEditPassword, withEditAccess, updateUndoButton, toggleInput, setupKeyboardShortcuts };
 }

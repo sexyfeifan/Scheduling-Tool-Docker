@@ -10,6 +10,7 @@ const {
   normalizeVersionData,
   wrapStructuredData
 } = require('../utils/normalize');
+const { migrate, needsMigration } = require('./migrator');
 
 function createFileStore(options = {}) {
   const dataDir = options.dataDir || DATA_DIR;
@@ -113,7 +114,17 @@ function createFileStore(options = {}) {
 
   async function loadStructuredCollection(filePath, normalizer, defaultValue) {
     const raw = await readJsonWithRecovery(filePath);
-    if (raw && typeof raw === 'object' && Number(raw.schemaVersion) >= 2 && raw.data !== undefined) {
+
+    // 使用迁移框架检查并升级数据格式
+    if (needsMigration(raw)) {
+      const migrated = migrate(raw);
+      return {
+        value: normalizer(migrated.data !== undefined ? migrated.data : (raw || defaultValue)),
+        migrated: true
+      };
+    }
+
+    if (raw && typeof raw === 'object' && raw.data !== undefined) {
       return {
         value: normalizer(raw.data),
         migrated: false

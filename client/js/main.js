@@ -262,6 +262,7 @@ async function initApp() {
     updateWeekDisplay();
     setupEventListeners();
     mobile.setupMobileDateSwitch();
+    mobile.setupSwipeGesture();
     ui.updateUndoButton();
     settings.loadVersionInfo();
     settings.loadHealthStatus();
@@ -276,6 +277,22 @@ async function initApp() {
     sse.connectSSE();
     webhook.setupWebhookEvents();
     setInterval(settings.loadHealthStatus, 30000);
+
+    // 快捷键
+    ui.setupKeyboardShortcuts({
+        undo: () => undoManager.undo().catch(err => { ui.showToast(err.message || '撤销失败', 'error'); }),
+        addProject: () => modal.showProjectModal(),
+        prevWeek: () => { currentMonday.setDate(currentMonday.getDate() - 7); updateWeekDisplay(); schedule.renderSchedule(); },
+        nextWeek: () => { currentMonday.setDate(currentMonday.getDate() + 7); updateWeekDisplay(); schedule.renderSchedule(); },
+        today: () => { currentMonday = getMonday(new Date()); updateWeekDisplay(); schedule.renderSchedule(); },
+        exportImage: () => exp.showExportModal(),
+        closeModal: () => { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); },
+        showHelp: () => { ui.showToast('快捷键: N=新增 T=今天 ←→=切周 E=导出 Ctrl+Z=撤销 ?=帮助', 'info', 5000); }
+    });
+
+    // CSV 导出按钮
+    const exportCsvBtn = document.getElementById('export-csv');
+    if (exportCsvBtn) exportCsvBtn.addEventListener('click', exp.exportCSV);
 }
 
 initApp();

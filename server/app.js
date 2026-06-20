@@ -39,10 +39,39 @@ function createApp(options = {}) {
   const backupPassword = options.backupPassword || BACKUP_PASSWORD;
   let connectedClients = [];
 
+  // Helmet security headers
+  const helmet = require('helmet');
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "blob:"],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+      }
+    },
+    crossOriginEmbedderPolicy: false
+  }));
+
   app.disable('x-powered-by');
   app.use(cors());
   app.use(express.json({ limit: '1mb' }));
   app.use(securityHeaders);
+
+  // HTTPS redirect hint for production
+  if (process.env.NODE_ENV === 'production') {
+    app.use((req, res, next) => {
+      if (req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] !== 'https') {
+        return res.status(403).json({ message: 'HTTPS required in production' });
+      }
+      next();
+    });
+  }
 
   function sendUpdateToClients(data) {
     connectedClients.forEach((client) => {

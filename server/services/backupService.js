@@ -77,10 +77,33 @@ function createBackupService(store) {
       appVersion: APP_VERSION
     }, null, 2), 'utf8');
 
+    // 自动清理：保留最近 20 份备份
+    await autoCleanupBackups(20);
+
     return {
       backupPath: `/backups/${dirName}/backup.json`,
       backups: (await listBackups()).slice(0, 20)
     };
+  }
+
+  async function autoCleanupBackups(keepCount = 20) {
+    try {
+      const entries = await fs.readdir(store.backupDir, { withFileTypes: true });
+      const dirs = entries
+        .filter(e => e.isDirectory() && e.name.startsWith('backup_'))
+        .map(e => e.name)
+        .sort()
+        .reverse();
+
+      if (dirs.length <= keepCount) return;
+
+      const toDelete = dirs.slice(keepCount);
+      for (const dir of toDelete) {
+        await fs.rm(path.join(store.backupDir, dir), { recursive: true, force: true });
+      }
+    } catch (err) {
+      console.error('自动清理备份失败:', err.message);
+    }
   }
 
   async function resolveBackupFile(backupPath) {

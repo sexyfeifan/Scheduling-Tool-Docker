@@ -65,6 +65,21 @@ export function createScheduleModule(ctx) {
             after: afterState
         });
         updateUndoButton();
+        updateHistoryPanel();
+    }
+
+    function updateHistoryPanel() {
+        const list = document.getElementById('history-panel-list');
+        if (!list) return;
+        const entries = undoManager.getEntries();
+        if (!entries || entries.length === 0) {
+            list.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text-tertiary);font-size:13px;">暂无操作记录</div>';
+            return;
+        }
+        list.innerHTML = entries.slice(-15).reverse().map((e, i) => {
+            const time = e.time ? new Date(e.time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : '';
+            return `<div class="history-item"><span class="history-item-label">${escapeHtml(e.label)}</span><span class="history-item-time">${time}</span></div>`;
+        }).join('');
     }
 
     async function undoLastChange() {

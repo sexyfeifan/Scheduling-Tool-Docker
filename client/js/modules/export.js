@@ -415,6 +415,38 @@ export function createExportModule(ctx) {
         }
     }
 
+    // ── CSV 导出 ──
+    function exportCSV() {
+        const data = getScheduleData();
+        const rows = [['日期', '项目名称', '类型', '场地', '导演', '摄影师', '制片', '开始时间', '状态']];
+
+        Object.keys(data).sort().forEach(date => {
+            (data[date] || []).forEach(p => {
+                rows.push([
+                    date,
+                    p.name || '',
+                    p.type || '',
+                    p.location || '',
+                    (Array.isArray(p.director) ? p.director.join('/') : p.director || ''),
+                    (Array.isArray(p.photographer) ? p.photographer.join('/') : p.photographer || ''),
+                    (Array.isArray(p.production) ? p.production.join('/') : p.production || ''),
+                    p.startTime || '',
+                    p.status || ''
+                ]);
+            });
+        });
+
+        const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `排期数据_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('CSV 导出成功', 'success');
+    }
+
     return {
         drawScheduleToCanvas,
         downloadImage,
@@ -422,5 +454,6 @@ export function createExportModule(ctx) {
         exportAllData,
         normalizeImportedSchedules,
         handleImportFile,
+        exportCSV,
     };
 }

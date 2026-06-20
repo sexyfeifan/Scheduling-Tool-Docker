@@ -16,7 +16,8 @@ export function createUndoManager(limit = 30) {
             stack.push({
                 ...entry,
                 before: cloneState(entry.before),
-                after: cloneState(entry.after)
+                after: cloneState(entry.after),
+                time: Date.now()
             });
 
             if (stack.length > limit) {
@@ -25,6 +26,9 @@ export function createUndoManager(limit = 30) {
         },
         pop() {
             return stack.pop() || null;
+        },
+        getEntries() {
+            return stack.slice();
         }
     };
 }

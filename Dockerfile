@@ -1,45 +1,52 @@
-FROM node:18-alpine
+# ── 阶段 1: 安装依赖 ──
+FROM node:22-alpine AS deps
 
-# 安装bash和better-sqlite3原生编译所需构建工具
-RUN apk add --no-cache bash python3 make g++
+WORKDIR /app
 
-# 以非root用户运行，提升安全性
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+COPY server/package*.json ./
 
-# 设置工作目录
+RUN apk add --no-cache python3 make g++ && \
+    npm ci --omit=dev && \
+    apk del python3 make g++
+
+# ── 阶段 2: 前端静态资源 ──
+FROM node:22-alpine AS frontend
+
+WORKDIR /client
+
+# 前端为纯静态文件，无需构建
+COPY client/ ./
+
+# ── 阶段 3: 最终镜像 ──
+FROM node:22-alpine
+
+RUN apk add --no-cache bash wget && \
+    addgroup -S appgroup && adduser -S appuser -G appgroup
+
 WORKDIR /app
 
 ENV DATA_DIR=/app/data
 ENV BACKUP_DIR=/app/backups
 ENV TMPDIR=/app/data/.tmp
 
-# 复制package.json和package-lock.json（如果存在）
-COPY server/package*.json ./
+# 从依赖阶段复制 node_modules
+COPY --from=deps /app/node_modules ./node_modules
 
-# 安装依赖（包含native模块编译）
-RUN npm ci --omit=dev
-
-# 清理构建工具，减小镜像体积
-RUN apk del python3 make g++
-
-# 复制应用代码
+# 复制后端应用代码
 COPY server/ ./
 
 # 复制前端静态文件
-COPY client/ /client/
+COPY --from=frontend /client/ /client/
 
-# 创建数据目录和备份目录（空目录，实际数据由 volume 挂载提供）
-# 注意：不在这里写入任何 JSON 文件，防止镜像层数据覆盖 volume 挂载的真实数据
-RUN mkdir -p data data/.tmp backups && chown -R appuser:appgroup /app /client
+# 创建数据目录和备份目录
+RUN mkdir -p data data/.tmp backups && \
+    chown -R appuser:appgroup /app /client
 
 USER appuser
 
-# 暴露端口
 EXPOSE 3000
 
-# 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD wget -qO- http://localhost:3000/api/health || exit 1
 
-# 启动应用
 CMD ["node", "server.js"]

@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs').promises;
 
 const { asyncHandler } = require('../middleware/asyncHandler');
+const { timingSafeEqual } = require('../utils/normalize');
 
 function createBackupRouter({ backupPassword, backupService, requireAdminPassword, requireEditAccess, sendUpdateToClients, store }) {
   const router = express.Router();
@@ -11,7 +12,7 @@ function createBackupRouter({ backupPassword, backupService, requireAdminPasswor
     if (!password) {
       return res.status(400).json({ valid: false, message: '请输入密码' });
     }
-    res.json({ valid: String(password) === String(backupPassword) });
+    res.json({ valid: timingSafeEqual(password, backupPassword) });
   });
 
   router.post('/backup', requireEditAccess, asyncHandler(async (req, res) => {

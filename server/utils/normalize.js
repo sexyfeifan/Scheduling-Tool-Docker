@@ -313,6 +313,13 @@ function wrapStructuredData(data) {
   };
 }
 
+function timingSafeEqual(a, b) {
+  const bufA = Buffer.from(String(a));
+  const bufB = Buffer.from(String(b));
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 module.exports = {
   DEFAULT_ROLE_CATEGORIES,
   DEFAULT_SETTINGS,
@@ -335,5 +342,6 @@ module.exports = {
   normalizeVersionData,
   sanitizeAccessForClient,
   sanitizeSettingsForClient,
+  timingSafeEqual,
   wrapStructuredData
 };

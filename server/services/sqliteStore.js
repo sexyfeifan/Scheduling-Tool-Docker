@@ -9,6 +9,7 @@ const {
   normalizeSettingsPayload,
   normalizeVersionData
 } = require('../utils/normalize');
+const { migrate, needsMigration } = require('./migrator');
 
 function createSqliteStore(options = {}) {
   const dataDir = options.dataDir || DATA_DIR;
@@ -125,7 +126,9 @@ function createSqliteStore(options = {}) {
     if (schedulesExist) {
       try {
         const raw = JSON.parse(fsNative.readFileSync(jsonSchedules, 'utf8'));
-        const data = raw && raw.schemaVersion >= 2 && raw.data !== undefined ? raw.data : raw;
+        // 使用迁移框架升级数据格式
+        const migrated = needsMigration(raw) ? migrate(raw) : raw;
+        const data = migrated && migrated.data !== undefined ? migrated.data : migrated;
         const schedules = normalizeScheduleList(data || []);
         const insert = db.prepare('INSERT OR REPLACE INTO schedules (date, id, data) VALUES (?, ?, ?)');
         const insertMany = db.transaction((rows) => {
@@ -141,7 +144,9 @@ function createSqliteStore(options = {}) {
     if (settingsExist) {
       try {
         const raw = JSON.parse(fsNative.readFileSync(jsonSettings, 'utf8'));
-        const data = raw && raw.schemaVersion >= 2 && raw.data !== undefined ? raw.data : raw;
+        // 使用迁移框架升级数据格式
+        const migrated = needsMigration(raw) ? migrate(raw) : raw;
+        const data = migrated && migrated.data !== undefined ? migrated.data : migrated;
         const settings = normalizeSettingsPayload(data || {});
         db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
           .run('main', JSON.stringify(settings));
