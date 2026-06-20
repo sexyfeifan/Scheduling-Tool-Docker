@@ -1,0 +1,233 @@
+/* ========================================
+ * schedule.css — 项目卡片、人员标签、类型标签、操作按钮
+ * 罐头场通告排期系统 v2.59
+ * ======================================== */
+
+/* ========================================
+   项目卡片 - 现代悬浮效果
+   ======================================== */
+.project-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-card);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.project-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+.project-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--primary-gradient);
+    border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+    opacity: 0.8;
+}
+
+.project-card.dragging {
+    opacity: 0.5;
+    transform: rotate(3deg) scale(0.98);
+}
+
+/* 卡片标题 */
+.project-card .project-title {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    color: var(--text-primary);
+    gap: 6px;
+    min-width: 0;
+}
+
+.project-card .project-title > span:first-child {
+    white-space: normal;
+    word-break: break-word;
+    min-width: 0;
+    flex: 1;
+    line-height: 1.35;
+}
+
+/* 删除按钮 */
+.project-card .delete-btn {
+    background: rgba(255, 59, 48, 0.1);
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--red-accent);
+    cursor: pointer;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.project-card .delete-btn:hover {
+    background: var(--red-accent);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* 位置标签 */
+.project-card .project-location {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 8px 0;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    background: rgba(0, 0, 0, 0.04);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* 人员信息 */
+.staff-info {
+    margin: 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.staff-role {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    max-width: 100%;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+.staff-role.director {
+    background: rgba(0, 113, 227, 0.1);
+    color: var(--blue-accent);
+}
+
+.staff-role.photographer {
+    background: rgba(175, 82, 222, 0.1);
+    color: var(--purple-accent);
+}
+
+.staff-role.production {
+    background: rgba(52, 199, 89, 0.1);
+    color: var(--green-accent);
+}
+
+.staff-role.rd {
+    background: rgba(255, 149, 0, 0.1);
+    color: var(--orange-accent);
+}
+
+.staff-role.operational {
+    background: rgba(90, 145, 255, 0.1);
+    color: #5a91ff;
+}
+
+.staff-role.audio {
+    background: rgba(255, 45, 85, 0.1);
+    color: #ff2d55;
+}
+
+.staff-role.business {
+    background: rgba(88, 86, 214, 0.1);
+    color: #5856d6;
+}
+
+.staff-role.start-time {
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--text-secondary);
+}
+
+.advertiser-no {
+    font-size: 11px;
+    font-style: italic;
+    color: #5856d6;
+    margin-top: 2px;
+    padding: 0 4px;
+}
+
+/* 老刀标记 */
+.laodao-mark {
+    color: var(--red-accent);
+    font-weight: 600;
+    font-size: 12px;
+    margin: 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* 类型标签 */
+.project-card .project-type {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.project-card .project-type.plane {
+    background: linear-gradient(135deg, #007aff, #5856d6);
+}
+
+.project-card .project-type.video {
+    background: linear-gradient(135deg, #af52de, #ff2d55);
+}
+
+.project-card .project-type.live {
+    background: linear-gradient(135deg, #ff9500, #ff3b30);
+}
+
+.project-card .project-type.test {
+    background: linear-gradient(135deg, #34c759, #30d158);
+}
+
+/* 卡片操作按钮 */
+.card-actions {
+    margin-top: 12px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.copy-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.copy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}

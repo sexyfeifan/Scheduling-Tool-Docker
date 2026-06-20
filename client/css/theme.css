@@ -1,0 +1,20 @@
+/* ========================================
+ * theme.css — 暗色模式（待实现）
+ * 罐头场通告排期系统 v2.59
+ * ======================================== */
+
+/* 暗色模式 — 待实现 */
+/* @media (prefers-color-scheme: dark) {
+    :root {
+        --glass-bg: rgba(30, 30, 30, 0.85);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --text-primary: #f5f5f7;
+        --text-secondary: #a1a1a6;
+        --text-tertiary: #6e6e73;
+        --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.3);
+    }
+    body { background: var(--bg-gradient); }
+    .project-card { background: rgba(40, 40, 40, 0.9); border-color: rgba(255,255,255,0.08); }
+    .day-column { background: rgba(30, 30, 30, 0.3); }
+} */

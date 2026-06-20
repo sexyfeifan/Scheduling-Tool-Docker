@@ -1,0 +1,431 @@
+/* ========================================
+ * extra_components.css — Toast、Loading、导出、Webhook、设置、标签
+ * 罐头场通告排期系统 v2.59
+ * ======================================== */
+
+.days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.day {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.day:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.day.selected {
+    background: var(--blue-accent);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.4);
+}
+
+.day.other-month {
+    color: var(--text-tertiary);
+}
+
+.day.today {
+    background: var(--green-accent);
+    color: white;
+    box-shadow: 0 4px 12px rgba(52, 199, 89, 0.4);
+}
+
+.selected-date-info {
+    text-align: center;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+/* ========================================
+   设置区域
+   ======================================== */
+.settings-section {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.settings-section:last-child {
+    border-bottom: none;
+}
+
+.settings-section h3 {
+    margin-bottom: 16px;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.settings-section p {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+/* ========================================
+   备份列表样式
+   ======================================== */
+.backup-list-container {
+    margin-top: 16px;
+}
+
+.backup-list-container h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.backup-list {
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: var(--radius-md);
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.backup-list .no-backup {
+    color: var(--text-tertiary);
+    font-size: 12px;
+    text-align: center;
+    padding: 20px;
+    margin: 0;
+}
+
+.backup-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    transition: background 0.2s ease;
+}
+
+.backup-item:last-child {
+    border-bottom: none;
+}
+
+.backup-item:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.backup-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.backup-item-date {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.backup-item-time {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.backup-item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.backup-item-actions .btn {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+/* ========================================
+   导出预览
+   ======================================== */
+.export-modal {
+    max-width: 720px;
+}
+
+.export-preview {
+    text-align: center;
+    margin: 24px 0;
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+}
+
+#export-canvas {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+}
+
+/* ========================================
+   Toast 提示组件
+   ======================================== */
+#toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.toast {
+    padding: 14px 24px;
+    border-radius: var(--radius-lg);
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    animation: toastIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-width: 360px;
+    word-wrap: break-word;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.toast.success {
+    background: linear-gradient(135deg, #34c759, #30d158);
+    box-shadow: 0 4px 20px rgba(52, 199, 89, 0.4);
+}
+
+.toast.error {
+    background: linear-gradient(135deg, #ff3b30, #ff6961);
+    box-shadow: 0 4px 20px rgba(255, 59, 48, 0.4);
+}
+
+.toast.warning {
+    background: linear-gradient(135deg, #ff9500, #ffcc00);
+    box-shadow: 0 4px 20px rgba(255, 149, 0, 0.4);
+}
+
+.toast.info {
+    background: linear-gradient(135deg, #007aff, #5ac8fa);
+    box-shadow: 0 4px 20px rgba(0, 113, 227, 0.4);
+}
+
+.toast.hiding {
+    animation: toastOut 0.3s ease forwards;
+}
+
+/* ========================================
+   Loading 加载指示器
+   ======================================== */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.loading-text {
+    color: white;
+    margin-top: 20px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* ========================================
+   复制日期选项
+   ======================================== */
+.copy-date-options {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.copy-week-label {
+    grid-column: 1 / -1;
+    padding: 10px 0 8px;
+    font-size: 12px;
+    color: var(--blue-accent);
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    margin-bottom: 8px;
+    margin-top: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.copy-week-label span:last-child {
+    font-weight: 400;
+    color: var(--text-tertiary);
+    font-size: 11px;
+}
+
+.copy-date-option {
+    padding: 10px 6px;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.copy-date-option:hover {
+    background: rgba(0, 113, 227, 0.1);
+    transform: translateY(-2px);
+}
+
+.copy-date-option.selected {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+}
+
+.copy-date-option .date-label {
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0;
+    font-kerning: none;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+}
+
+.copy-date-option .day-label {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+/* ========================================
+   星期列添加按钮
+   ======================================== */
+.day-column .add-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+    transition: all 0.2s ease;
+}
+
+.day-column:hover .add-btn {
+    display: flex;
+}
+
+.day-column .add-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5);
+}
+
+/* ========================================
+   今日高亮 - 编辑页面显示
+   ======================================== */
+.day-header.today-highlight {
+    background: linear-gradient(135deg, #ff3b30, #ff6961) !important;
+    position: relative;
+}
+
+.day-header.today-highlight::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #ff3b30;
+}
+
+.day-column.today-highlight {
+    background: linear-gradient(135deg, rgba(255, 59, 48, 0.08), rgba(255, 149, 0, 0.05));
+    border: 2px solid rgba(255, 59, 48, 0.3);
+    border-radius: var(--radius-md);
+}
+
+/* 在导出图片时隐藏今日高亮 */
+.export-modal .day-header.today-highlight,
+.modal-content.export-modal .day-header.today-highlight {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.export-modal .day-header.today-highlight::after,
+.modal-content.export-modal .day-header.today-highlight::after {
+    display: none;
+}
+
+.export-modal .day-column.today-highlight,
+.modal-content.export-modal .day-column.today-highlight {
+    background: rgba(255, 255, 255, 0.3) !important;
+    border: none !important;
+    border-radius: 0 !important;
+}
+
+/* ========================================
+   日期输入容器
+   ======================================== */
+.date-input-container {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.date-input-container input {
+    flex: 1;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+/* ========================================

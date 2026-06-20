@@ -9,10 +9,18 @@ import { createDefaultFilters } from './modules/filters.js';
 import { createUndoManager } from './modules/undo.js';
 import { createUiModule } from './modules/ui.js';
 import { createScheduleModule } from './modules/schedule.js';
+import { createScheduleCardModule } from './modules/schedule-card.js';
+import { createScheduleNoticeModule } from './modules/schedule-notice.js';
+import { createScheduleCopyModule } from './modules/schedule-copy.js';
+import { createModalProjectModule } from './modules/modal-project.js';
+import { createModalExportModule } from './modules/modal-export.js';
+import { createModalBackupModule } from './modules/modal-backup.js';
 import { createModalModule } from './modules/modal.js';
 import { createExportModule } from './modules/export.js';
 import { createWebhookModule } from './modules/webhook.js';
 import { createSettingsModule } from './modules/settings.js';
+import { createSettingsTemplateModule } from './modules/settings-template.js';
+import { createSettingsRoleModule } from './modules/settings-role.js';
 import { createClipboardModule } from './modules/clipboard.js';
 import { createDragdropModule } from './modules/dragdrop.js';
 import { createMobileModule } from './modules/mobile.js';
@@ -60,16 +68,27 @@ let scheduleAPI, settingAPI, versionAPI, backupAPI;
 
 // ── 初始化模块 ──
 const ui = createUiModule(ctx);
-const schedule = createScheduleModule({ ...ctx, ...ui });
-const modal = createModalModule({ ...ctx, ...schedule, ...ui });
+const settingsRole = createSettingsRoleModule({ ...ctx, ...ui });
+const settingsTemplate = createSettingsTemplateModule({ ...ctx, ...ui, ...settingsRole });
+const settings = createSettingsModule({ ...ctx, ...ui, ...settingsRole, ...settingsTemplate });
+const scheduleCard = createScheduleCardModule({ ...ctx, ...ui });
+const scheduleNotice = createScheduleNoticeModule({ ...ctx, ...ui });
+const scheduleCopy = createScheduleCopyModule({ ...ctx, ...ui });
+const schedule = createScheduleModule({ ...ctx, ...ui, ...scheduleCard, ...scheduleNotice, ...scheduleCopy });
+const modalProject = createModalProjectModule({ ...ctx, ...schedule, ...ui, ...settingsRole, ...settingsTemplate, ...settings });
+const modalExport = createModalExportModule({ ...ctx, ...schedule, ...ui });
+const modalBackup = createModalBackupModule({ ...ctx, ...schedule, ...ui });
+const modal = createModalModule({ ...ctx, ...schedule, ...ui, ...modalProject, ...settings, ...settingsTemplate });
 const exp = createExportModule({ ...ctx, ...schedule, ...ui });
 const webhook = createWebhookModule({ ...ctx, ...ui });
-const settings = createSettingsModule({ ...ctx, ...schedule, ...ui });
-const clipboard = createClipboardModule({ ...ctx, ...schedule, ...ui, ...modal });
+const clipboard = createClipboardModule({ ...ctx, ...schedule, ...ui, ...modalProject });
 const dragdrop = createDragdropModule({ ...ctx, ...schedule, ...ui });
 const mobile = createMobileModule({ ...ctx });
 const sse = createSseModule({ ...ctx, ...schedule, ...settings, ...ui });
 const heatmap = createHeatmapModule({ ...ctx, ...ui });
+
+// 合并所有模态框函数到统一接口
+const allModals = { ...modal, ...modalProject, ...modalExport, ...modalBackup };
 
 // 构建 API 包装器
 scheduleAPI = {
@@ -161,8 +180,8 @@ function setupEventListeners() {
             e.preventDefault();
             if (projectModal.style.display === 'block') projectForm.dispatchEvent(new Event('submit'));
         }
-        if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); modal.showProjectModal(); }
-        if ((e.ctrlKey || e.metaKey) && e.key === 'e') { e.preventDefault(); modal.showExportModal(); }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); allModals.showProjectModal(); }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'e') { e.preventDefault(); allModals.showExportModal(); }
         if (e.key === 'ArrowLeft' && !e.target.matches('input, textarea, select')) {
             currentMonday.setDate(currentMonday.getDate() - 7); updateWeekDisplay(); schedule.renderSchedule();
         }
@@ -178,19 +197,19 @@ function setupEventListeners() {
     nextWeekBtn.addEventListener('click', () => { currentMonday.setDate(currentMonday.getDate() + 7); updateWeekDisplay(); schedule.renderSchedule(); });
     currentWeekBtn.addEventListener('click', () => { currentMonday = getMonday(new Date()); updateWeekDisplay(); schedule.renderSchedule(); });
 
-    addProjectBtn.addEventListener('click', () => modal.showProjectModal());
-    exportImageBtn.addEventListener('click', modal.showExportModal);
+    addProjectBtn.addEventListener('click', () => allModals.showProjectModal());
+    exportImageBtn.addEventListener('click', allModals.showExportModal);
     pasteRecognitionBtn.addEventListener('click', clipboard.handlePasteRecognition);
-    settingsBtn.addEventListener('click', modal.showSettingsModal);
-    if (adminBtn) adminBtn.addEventListener('click', modal.showAdminModal);
+    settingsBtn.addEventListener('click', allModals.showSettingsModal);
+    if (adminBtn) adminBtn.addEventListener('click', allModals.showAdminModal);
     if (heatmapBtn) heatmapBtn.addEventListener('click', heatmap.showHeatmapModal);
 
     document.addEventListener('click', (e) => {
         const t = e.target;
         if (t.classList.contains('delete-btn')) schedule.deleteProject(t.dataset.date, parseInt(t.dataset.index));
-        if (t.classList.contains('copy-btn')) schedule.showCopyModal(t.dataset.date, parseInt(t.dataset.index));
-        if (t.classList.contains('notice-day-btn')) schedule.showNoticeModal(t.dataset.date);
-        if (t.classList.contains('sort-day-btn')) schedule.sortDayProjects(t.dataset.date);
+        if (t.classList.contains('copy-btn')) scheduleCopy.showCopyModal(t.dataset.date, parseInt(t.dataset.index));
+        if (t.classList.contains('notice-day-btn')) scheduleNotice.showNoticeModal(t.dataset.date);
+        if (t.classList.contains('sort-day-btn')) scheduleNotice.sortDayProjects(t.dataset.date);
     });
 
     undoActionBtn.addEventListener('click', async () => {
@@ -201,9 +220,9 @@ function setupEventListeners() {
     filterTypeSelect.addEventListener('change', settings.updateFilterState);
     clearFiltersBtn.addEventListener('click', () => { searchProjectsInput.value = ''; filterTypeSelect.value = ''; settings.updateFilterState(); });
 
-    applyTemplateBtn.addEventListener('click', settings.applySelectedTemplate);
+    applyTemplateBtn.addEventListener('click', settingsTemplate.applySelectedTemplate);
     saveTemplateFromFormBtn.addEventListener('click', async () => {
-        try { await settings.saveTemplateFromCurrentForm(); } catch (err) { ui.showToast(err.message || '保存模板失败', 'error'); }
+        try { await settingsTemplate.saveTemplateFromCurrentForm(); } catch (err) { ui.showToast(err.message || '保存模板失败', 'error'); }
     });
 
     closeModalButtons.forEach(b => b.addEventListener('click', () => { projectModal.style.display = 'none'; settingsModal.style.display = 'none'; exportModal.style.display = 'none'; }));
@@ -216,7 +235,7 @@ function setupEventListeners() {
             const cats = s.roleCategories || [];
             cats.push({ key: `custom_${Date.now()}`, label: '新职能', type: 'checkbox', optionsKey: `commonCustom_${Date.now()}` });
             s.roleCategories = cats; window.__currentSettings = s; roleCategories = cats;
-            settings.renderRoleSettings(s);
+            settingsRole.renderRoleSettings(s);
         });
     }
     if (projectAdvertiserCheckbox && advertiserNoWrap) {
@@ -226,15 +245,15 @@ function setupEventListeners() {
         exportCrossWeekCheckbox.addEventListener('change', () => { exportDateRangeDiv.style.display = exportCrossWeekCheckbox.checked ? 'block' : 'none'; });
     }
     if (regenerateExportBtn) regenerateExportBtn.addEventListener('click', exp.drawScheduleToCanvas);
-    if (selectDateBtn) selectDateBtn.addEventListener('click', modal.showDatePicker);
+    if (selectDateBtn) selectDateBtn.addEventListener('click', allModals.showDatePicker);
 
     const confirmDateBtn = $('confirm-date');
     const cancelDateBtn = $('cancel-date');
-    if (confirmDateBtn) confirmDateBtn.addEventListener('click', modal.confirmDateSelection);
+    if (confirmDateBtn) confirmDateBtn.addEventListener('click', allModals.confirmDateSelection);
     if (cancelDateBtn) cancelDateBtn.addEventListener('click', () => { datePickerModal.style.display = 'none'; });
     if (datePickerModal) datePickerModal.addEventListener('click', (e) => { if (e.target === datePickerModal) datePickerModal.style.display = 'none'; });
 
-    projectForm.addEventListener('submit', (e) => { e.preventDefault(); modal.saveProject(); });
+    projectForm.addEventListener('submit', (e) => { e.preventDefault(); allModals.saveProject(); });
 
     if (closeExportBtn) closeExportBtn.addEventListener('click', () => { exportModal.style.display = 'none'; });
     if (downloadImageBtn) downloadImageBtn.addEventListener('click', exp.downloadImage);
@@ -246,7 +265,7 @@ function setupEventListeners() {
         if (e.target === projectModal) projectModal.style.display = 'none';
         if (e.target === settingsModal) settingsModal.style.display = 'none';
         if (e.target === exportModal) exportModal.style.display = 'none';
-        if (e.target === backupPreviewModal) settings.closeBackupPreviewModal();
+        if (e.target === backupPreviewModal) modalBackup.closeBackupPreviewModal();
         ['admin-modal', 'heatmap-modal'].forEach(id => { const m = $(id); if (m && e.target === m) m.style.display = 'none'; });
     });
 
@@ -269,10 +288,10 @@ async function initApp() {
 
     await schedule.loadScheduleData();
     await settings.loadSettings();
-    await settings.loadTemplateData();
+    await settingsTemplate.loadTemplateData();
 
     if (isMobile) mobile.showTodayOnMobile();
-    settings.updateProjectFormOptions();
+    settingsRole.updateProjectFormOptions();
     settings.initStartTimeOptions();
     sse.connectSSE();
     webhook.setupWebhookEvents();
@@ -281,7 +300,7 @@ async function initApp() {
     // 快捷键
     ui.setupKeyboardShortcuts({
         undo: () => undoManager.undo().catch(err => { ui.showToast(err.message || '撤销失败', 'error'); }),
-        addProject: () => modal.showProjectModal(),
+        addProject: () => allModals.showProjectModal(),
         prevWeek: () => { currentMonday.setDate(currentMonday.getDate() - 7); updateWeekDisplay(); schedule.renderSchedule(); },
         nextWeek: () => { currentMonday.setDate(currentMonday.getDate() + 7); updateWeekDisplay(); schedule.renderSchedule(); },
         today: () => { currentMonday = getMonday(new Date()); updateWeekDisplay(); schedule.renderSchedule(); },

@@ -1,0 +1,143 @@
+/* ========================================
+ * layout.css — 头部、导航栏、工具栏布局
+ * 罐头场通告排期系统 v2.59
+ * ======================================== */
+
+/* ========================================
+   头部样式 - 毛玻璃效果
+   ======================================== */
+.header {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: var(--radius-xl);
+    padding: 24px 32px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--glass-border);
+    margin-bottom: 24px;
+}
+
+.header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 20px;
+    letter-spacing: -0.5px;
+}
+
+/* ========================================
+   版本信息 - 左上角显示
+   ======================================== */
+.version-info {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: var(--radius-md);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-size: 10px;
+    color: var(--text-tertiary);
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.version-info:hover {
+    opacity: 1;
+}
+
+.version-info .version-number {
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--blue-accent);
+}
+
+.version-info .version-date {
+    font-size: 9px;
+    color: var(--text-tertiary);
+}
+
+/* 工具栏 */
+.toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* 图标按钮 - 紧凑样式 */
+.btn.icon-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+    white-space: nowrap;
+    gap: 4px;
+}
+
+/* 工具栏分隔符 */
+.toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.12);
+    margin: 0 2px;
+    flex-shrink: 0;
+}
+
+.filters-toolbar {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.toolbar-input,
+.toolbar-select {
+    min-height: 42px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 0 14px;
+    background: rgba(255, 255, 255, 0.88);
+    color: var(--text-primary);
+    font-size: 14px;
+    box-shadow: var(--shadow-sm);
+}
+
+.toolbar-input {
+    min-width: 220px;
+}
+
+.health-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 42px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: rgba(0, 113, 227, 0.1);
+    color: var(--blue-accent);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.health-badge[data-state="error"] {
+    background: rgba(255, 59, 48, 0.12);
+    color: var(--red-accent);
+}
+
+.week-display {
+    font-weight: 500;
+    font-size: 18px;
+    color: var(--text-primary);
+    margin: 0 16px;
+    min-width: 220px;
+    text-align: center;
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: var(--radius-md);
+}
