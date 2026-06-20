@@ -37,6 +37,7 @@ import { createClientExportModule } from './modules/clientExport.js';
 import { createConflictModule } from './modules/conflict.js';
 import { createKeyboardNavModule } from './modules/keyboardNav.js';
 import { createMobileGesturesModule } from './modules/mobileGestures.js';
+import { createOfflineIndicatorModule } from './modules/offlineIndicator.js';
 
 // ── 共享状态 ──
 let currentMonday = getMonday(new Date());
@@ -132,11 +133,11 @@ const mobileGestures = createMobileGesturesModule({
     onSwipeLeft: () => { document.getElementById('next-week')?.click(); },
     onSwipeRight: () => { document.getElementById('prev-week')?.click(); },
     onLongPress: (x, y) => {
-        // 长按显示快速创建
         const addBtn = document.getElementById('add-project');
         if (addBtn) addBtn.click();
     }
 });
+const offlineIndicator = createOfflineIndicatorModule();
 const personnelView = createPersonnelViewModule({
     api: { fetchSchedules: (start, end) => apiClient.get(`/schedules?start=${start}&end=${end}`) },
     onJumpToWeek: (date) => {
@@ -144,34 +145,6 @@ const personnelView = createPersonnelViewModule({
         updateWeekDisplay();
         schedule.loadScheduleData().then(() => schedule.renderSchedule());
         import('./modules/viewSwitcher.js').then(m => m.switchView('week'));
-    }
-});
-const clientExport = createClientExportModule({ apiClient });
-const conflictModule = createConflictModule({ apiClient });
-const keyboardNav = createKeyboardNavModule({
-    onNavigate: (action, param) => {
-        if (action === 'prev-week') {
-            document.getElementById('prev-week')?.click();
-        } else if (action === 'next-week') {
-            document.getElementById('next-week')?.click();
-        } else if (action === 'today') {
-            document.getElementById('today')?.click();
-        } else if (action === 'switch-view') {
-            import('./modules/viewSwitcher.js').then(m => m.switchView(param));
-        }
-    },
-    onAction: (action) => {
-        if (action === 'undo') undoManager.undo();
-        if (action === 'redo') undoManager.redo();
-    }
-});
-const mobileGestures = createMobileGesturesModule({
-    onSwipeLeft: () => { document.getElementById('next-week')?.click(); },
-    onSwipeRight: () => { document.getElementById('prev-week')?.click(); },
-    onLongPress: (x, y) => {
-        // 长按显示快速创建
-        const addBtn = document.getElementById('add-project');
-        if (addBtn) addBtn.click();
     }
 });
 const dashboardView = createDashboardViewModule({
@@ -189,40 +162,10 @@ const searchModule = createSearchModule({
     apiClient,
     onResults: (results) => {
         if (!results) {
-            // 清除搜索，恢复正常视图
             schedule.loadScheduleData().then(() => schedule.renderSchedule());
         } else {
-            // 显示搜索结果
             console.log('[search] 找到', results.total, '条结果');
         }
-    }
-});
-const clientExport = createClientExportModule({ apiClient });
-const conflictModule = createConflictModule({ apiClient });
-const keyboardNav = createKeyboardNavModule({
-    onNavigate: (action, param) => {
-        if (action === 'prev-week') {
-            document.getElementById('prev-week')?.click();
-        } else if (action === 'next-week') {
-            document.getElementById('next-week')?.click();
-        } else if (action === 'today') {
-            document.getElementById('today')?.click();
-        } else if (action === 'switch-view') {
-            import('./modules/viewSwitcher.js').then(m => m.switchView(param));
-        }
-    },
-    onAction: (action) => {
-        if (action === 'undo') undoManager.undo();
-        if (action === 'redo') undoManager.redo();
-    }
-});
-const mobileGestures = createMobileGesturesModule({
-    onSwipeLeft: () => { document.getElementById('next-week')?.click(); },
-    onSwipeRight: () => { document.getElementById('prev-week')?.click(); },
-    onLongPress: (x, y) => {
-        // 长按显示快速创建
-        const addBtn = document.getElementById('add-project');
-        if (addBtn) addBtn.click();
     }
 });
 
@@ -451,6 +394,7 @@ async function initApp() {
     conflictModule.init();
     keyboardNav.init();
     mobileGestures.init();
+    offlineIndicator.init();
 
     // 监听视图切换事件，触发各视图渲染
     document.addEventListener('viewInit', (e) => {
