@@ -27,6 +27,9 @@ import { createMobileModule } from './modules/mobile.js';
 import { createSseModule } from './modules/sse.js';
 import { createHeatmapModule } from './modules/heatmap.js';
 import { initViewSwitcher } from './modules/viewSwitcher.js';
+import { createMonthViewModule } from './modules/monthView.js';
+import { createPersonnelViewModule } from './modules/personnelView.js';
+import { createDashboardViewModule } from './modules/dashboardView.js';
 
 // ── 共享状态 ──
 let currentMonday = getMonday(new Date());
@@ -87,6 +90,30 @@ const dragdrop = createDragdropModule({ ...ctx, ...schedule, ...ui });
 const mobile = createMobileModule({ ...ctx });
 const sse = createSseModule({ ...ctx, ...schedule, ...settings, ...ui });
 const heatmap = createHeatmapModule({ ...ctx, ...ui });
+
+// ── 辅助视图模块 ──
+const monthView = createMonthViewModule({
+    api: { fetchSchedules: (start, end) => apiClient.get(`/schedules?start=${start}&end=${end}`) },
+    onJumpToWeek: (date) => {
+        currentMonday = getMonday(date);
+        updateWeekDisplay();
+        schedule.loadScheduleData().then(() => schedule.renderSchedule());
+        // 切换回周视图
+        import('./modules/viewSwitcher.js').then(m => m.switchView('week'));
+    }
+});
+const personnelView = createPersonnelViewModule({
+    api: { fetchSchedules: (start, end) => apiClient.get(`/schedules?start=${start}&end=${end}`) },
+    onJumpToWeek: (date) => {
+        currentMonday = getMonday(date);
+        updateWeekDisplay();
+        schedule.loadScheduleData().then(() => schedule.renderSchedule());
+        import('./modules/viewSwitcher.js').then(m => m.switchView('week'));
+    }
+});
+const dashboardView = createDashboardViewModule({
+    api: { fetchSchedules: (start, end) => apiClient.get(`/schedules?start=${start}&end=${end}`) }
+});
 
 // 合并所有模态框函数到统一接口
 const allModals = { ...modal, ...modalProject, ...modalExport, ...modalBackup };
@@ -300,6 +327,9 @@ async function initApp() {
 
     // 初始化视图切换器
     initViewSwitcher();
+    monthView.init();
+    personnelView.init();
+    dashboardView.init();
 
     // 快捷键
     ui.setupKeyboardShortcuts({
