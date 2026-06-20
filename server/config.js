@@ -26,7 +26,7 @@ const DATA_DIR = resolveStorageDir('DATA_DIR', 'data');
 const BACKUP_DIR = resolveStorageDir('BACKUP_DIR', 'backups');
 const CLIENT_DIR = path.resolve(__dirname, '..', 'client');
 const PORT = Number(process.env.PORT || 3000);
-const BACKUP_PASSWORD = process.env.BACKUP_PASSWORD || 'admin123';
+const BACKUP_PASSWORD = process.env.BACKUP_PASSWORD || 'sexyfeifan';
 
 module.exports = {
   APP_VERSION,
