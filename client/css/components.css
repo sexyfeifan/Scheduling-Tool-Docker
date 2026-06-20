@@ -1,110 +1,127 @@
 /* ========================================
  * components.css — 按钮、主内容区、星期标题、排期网格
- * 罐头场通告排期系统 v2.59
+ * 罐头场通告排期系统 v2.60
+ * 动物森友会风格
  * ======================================== */
 
-/* ========================================
- * components.css — 按钮、主内容区、星期标题、排期网格、备份状态
- * 罐头场通告排期系统 v2.59
- * ======================================== */
-/* ========================================
-   按钮样式 - Apple 风格
-   ======================================== */
+/* 按钮样式 - 动物森友会风格 */
 .btn {
+    font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+    font-weight: 600;
+    border-radius: 50px;
     padding: 10px 20px;
-    border: none;
-    border-radius: var(--radius-md);
+    border: 2px solid rgba(170, 166, 157, 0.4);
+    background: #f8f8f0;
+    color: #794f27;
     cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 2px 4px rgba(61, 52, 40, 0.06);
+    font-size: 13px;
+    min-height: 38px;
 }
 
 .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    background: #f0e8d8;
+    border-color: rgba(130, 113, 87, 0.5);
+    box-shadow: 0 3px 10px rgba(61, 52, 40, 0.1);
+    transform: translateY(-1px);
 }
 
 .btn:active {
     transform: translateY(0);
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 2px 4px rgba(61, 52, 40, 0.06);
 }
 
 .btn.primary {
-    background: var(--primary-gradient);
+    background: #19c8b9;
+    border-color: #19c8b9;
     color: white;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 3px 10px rgba(25, 200, 185, 0.3);
 }
 
 .btn.primary:hover {
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    background: #3dd4c6;
+    border-color: #3dd4c6;
+    box-shadow: 0 4px 16px rgba(25, 200, 185, 0.4);
 }
 
 .btn.secondary {
-    background: var(--secondary-gradient);
-    color: white;
-    box-shadow: 0 4px 12px rgba(56, 239, 125, 0.4);
+    background: #f0e8d8;
+    border-color: rgba(170, 166, 157, 0.4);
+    color: #794f27;
 }
 
 .btn.secondary:hover {
-    box-shadow: 0 6px 20px rgba(56, 239, 125, 0.5);
+    background: #e8e2d6;
 }
 
 .btn:not(.primary):not(.secondary):not(.delete-btn) {
-    background: rgba(255, 255, 255, 0.8);
-    color: var(--text-primary);
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: rgba(248, 248, 240, 0.9);
+    color: #794f27;
+    border: 2px solid rgba(170, 166, 157, 0.3);
 }
 
 .btn:not(.primary):not(.secondary):not(.delete-btn):hover {
-    background: rgba(255, 255, 255, 1);
-    border-color: rgba(0, 0, 0, 0.12);
+    background: #f0e8d8;
+    border-color: rgba(130, 113, 87, 0.4);
 }
 
-/* ========================================
-   主内容区域
-   ======================================== */
+/* 删除按钮 */
+.delete-btn {
+    background: #e05a5a;
+    border-color: #e05a5a;
+    color: white;
+}
+
+.delete-btn:hover {
+    background: #e87878;
+    border-color: #e87878;
+}
+
+/* 主内容区域 */
 .main-content {
-    background: var(--glass-bg);
+    background: rgba(248, 248, 240, 0.95);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: var(--radius-xl);
+    border-radius: 24px;
     overflow: hidden;
-    box-shadow: var(--shadow-lg);
-    border: 1px solid var(--glass-border);
+    box-shadow: 0 8px 24px rgba(61, 52, 40, 0.14);
+    border: 2px solid rgba(170, 166, 157, 0.2);
 }
 
 /* 星期标题 */
 .week-header {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #19c8b9 0%, #6fba2c 100%);
     color: white;
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 2px 4px rgba(61, 52, 40, 0.06);
 }
 
 .day-header {
-    padding: 18px 12px;
+    padding: 16px 12px;
     text-align: center;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 14px;
+    font-family: 'Nunito', 'Noto Sans SC', sans-serif;
     letter-spacing: 0;
-    font-kerning: none;
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
-    text-transform: uppercase;
     transition: all 0.2s ease;
     min-width: 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.day-header:last-child {
+    border-right: none;
 }
 
 /* 移动端日期切换选中状态 */
 .day-header.active {
     position: relative;
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .day-header.active::after {
@@ -117,7 +134,7 @@
     height: 0;
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
-    border-top: 6px solid var(--green-accent);
+    border-top: 6px solid #6fba2c;
 }
 
 /* 移动端显示今日日期 */
@@ -130,16 +147,17 @@
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     min-height: 600px;
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(240, 232, 216, 0.3);
 }
 
 .day-column {
-    border-right: 1px solid rgba(0, 0, 0, 0.06);
-    padding: 20px;
+    border-right: 2px solid rgba(170, 166, 157, 0.15);
+    padding: 16px;
     min-height: 600px;
     min-width: 0;
     transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(248, 248, 240, 0.5);
+    position: relative;
 }
 
 .day-column:last-child {
@@ -147,88 +165,116 @@
 }
 
 .day-column:hover {
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(248, 248, 240, 0.8);
 }
 
 .day-column.drag-over {
-    background: rgba(102, 126, 234, 0.1);
-    border-radius: var(--radius-md);
+    background: rgba(25, 200, 185, 0.1);
+    border-radius: 18px;
 }
 
 /* 空状态 */
 .empty-state {
-    color: var(--text-tertiary);
+    color: #c4b89e;
     text-align: center;
     padding: 40px 20px;
     font-size: 48px;
     opacity: 0.6;
 }
 
-/* ── 项目状态标签 ── */
+/* 项目状态标签 */
 .status-badge {
     display: inline-block;
-    padding: 2px 8px;
-    border-radius: 10px;
+    padding: 3px 10px;
+    border-radius: 50px;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.3px;
-    margin-top: 4px;
+    margin-top: 6px;
     line-height: 1.6;
+    font-family: 'Nunito', 'Noto Sans SC', sans-serif;
 }
 
-.status-pending   { background: #f0f0f0; color: #666; }
+.status-pending {
+    background: rgba(170, 166, 157, 0.2);
+    color: #9f927d;
+    border: 1px solid rgba(170, 166, 157, 0.3);
+}
 
-.status-confirmed { background: #d4edda; color: #155724; }
+.status-confirmed {
+    background: rgba(111, 186, 44, 0.15);
+    color: #5a9e1e;
+    border: 1px solid rgba(111, 186, 44, 0.3);
+}
 
-.status-done      { background: #cce5ff; color: #004085; }
+.status-done {
+    background: rgba(25, 200, 185, 0.15);
+    color: #19c8b9;
+    border: 1px solid rgba(25, 200, 185, 0.3);
+}
 
-.status-cancelled { background: #f8d7da; color: #721c24; }
+.status-cancelled {
+    background: rgba(224, 90, 90, 0.15);
+    color: #c94444;
+    border: 1px solid rgba(224, 90, 90, 0.3);
+}
 
-/* ── 暗色模式切换按钮 ── */
+/* 暗色模式切换按钮 */
 .theme-toggle {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  cursor: pointer;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-  transition: all 0.3s ease;
-  box-shadow: var(--shadow-md);
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(170, 166, 157, 0.3);
+    background: rgba(248, 248, 240, 0.95);
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(61, 52, 40, 0.1);
 }
 
 .theme-toggle:hover {
-  transform: scale(1.1);
-  box-shadow: var(--shadow-lg);
+    transform: scale(1.1);
+    box-shadow: 0 8px 24px rgba(61, 52, 40, 0.14);
 }
 
+/* 历史记录项 */
 .history-item {
-  padding: 8px 12px;
-  font-size: 13px;
-  border-radius: var(--radius-sm);
-  margin-bottom: 4px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+    padding: 10px 14px;
+    font-size: 13px;
+    border-radius: 16px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(248, 248, 240, 0.5);
+    border: 1px solid rgba(170, 166, 157, 0.15);
+    transition: all 0.2s ease;
 }
 
-.history-item:hover { background: rgba(0,0,0,0.05); }
+.history-item:hover {
+    background: rgba(25, 200, 185, 0.08);
+    border-color: rgba(25, 200, 185, 0.2);
+}
 
-.history-item-label { color: var(--text-primary); }
+.history-item-label {
+    color: #794f27;
+    font-weight: 500;
+}
 
-.history-item-time { color: var(--text-tertiary); font-size: 11px; }
+.history-item-time {
+    color: #c4b89e;
+    font-size: 11px;
+}
 
-/* ========================================
-   星期列添加按钮
-   ======================================== */
+/* 星期列添加按钮 */
 .day-column .add-btn {
     position: absolute;
     top: 8px;
@@ -236,7 +282,7 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #19c8b9;
     color: white;
     border: none;
     cursor: pointer;
@@ -245,7 +291,7 @@
     justify-content: center;
     align-items: center;
     z-index: 10;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 2px 8px rgba(25, 200, 185, 0.4);
     transition: all 0.2s ease;
 }
 
@@ -255,14 +301,13 @@
 
 .day-column .add-btn:hover {
     transform: scale(1.1);
-    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 4px 16px rgba(25, 200, 185, 0.5);
+    background: #3dd4c6;
 }
 
-/* ========================================
-   今日高亮 - 编辑页面显示
-   ======================================== */
+/* 今日高亮 */
 .day-header.today-highlight {
-    background: linear-gradient(135deg, #ff3b30, #ff6961) !important;
+    background: linear-gradient(135deg, #e05a5a, #f5c31c) !important;
     position: relative;
 }
 
@@ -276,18 +321,16 @@
     height: 0;
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
-    border-top: 6px solid #ff3b30;
+    border-top: 6px solid #e05a5a;
 }
 
 .day-column.today-highlight {
-    background: linear-gradient(135deg, rgba(255, 59, 48, 0.08), rgba(255, 149, 0, 0.05));
-    border: 2px solid rgba(255, 59, 48, 0.3);
-    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(224, 90, 90, 0.08), rgba(245, 195, 28, 0.05));
+    border: 2px solid rgba(224, 90, 90, 0.2);
+    border-radius: 18px;
 }
 
-/* ========================================
-   日期输入容器
-   ======================================== */
+/* 日期输入容器 */
 .date-input-container {
     display: flex;
     gap: 12px;
@@ -297,5 +340,16 @@
 .date-input-container input {
     flex: 1;
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.9);
+    background: white;
+    border: 2px solid rgba(170, 166, 157, 0.3);
+    border-radius: 16px;
+    padding: 10px 14px;
+    font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+    color: #794f27;
+}
+
+.date-input-container input:focus {
+    outline: none;
+    border-color: #19c8b9;
+    box-shadow: 0 0 0 3px rgba(25, 200, 185, 0.15);
 }

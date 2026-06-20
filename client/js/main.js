@@ -286,6 +286,47 @@ function setupEventListeners() {
     if (adminBtn) adminBtn.addEventListener('click', allModals.showAdminModal);
     if (heatmapBtn) heatmapBtn.addEventListener('click', heatmap.showHeatmapModal);
 
+    // ── 管理员密码验证 ──
+    const confirmAdminPwdBtn = $('confirm-admin-password');
+    const adminPasswordInput = $('admin-password-input');
+    const adminPasswordSection = $('admin-password-section');
+    const adminUnlockedContent = $('admin-unlocked-content');
+
+    if (confirmAdminPwdBtn) {
+        confirmAdminPwdBtn.addEventListener('click', async () => {
+            const pwd = adminPasswordInput ? adminPasswordInput.value.trim() : '';
+            if (!pwd) {
+                ui.showToast('请输入管理员密码', 'error');
+                return;
+            }
+            try {
+                const result = await apiClient.verifyAdminPassword(pwd);
+                if (result && result.valid) {
+                    ctx.setAdminPassword(pwd);
+                    if (adminPasswordSection) adminPasswordSection.style.display = 'none';
+                    if (adminUnlockedContent) adminUnlockedContent.style.display = 'block';
+                    ui.showToast('密码验证成功', 'success');
+                    // 加载备份列表
+                    if (typeof modal.loadBackupList === 'function') modal.loadBackupList();
+                } else {
+                    ui.showToast('密码错误', 'error');
+                }
+            } catch (err) {
+                ui.showToast('验证失败: ' + (err.message || '未知错误'), 'error');
+            }
+        });
+    }
+
+    // 管理员密码输入框回车提交
+    if (adminPasswordInput) {
+        adminPasswordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (confirmAdminPwdBtn) confirmAdminPwdBtn.click();
+            }
+        });
+    }
+
     document.addEventListener('click', (e) => {
         const t = e.target;
         if (t.classList.contains('delete-btn')) schedule.deleteProject(t.dataset.date, parseInt(t.dataset.index));

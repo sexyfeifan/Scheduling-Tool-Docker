@@ -1,38 +1,32 @@
 /* ========================================
  * base.css — CSS 变量、全局重置、基础样式
- * 罐头场通告排期系统 v2.59
+ * 罐头场通告排期系统 v2.60
+ * 动物森友会风格
  * ======================================== */
 
-/* ========================================
- * base.css — CSS 变量、全局重置、基础样式
- * 罐头场通告排期系统 v2.59
- * ======================================== */
-/* ========================================
-   罐头场通告排期系统 v2.0 - Apple 风格设计
-   ======================================== */
-
-/* CSS 变量 - Apple 风格配色 */
+/* CSS 变量 - 动物森友会风格 */
 :root {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --secondary-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-    --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.5);
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
-    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
+    /* 主色调 */
+    --primary-gradient: linear-gradient(135deg, #19c8b9 0%, #6fba2c 100%);
+    --secondary-gradient: linear-gradient(135deg, #f5c31c 0%, #ff9500 100%);
+    --bg-gradient: linear-gradient(135deg, #f8f8f0 0%, #f0e8d8 100%);
+    --glass-bg: rgba(248, 248, 240, 0.95);
+    --glass-border: rgba(170, 166, 157, 0.3);
+    --shadow-sm: 0 2px 4px 0 rgba(61, 52, 40, 0.06);
+    --shadow-md: 0 3px 10px 0 rgba(61, 52, 40, 0.1);
+    --shadow-lg: 0 8px 24px 0 rgba(61, 52, 40, 0.14);
+    --shadow-card: 0 3px 10px 0 rgba(61, 52, 40, 0.1);
+    --radius-sm: 16px;
+    --radius-md: 18px;
+    --radius-lg: 24px;
     --radius-xl: 24px;
-    --text-primary: #1d1d1f;
-    --text-secondary: #86868b;
-    --text-tertiary: #a1a1a6;
-    --blue-accent: #0071e3;
-    --green-accent: #34c759;
-    --orange-accent: #ff9500;
-    --red-accent: #ff3b30;
+    --text-primary: #794f27;
+    --text-secondary: #9f927d;
+    --text-tertiary: #c4b89e;
+    --blue-accent: #19c8b9;
+    --green-accent: #6fba2c;
+    --orange-accent: #f5c31c;
+    --red-accent: #e05a5a;
     --purple-accent: #af52de;
 }
 
@@ -44,7 +38,7 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Nunito', 'Noto Sans SC', 'Zen Maru Gothic', 'HarmonyOS Sans SC', 'MiSans', -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif !important;
     background: var(--bg-gradient);
     background-attachment: fixed;
     color: var(--text-primary);
@@ -58,4 +52,20 @@ body {
     max-width: 1800px;
     margin: 0 auto;
     padding: 24px;
+}
+
+/* 链接样式 */
+a {
+    color: var(--blue-accent);
+    text-decoration: none;
+}
+
+a:hover {
+    color: #3dd4c6;
+}
+
+/* 选中文本样式 */
+::selection {
+    background: rgba(25, 200, 185, 0.2);
+    color: var(--text-primary);
 }
