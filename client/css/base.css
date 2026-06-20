@@ -4,11 +4,11 @@
  * ======================================== */
 
 /* ========================================
+ * base.css — CSS 变量、全局重置、基础样式
+ * 罐头场通告排期系统 v2.59
+ * ======================================== *//* ========================================
    罐头场通告排期系统 v2.0 - Apple 风格设计
-   ======================================== */
-
-/* CSS 变量 - Apple 风格配色 */
-:root {
+   ======================================== *//* CSS 变量 - Apple 风格配色 */:root {
     --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     --secondary-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
     --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -31,14 +31,11 @@
     --red-accent: #ff3b30;
     --purple-accent: #af52de;
 }
-
-/* 全局样式 */
-* {
+/* 全局样式 */* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
-
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
     background: var(--bg-gradient);
@@ -49,7 +46,6 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
-
 .container {
     max-width: 1800px;
     margin: 0 auto;

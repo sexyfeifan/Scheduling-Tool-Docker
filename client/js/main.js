@@ -283,7 +283,7 @@ async function initApp() {
     mobile.setupMobileDateSwitch();
     mobile.setupSwipeGesture();
     ui.updateUndoButton();
-    settings.loadVersionInfo();
+    settings.loadVersionInfo && settings.loadVersionInfo();
     settings.loadHealthStatus();
 
     await schedule.loadScheduleData();
@@ -292,7 +292,7 @@ async function initApp() {
 
     if (isMobile) mobile.showTodayOnMobile();
     settingsRole.updateProjectFormOptions();
-    settings.initStartTimeOptions();
+    settingsRole.initStartTimeOptions();
     sse.connectSSE();
     webhook.setupWebhookEvents();
     setInterval(settings.loadHealthStatus, 30000);
