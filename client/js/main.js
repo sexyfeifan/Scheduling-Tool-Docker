@@ -32,6 +32,7 @@ import { createPersonnelViewModule } from './modules/personnelView.js';
 import { createDashboardViewModule } from './modules/dashboardView.js';
 import { createQuickAddModule } from './modules/quickAdd.js';
 import { createHistoryPanelModule } from './modules/historyPanel.js';
+import { createSearchModule } from './modules/search.js';
 
 // ── 共享状态 ──
 let currentMonday = getMonday(new Date());
@@ -123,6 +124,18 @@ const quickAdd = createQuickAddModule({
 const historyPanel = createHistoryPanelModule({
     apiClient,
     onUndone: () => undoManager.undo()
+});
+const searchModule = createSearchModule({
+    apiClient,
+    onResults: (results) => {
+        if (!results) {
+            // 清除搜索，恢复正常视图
+            schedule.loadScheduleData().then(() => schedule.renderSchedule());
+        } else {
+            // 显示搜索结果
+            console.log('[search] 找到', results.total, '条结果');
+        }
+    }
 });
 
 // 合并所有模态框函数到统一接口
@@ -345,6 +358,7 @@ async function initApp() {
     dashboardView.init();
     quickAdd.init();
     historyPanel.init();
+    searchModule.init();
 
     // 快捷键
     ui.setupKeyboardShortcuts({
