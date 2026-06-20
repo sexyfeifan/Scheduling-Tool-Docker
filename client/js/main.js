@@ -492,6 +492,76 @@ async function initApp() {
     // CSV 导出按钮
     const exportCsvBtn = document.getElementById('export-csv');
     if (exportCsvBtn) exportCsvBtn.addEventListener('click', exp.exportCSV);
+
+    // ── 管理员设置 - 备份功能 ──
+    const backupToHostBtn = document.getElementById('backup-to-host');
+    if (backupToHostBtn) {
+        backupToHostBtn.addEventListener('click', async () => {
+            try {
+                ui.showLoading('正在备份...');
+                await apiClient.createBackup();
+                ui.hideLoading();
+                ui.showToast('备份成功', 'success');
+                // 刷新备份列表
+                if (typeof modalBackup.loadBackupList === 'function') {
+                    await modalBackup.loadBackupList();
+                }
+            } catch (error) {
+                ui.hideLoading();
+                ui.showToast('备份失败: ' + (error.message || '未知错误'), 'error');
+            }
+        });
+    }
+
+    // 从备份恢复按钮
+    const restoreFromHostBtn = document.getElementById('restore-from-host');
+    if (restoreFromHostBtn) {
+        restoreFromHostBtn.addEventListener('click', () => {
+            // 刷新备份列表
+            if (typeof modalBackup.loadBackupList === 'function') {
+                modalBackup.loadBackupList();
+            }
+            ui.showToast('请从下方备份列表选择要恢复的版本', 'info');
+        });
+    }
+
+    // ── 所有模态框关闭按钮 ──
+    // 使用事件委托处理所有关闭按钮
+    document.addEventListener('click', (e) => {
+        // 处理所有 .close 按钮
+        if (e.target.classList.contains('close')) {
+            const modal = e.target.closest('.modal');
+            if (modal) modal.style.display = 'none';
+        }
+        
+        // 处理所有取消按钮
+        if (e.target.id && e.target.id.startsWith('cancel-')) {
+            const modal = e.target.closest('.modal');
+            if (modal) modal.style.display = 'none';
+        }
+        
+        // 点击模态框背景关闭
+        if (e.target.classList.contains('modal')) {
+            e.target.style.display = 'none';
+        }
+    });
+
+    // ── 管理员设置 - 周导出功能 ──
+    const copyWeekExportBtn = document.getElementById('copy-week-export');
+    if (copyWeekExportBtn) {
+        copyWeekExportBtn.addEventListener('click', async () => {
+            // 复制周导出内容
+            const weekExportContent = document.getElementById('week-export-content');
+            if (weekExportContent) {
+                try {
+                    await navigator.clipboard.writeText(weekExportContent.textContent);
+                    ui.showToast('已复制到剪贴板', 'success');
+                } catch (err) {
+                    ui.showToast('复制失败', 'error');
+                }
+            }
+        });
+    }
 }
 
 initApp();
