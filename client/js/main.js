@@ -30,6 +30,8 @@ import { initViewSwitcher } from './modules/viewSwitcher.js';
 import { createMonthViewModule } from './modules/monthView.js';
 import { createPersonnelViewModule } from './modules/personnelView.js';
 import { createDashboardViewModule } from './modules/dashboardView.js';
+import { createQuickAddModule } from './modules/quickAdd.js';
+import { createHistoryPanelModule } from './modules/historyPanel.js';
 
 // ── 共享状态 ──
 let currentMonday = getMonday(new Date());
@@ -113,6 +115,14 @@ const personnelView = createPersonnelViewModule({
 });
 const dashboardView = createDashboardViewModule({
     api: { fetchSchedules: (start, end) => apiClient.get(`/schedules?start=${start}&end=${end}`) }
+});
+const quickAdd = createQuickAddModule({
+    apiClient,
+    onCreated: () => { schedule.loadScheduleData().then(() => schedule.renderSchedule()); }
+});
+const historyPanel = createHistoryPanelModule({
+    apiClient,
+    onUndone: () => undoManager.undo()
 });
 
 // 合并所有模态框函数到统一接口
@@ -321,6 +331,9 @@ async function initApp() {
     if (isMobile) mobile.showTodayOnMobile();
     settingsRole.updateProjectFormOptions();
     settingsRole.initStartTimeOptions();
+    // 将设置中的已知列表传给快速创建模块
+    const currentSettings = ctx.getSettings ? ctx.getSettings() : null;
+    if (currentSettings) quickAdd.updateKnownLists(currentSettings);
     sse.connectSSE();
     webhook.setupWebhookEvents();
     setInterval(settings.loadHealthStatus, 30000);
@@ -330,6 +343,8 @@ async function initApp() {
     monthView.init();
     personnelView.init();
     dashboardView.init();
+    quickAdd.init();
+    historyPanel.init();
 
     // 快捷键
     ui.setupKeyboardShortcuts({
