@@ -36,6 +36,7 @@ import { createSearchModule } from './modules/search.js';
 import { createClientExportModule } from './modules/clientExport.js';
 import { createConflictModule } from './modules/conflict.js';
 import { createKeyboardNavModule } from './modules/keyboardNav.js';
+import { createMobileGesturesModule } from './modules/mobileGestures.js';
 
 // ── 共享状态 ──
 let currentMonday = getMonday(new Date());
@@ -127,6 +128,15 @@ const keyboardNav = createKeyboardNavModule({
         if (action === 'redo') undoManager.redo();
     }
 });
+const mobileGestures = createMobileGesturesModule({
+    onSwipeLeft: () => { document.getElementById('next-week')?.click(); },
+    onSwipeRight: () => { document.getElementById('prev-week')?.click(); },
+    onLongPress: (x, y) => {
+        // 长按显示快速创建
+        const addBtn = document.getElementById('add-project');
+        if (addBtn) addBtn.click();
+    }
+});
 const personnelView = createPersonnelViewModule({
     api: { fetchSchedules: (start, end) => apiClient.get(`/schedules?start=${start}&end=${end}`) },
     onJumpToWeek: (date) => {
@@ -153,6 +163,15 @@ const keyboardNav = createKeyboardNavModule({
     onAction: (action) => {
         if (action === 'undo') undoManager.undo();
         if (action === 'redo') undoManager.redo();
+    }
+});
+const mobileGestures = createMobileGesturesModule({
+    onSwipeLeft: () => { document.getElementById('next-week')?.click(); },
+    onSwipeRight: () => { document.getElementById('prev-week')?.click(); },
+    onLongPress: (x, y) => {
+        // 长按显示快速创建
+        const addBtn = document.getElementById('add-project');
+        if (addBtn) addBtn.click();
     }
 });
 const dashboardView = createDashboardViewModule({
@@ -195,6 +214,15 @@ const keyboardNav = createKeyboardNavModule({
     onAction: (action) => {
         if (action === 'undo') undoManager.undo();
         if (action === 'redo') undoManager.redo();
+    }
+});
+const mobileGestures = createMobileGesturesModule({
+    onSwipeLeft: () => { document.getElementById('next-week')?.click(); },
+    onSwipeRight: () => { document.getElementById('prev-week')?.click(); },
+    onLongPress: (x, y) => {
+        // 长按显示快速创建
+        const addBtn = document.getElementById('add-project');
+        if (addBtn) addBtn.click();
     }
 });
 
@@ -422,6 +450,7 @@ async function initApp() {
     clientExport.init();
     conflictModule.init();
     keyboardNav.init();
+    mobileGestures.init();
 
     // 监听视图切换事件，触发各视图渲染
     document.addEventListener('viewInit', (e) => {
