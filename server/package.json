@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "2.59.0",
+  "version": "2.60.0",
   "description": "罐头场通告排期Web版后端服务",
   "main": "server.js",
   "scripts": {
