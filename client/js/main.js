@@ -34,6 +34,7 @@ import { createQuickAddModule } from './modules/quickAdd.js';
 import { createHistoryPanelModule } from './modules/historyPanel.js';
 import { createSearchModule } from './modules/search.js';
 import { createClientExportModule } from './modules/clientExport.js';
+import { createConflictModule } from './modules/conflict.js';
 
 // ── 共享状态 ──
 let currentMonday = getMonday(new Date());
@@ -107,6 +108,7 @@ const monthView = createMonthViewModule({
     }
 });
 const clientExport = createClientExportModule({ apiClient });
+const conflictModule = createConflictModule({ apiClient });
 const personnelView = createPersonnelViewModule({
     api: { fetchSchedules: (start, end) => apiClient.get(`/schedules?start=${start}&end=${end}`) },
     onJumpToWeek: (date) => {
@@ -117,6 +119,7 @@ const personnelView = createPersonnelViewModule({
     }
 });
 const clientExport = createClientExportModule({ apiClient });
+const conflictModule = createConflictModule({ apiClient });
 const dashboardView = createDashboardViewModule({
     api: { fetchSchedules: (start, end) => apiClient.get(`/schedules?start=${start}&end=${end}`) }
 });
@@ -141,6 +144,7 @@ const searchModule = createSearchModule({
     }
 });
 const clientExport = createClientExportModule({ apiClient });
+const conflictModule = createConflictModule({ apiClient });
 
 // 合并所有模态框函数到统一接口
 const allModals = { ...modal, ...modalProject, ...modalExport, ...modalBackup };
@@ -364,6 +368,7 @@ async function initApp() {
     historyPanel.init();
     searchModule.init();
     clientExport.init();
+    conflictModule.init();
 
     // 监听视图切换事件，触发各视图渲染
     document.addEventListener('viewInit', (e) => {

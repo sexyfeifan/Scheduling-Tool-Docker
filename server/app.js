@@ -17,6 +17,7 @@ const { createCalendarRouter } = require('./routes/calendar');
 const { createExportRouter } = require('./routes/export');
 const { createBatchRouter } = require('./routes/batch');
 const { createSearchRouter } = require('./routes/search');
+const { createConflictRouter } = require('./routes/conflict');
 const { createBackupService } = require('./services/backupService');
 const { createSqliteStore } = require('./services/sqliteStore');
 
@@ -140,6 +141,7 @@ function createApp(options = {}) {
   app.use('/api/export', createExportRouter({ store }));
   app.use('/api/schedules/batch', createBatchRouter({ requireEditAccess, sendUpdateToClients, store }));
   app.use('/api/schedules/search', createSearchRouter({ store }));
+  app.use('/api/schedules/conflicts', createConflictRouter({ store }));
   app.use('/api', createSystemRouter({ store }));
 
   app.use(express.static(CLIENT_DIR));
