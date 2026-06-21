@@ -12,7 +12,7 @@ export function createSearchModule({ apiClient, onResults }) {
   let searchTimeout = null;
 
   function init() {
-    const input = document.getElementById('search-input');
+    const input = document.getElementById('search-projects');
     if (!input) return;
 
     // 增强搜索框
@@ -62,7 +62,7 @@ export function createSearchModule({ apiClient, onResults }) {
   }
 
   async function performSearch() {
-    const input = document.getElementById('search-input');
+    const input = document.getElementById('search-projects');
     if (!input) return;
 
     const query = input.value.trim();
@@ -96,7 +96,7 @@ export function createSearchModule({ apiClient, onResults }) {
   }
 
   function clearSearch() {
-    const input = document.getElementById('search-input');
+    const input = document.getElementById('search-projects');
     if (input) input.value = '';
     currentFilters = {};
     clearFilterInputs();

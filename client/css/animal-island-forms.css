@@ -279,6 +279,102 @@ label {
     cursor: pointer;
 }
 
+/* ── 分隔线样式 ── */
+hr, .divider {
+    border: none;
+    border-top: 2px solid var(--animal-border-light);
+    margin: 20px 0;
+}
+
+/* ── 提示文本样式 ── */
+.hint-text {
+    color: var(--animal-text-secondary);
+    font-size: 12px;
+    margin-bottom: 16px;
+}
+
+/* ── 代码/模板文本域样式 ── */
+textarea.code-textarea,
+textarea.template-textarea {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    width: 100%;
+    resize: vertical;
+}
+
+textarea.export-textarea {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    height: 400px;
+    width: 100%;
+    resize: vertical;
+}
+
+/* ── 紧凑输入框样式 ── */
+.input-compact {
+    padding: 6px 10px;
+    font-size: 13px;
+}
+
+.input-flex {
+    flex: 1;
+    padding: 6px;
+    font-size: 13px;
+}
+
+/* ── 导出画布样式 ── */
+.export-canvas {
+    width: 100%;
+    max-width: 600px;
+    border: 2px solid var(--animal-border-light);
+    border-radius: var(--animal-radius-base);
+}
+
+/* ── Flex 容器样式 ── */
+.flex-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.flex-row-sm {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.flex-row-md {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.flex-row-mt {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+/* ── 紧凑标签样式 ── */
+.label-compact {
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+/* ── 不换行按钮样式 ── */
+.btn-nowrap {
+    white-space: nowrap;
+}
+
+/* ── Flex 填充样式 ── */
+.flex-1 {
+    flex: 1;
+}
+
 /* ── 表单组样式 ── */
 .form-group {
     margin-bottom: 16px;

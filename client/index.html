@@ -243,7 +243,7 @@
                             <input type="checkbox" id="project-advertiser" value="1"> 广告商单
                         </label>
                         <div id="advertiser-no-wrap" style="display:none;margin-top:6px;">
-                            <input type="text" id="project-advertiser-no" placeholder="请输入项目号" style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                            <input type="text" id="project-advertiser-no" class="input-compact" placeholder="请输入项目号">
                         </div>
                     </div>
                     <div class="form-actions">
@@ -296,17 +296,17 @@
                         <input type="checkbox" id="export-cross-week"> 跨周数导出
                     </label>
                     <div id="export-date-range" style="display:none;margin-top:8px;">
-                        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-                            <label style="font-size:13px;white-space:nowrap;">起始日：</label>
-                            <input type="date" id="export-start-date" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
-                            <label style="font-size:13px;white-space:nowrap;">结束日：</label>
-                            <input type="date" id="export-end-date" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                        <div class="flex-row-md">
+                            <label class="label-compact">起始日：</label>
+                            <input type="date" id="export-start-date" class="input-flex">
+                            <label class="label-compact">结束日：</label>
+                            <input type="date" id="export-end-date" class="input-flex">
                         </div>
                         <button id="regenerate-export" class="btn primary" style="width:100%;">生成图片</button>
                     </div>
                 </div>
                 <div class="export-preview">
-                    <canvas id="export-canvas" style="width: 100%; max-width: 600px; border: 1px solid #ddd;"></canvas>
+                    <canvas id="export-canvas" class="export-canvas"></canvas>
                 </div>
                 <div class="form-actions">
                     <button id="download-image" class="btn primary">下载图片</button>
@@ -331,7 +331,7 @@
 
                 <div class="settings-section">
                     <h3>项目模板</h3>
-                    <p style="color: var(--text-tertiary); font-size: 12px; margin-bottom: 16px;">可保存常用项目模板，在新增项目时一键套用。</p>
+                    <p class="hint-text">可保存常用项目模板，在新增项目时一键套用。</p>
                     <div id="template-list" class="template-list">
                         <p class="no-template">暂无模板</p>
                     </div>
@@ -350,7 +350,7 @@
             <h2>管理员设置</h2>
             <!-- 管理员密码验证 -->
             <div id="admin-password-section">
-                <p style="margin-bottom: 12px; color: #666;">此功能需要管理员密码</p>
+                <p class="hint-text">此功能需要管理员密码</p>
                 <div class="form-group">
                     <input type="password" id="admin-password-input" placeholder="请输入管理员密码">
                 </div>
@@ -369,7 +369,7 @@
 
                 <!-- 备份与恢复标签页 -->
                 <div id="admin-tab-backup" class="admin-tab-panel">
-                    <p style="color: var(--text-tertiary); font-size: 12px; margin-bottom: 16px;">备份文件将保存到服务器 backups 文件夹中</p>
+                    <p class="hint-text">备份文件将保存到服务器 backups 文件夹中</p>
                     <div class="backup-section">
                         <div class="form-group">
                             <button id="backup-to-host" class="btn primary">📦 一键备份到宿主机</button>
@@ -382,14 +382,14 @@
                             </div>
                         </div>
                     </div>
-                    <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0;">
+                    <hr>
                     <div class="restore-section">
                         <div class="form-group">
                             <button id="restore-from-host" class="btn">📥 从备份恢复</button>
                             <p>从服务器备份文件夹选择恢复数据</p>
                         </div>
                     </div>
-                    <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0;">
+                    <hr>
                     <div class="access-section">
                         <h4>访问控制与分享</h4>
                         <div class="form-group">
@@ -413,7 +413,7 @@
                             <p id="share-link-display" class="share-link-display">分享链接尚未启用</p>
                         </div>
                     </div>
-                    <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0;">
+                    <hr>
                     <div class="form-group">
                         <button id="export-data" class="btn">💾 下载备份文件</button>
                         <p>下载 JSON 格式的备份文件到本地</p>
@@ -430,7 +430,7 @@
                     <div class="history-filters">
                         <input type="date" id="history-date-filter" placeholder="按日期筛选">
                         <button id="history-refresh-btn" class="btn">刷新</button>
-                        <button id="history-clear-btn" class="btn" style="background:#e74c3c;color:white;">清空记录</button>
+                        <button id="history-clear-btn" class="btn delete-btn">清空记录</button>
                     </div>
                     <div id="history-table-container" class="history-table-container">
                         <table class="history-table">
@@ -467,23 +467,23 @@
                     </div>
                     <div class="form-group">
                         <label>日通告推送格式模板:</label>
-                        <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">
-                            <select id="webhook-daily-preset" class="toolbar-select" style="flex:1;">
+                        <div class="flex-row-sm">
+                            <select id="webhook-daily-preset" class="toolbar-select flex-1">
                                 <option value="">-- 选择预设模板 --</option>
                             </select>
-                            <button id="webhook-apply-daily-preset" class="btn" style="white-space:nowrap;">应用</button>
+                            <button id="webhook-apply-daily-preset" class="btn btn-nowrap">应用</button>
                         </div>
-                        <textarea id="webhook-daily-template" rows="8" style="width:100%;font-family:monospace;font-size:12px;" placeholder="留空使用默认模板"></textarea>
+                        <textarea id="webhook-daily-template" class="template-textarea" rows="8" placeholder="留空使用默认模板"></textarea>
                     </div>
                     <div class="form-group">
                         <label>周通告推送格式模板:</label>
-                        <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">
-                            <select id="webhook-weekly-preset" class="toolbar-select" style="flex:1;">
+                        <div class="flex-row-sm">
+                            <select id="webhook-weekly-preset" class="toolbar-select flex-1">
                                 <option value="">-- 选择预设模板 --</option>
                             </select>
-                            <button id="webhook-apply-weekly-preset" class="btn" style="white-space:nowrap;">应用</button>
+                            <button id="webhook-apply-weekly-preset" class="btn btn-nowrap">应用</button>
                         </div>
-                        <textarea id="webhook-weekly-template" rows="8" style="width:100%;font-family:monospace;font-size:12px;" placeholder="留空使用默认模板"></textarea>
+                        <textarea id="webhook-weekly-template" class="template-textarea" rows="8" placeholder="留空使用默认模板"></textarea>
                     </div>
                     <div class="form-actions" style="gap:8px;">
                         <button id="webhook-save" class="btn primary">保存设置</button>
@@ -528,7 +528,7 @@
             <h2>📤 Webhook 推送</h2>
             <div class="form-group">
                 <label>推送类型:</label>
-                <div style="display:flex;gap:8px;margin-top:8px;">
+                <div class="flex-row-mt">
                     <button id="webhook-push-daily-btn" class="btn primary" style="flex:1;">📅 日通告推送</button>
                     <button id="webhook-push-weekly-btn" class="btn secondary" style="flex:1;">📋 周通告推送</button>
                 </div>
@@ -562,7 +562,7 @@
         <div class="modal-content copy-modal-content">
             <span class="close" id="close-copy-modal">&times;</span>
             <h2>复制项目到其他日期</h2>
-            <p style="margin-bottom: 15px; color: #666;">选择目标日期（可多选，支持跨周）：</p>
+            <p class="hint-text">选择目标日期（可多选，支持跨周）：</p>
             <div id="copy-date-options" class="copy-date-options"></div>
             <div class="form-actions">
                 <button id="confirm-copy" class="btn primary">确认复制</button>
@@ -606,7 +606,7 @@
         <div class="modal-content" style="max-width:600px;">
             <span class="close" id="close-week-export">&times;</span>
             <h2>导出本周通告</h2>
-            <textarea id="week-export-text" readonly style="width:100%;height:400px;font-family:monospace;font-size:13px;line-height:1.6;resize:vertical;border:1px solid #ddd;border-radius:4px;padding:10px;box-sizing:border-box;"></textarea>
+            <textarea id="week-export-text" class="export-textarea" readonly></textarea>
             <div class="form-actions" style="margin-top:12px;">
                 <button id="copy-week-export" class="btn primary">复制全部</button>
                 <button id="cancel-week-export" class="btn">关闭</button>
