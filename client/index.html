@@ -233,9 +233,12 @@
 
         <!-- 项目编辑模态框 -->
         <div id="project-modal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2>项目信息</h2>
+            <div class="modal-content animal-card">
+                <div class="animal-card-header">
+                    <h2 class="animal-card-title">📋 项目信息</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="animal-card-body">
                 <div class="template-toolbar">
                     <div class="animal-select-wrapper">
                         <select id="project-template-select" class="animal-select toolbar-select">
@@ -309,14 +312,18 @@
                         <button type="button" id="cancel-edit" class="btn">取消</button>
                     </div>
                 </form>
+                </div> <!-- /animal-card-body -->
             </div>
         </div>
 
         <!-- 日期选择器模态框 -->
         <div id="date-picker-modal" class="modal">
-            <div class="modal-content date-picker">
-                <span class="close" id="close-date-picker">&times;</span>
-                <h2>选择日期</h2>
+            <div class="modal-content date-picker animal-card">
+                <div class="animal-card-header">
+                    <h2 class="animal-card-title">📅 选择日期</h2>
+                    <span class="close" id="close-date-picker">&times;</span>
+                </div>
+                <div class="animal-card-body">
                 <div class="date-picker-header">
                     <button id="prev-month" class="btn">◀</button>
                     <span id="current-month-year"></span>
@@ -341,14 +348,18 @@
                     <button id="confirm-date" class="btn primary">确定</button>
                     <button id="cancel-date" class="btn">取消</button>
                 </div>
+                </div> <!-- /animal-card-body -->
             </div>
         </div>
         
         <!-- 图片导出模态框 -->
         <div id="export-modal" class="modal">
-            <div class="modal-content export-modal">
-                <span class="close" id="close-export">&times;</span>
-                <h2>导出图片</h2>
+            <div class="modal-content export-modal animal-card">
+                <div class="animal-card-header">
+                    <h2 class="animal-card-title">🖼 导出图片</h2>
+                    <span class="close" id="close-export">&times;</span>
+                </div>
+                <div class="animal-card-body">
                 <div class="form-group" style="margin-bottom:12px;">
                     <label class="animal-switch">
                         <input type="checkbox" id="export-cross-week">
@@ -373,14 +384,18 @@
                     <button id="open-in-new-tab" class="btn">在新标签页打开</button>
                     <button id="cancel-export" class="btn">取消</button>
                 </div>
+                </div> <!-- /animal-card-body -->
             </div>
         </div>
         
         <!-- 设置模态框 -->
         <div id="settings-modal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2>设置</h2>
+            <div class="modal-content animal-card">
+                <div class="animal-card-header">
+                    <h2 class="animal-card-title">⚙ 设置</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="animal-card-body">
                 <div class="settings-section">
                     <h3>常用项管理</h3>
                     <div id="role-settings-container"></div>
@@ -399,6 +414,7 @@
                 <div class="form-actions">
                     <button id="save-settings" class="btn primary">保存设置</button>
                 </div>
+                </div> <!-- /animal-card-body -->
             </div>
         </div>
     </div>
@@ -581,9 +597,12 @@
 
     <!-- 热力图模态框 -->
     <div id="heatmap-modal" class="modal">
-        <div class="modal-content heatmap-modal-content">
-            <span class="close" id="close-heatmap-modal">&times;</span>
-            <h2>工作量热力图</h2>
+        <div class="modal-content heatmap-modal-content animal-card">
+            <div class="animal-card-header">
+                <h2 class="animal-card-title">🔥 工作量热力图</h2>
+                <span class="close" id="close-heatmap-modal">&times;</span>
+            </div>
+            <div class="animal-card-body">
             <div id="heatmap-chart" class="heatmap-chart"></div>
             <div class="heatmap-tabs">
                 <button class="heatmap-tab-btn active" data-range="today">今日</button>
@@ -602,14 +621,18 @@
                     <div id="heatmap-day-list" class="heatmap-day-list"></div>
                 </div>
             </div>
+            </div> <!-- /animal-card-body -->
         </div>
     </div>
 
     <!-- Webhook 推送模态框 -->
     <div id="webhook-push-modal" class="modal">
-        <div class="modal-content" style="max-width:500px;">
-            <span class="close" id="close-webhook-push">&times;</span>
-            <h2>📤 Webhook 推送</h2>
+        <div class="modal-content animal-card" style="max-width:500px;">
+            <div class="animal-card-header">
+                <h2 class="animal-card-title">📤 Webhook 推送</h2>
+                <span class="close" id="close-webhook-push">&times;</span>
+            </div>
+            <div class="animal-card-body">
             <div class="form-group">
                 <label>推送类型:</label>
                 <div class="flex-row-mt">
@@ -629,6 +652,7 @@
                 <button id="webhook-push-confirm" class="btn primary" disabled>确认推送</button>
                 <button id="webhook-push-cancel" class="btn">取消</button>
             </div>
+            </div> <!-- /animal-card-body -->
         </div>
     </div>
 
@@ -669,9 +693,12 @@
 
     <!-- 通告单生成模态框 -->
     <div id="notice-modal" class="modal">
-        <div class="modal-content notice-modal-content">
-            <span class="close" id="close-notice-modal">&times;</span>
-            <h2>通告单</h2>
+        <div class="modal-content notice-modal-content animal-card">
+            <div class="animal-card-header">
+                <h2 class="animal-card-title">📋 通告单</h2>
+                <span class="close" id="close-notice-modal">&times;</span>
+            </div>
+            <div class="animal-card-body">
             <div id="notice-header-info" class="notice-header-info"></div>
             <div id="notice-body" class="notice-body"></div>
             <div class="form-actions">
@@ -680,6 +707,7 @@
                 <button id="notice-open-image-btn" class="btn secondary">在新窗口打开</button>
                 <button id="close-notice-action-btn" class="btn">关闭</button>
             </div>
+            </div> <!-- /animal-card-body -->
         </div>
     </div>
 
@@ -687,14 +715,18 @@
 
     <!-- 导出本周通告模态框 -->
     <div id="week-export-modal" class="modal" style="display:none;">
-        <div class="modal-content" style="max-width:600px;">
-            <span class="close" id="close-week-export">&times;</span>
-            <h2>导出本周通告</h2>
+        <div class="modal-content animal-card" style="max-width:600px;">
+            <div class="animal-card-header">
+                <h2 class="animal-card-title">📋 导出本周通告</h2>
+                <span class="close" id="close-week-export">&times;</span>
+            </div>
+            <div class="animal-card-body">
             <textarea id="week-export-text" class="export-textarea" readonly></textarea>
             <div class="form-actions" style="margin-top:12px;">
                 <button id="copy-week-export" class="btn primary">复制全部</button>
                 <button id="cancel-week-export" class="btn">关闭</button>
             </div>
+            </div> <!-- /animal-card-body -->
         </div>
     </div>
 
