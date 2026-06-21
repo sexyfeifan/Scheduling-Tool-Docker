@@ -286,6 +286,10 @@ function setupEventListeners() {
     if (adminBtn) adminBtn.addEventListener('click', allModals.showAdminModal);
     if (heatmapBtn) heatmapBtn.addEventListener('click', heatmap.showHeatmapModal);
 
+    // ── 历史面板按钮 ──
+    const historyBtn = $('history-btn');
+    if (historyBtn) historyBtn.addEventListener('click', historyPanel.togglePanel);
+
     // ── 管理员密码验证 ──
     const confirmAdminPwdBtn = $('confirm-admin-password');
     const adminPasswordInput = $('admin-password-input');
@@ -308,6 +312,10 @@ function setupEventListeners() {
                     ui.showToast('密码验证成功', 'success');
                     // 加载备份列表
                     if (typeof modalBackup.loadBackupList === 'function') modalBackup.loadBackupList();
+                    // 加载 Webhook 设置
+                    if (typeof webhook.loadWebhookSettings === 'function') webhook.loadWebhookSettings();
+                    // 加载历史记录
+                    loadAdminHistory();
                 } else {
                     ui.showToast('密码错误', 'error');
                 }
@@ -350,6 +358,58 @@ function setupEventListeners() {
     if (adminTabPanels.length > 0) {
         adminTabPanels.forEach((panel, index) => {
             panel.style.display = index === 0 ? 'block' : 'none';
+        });
+    }
+
+    // ── 管理员标签页 - 历史记录功能 ──
+    async function loadAdminHistory() {
+        const historyTbody = document.getElementById('history-tbody');
+        if (!historyTbody) return;
+
+        try {
+            const response = await apiClient.get('/history');
+            const history = Array.isArray(response) ? response : (response.history || []);
+
+            if (history.length === 0) {
+                historyTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;padding:16px;">暂无操作记录</td></tr>';
+                return;
+            }
+
+            historyTbody.innerHTML = '';
+            history.slice(0, 50).forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.ts ? new Date(item.ts).toLocaleString() : '未知'}</td>
+                    <td>${escapeHtml(item.action || '未知')}</td>
+                    <td>${escapeHtml(item.date || '未知')}</td>
+                    <td>${escapeHtml(item.details || '')}</td>
+                `;
+                historyTbody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('加载历史记录失败:', error);
+            historyTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#e74c3c;padding:16px;">加载失败</td></tr>';
+        }
+    }
+
+    // 历史记录刷新按钮
+    const historyRefreshBtn = document.getElementById('history-refresh-btn');
+    if (historyRefreshBtn) {
+        historyRefreshBtn.addEventListener('click', loadAdminHistory);
+    }
+
+    // 历史记录清空按钮
+    const historyClearBtn = document.getElementById('history-clear-btn');
+    if (historyClearBtn) {
+        historyClearBtn.addEventListener('click', async () => {
+            if (!confirm('确定要清空所有操作记录吗？此操作不可恢复。')) return;
+            try {
+                await apiClient.post('/history/clear');
+                ui.showToast('操作记录已清空', 'success');
+                await loadAdminHistory();
+            } catch (error) {
+                ui.showToast('清空失败: ' + (error.message || '未知错误'), 'error');
+            }
         });
     }
 
