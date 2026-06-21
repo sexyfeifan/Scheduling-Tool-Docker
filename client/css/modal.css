@@ -121,11 +121,44 @@
 }
 
 .form-group input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
     width: 20px;
     height: 20px;
-    border-radius: 8px;
+    border: 2px solid var(--animal-border);
+    border-radius: 6px;
+    background: white;
     cursor: pointer;
-    accent-color: #19c8b9;
+    position: relative;
+    vertical-align: middle;
+    margin-right: 8px;
+    transition: all var(--animal-motion-fast) var(--animal-motion-ease);
+}
+
+.form-group input[type="checkbox"]:hover {
+    border-color: var(--animal-primary);
+}
+
+.form-group input[type="checkbox"]:checked {
+    background: var(--animal-primary);
+    border-color: var(--animal-primary);
+}
+
+.form-group input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 6px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.form-group input[type="checkbox"]:focus {
+    box-shadow: 0 0 0 3px var(--animal-primary-bg);
 }
 
 /* 表单操作按钮 */
