@@ -75,11 +75,36 @@ const ctx = {
     apiClient, undoManager,
 };
 
-// ── API 包装器（需要 withEditAccess，模块初始化后赋值） ──
-let scheduleAPI, settingAPI, versionAPI, backupAPI;
-
 // ── 初始化模块 ──
 const ui = createUiModule(ctx);
+
+// ── API 包装器（需要 ui.withEditAccess） ──
+const scheduleAPI = {
+    getSchedules: (p = {}) => apiClient.getSchedules(p),
+    saveSchedule: (p) => ui.withEditAccess(() => apiClient.saveSchedule(p)),
+    deleteSchedule: (d) => ui.withEditAccess(() => apiClient.deleteSchedule(d))
+};
+const settingAPI = {
+    getSettings: () => apiClient.getSettings(),
+    saveSettings: (p) => ui.withEditAccess(() => apiClient.saveSettings(p)),
+    getTemplates: () => apiClient.getTemplates(),
+    saveTemplate: (p) => ui.withEditAccess(() => apiClient.saveTemplate(p)),
+    deleteTemplate: (id) => ui.withEditAccess(() => apiClient.deleteTemplate(id)),
+    getAccessSettings: () => apiClient.getAccessSettings(),
+    saveAccessSettings: (p) => ui.withEditAccess(() => apiClient.saveAccessSettings(p))
+};
+const versionAPI = { getVersion: () => apiClient.version(), getHealth: () => apiClient.health() };
+const backupAPI = {
+    createBackup: () => ui.withEditAccess(() => apiClient.createBackup()),
+    getBackups: () => apiClient.getBackups(),
+    deleteBackup: (p) => ui.withEditAccess(() => apiClient.deleteBackup(p)),
+    restoreBackup: (p) => ui.withEditAccess(() => apiClient.restoreBackup(p)),
+    fetchBackupPayload: (p) => apiClient.fetchBackupPayload(p),
+    verifyPassword: (p) => apiClient.verifyAdminPassword(p)
+};
+
+// 注入到 ctx（供后续模块使用）
+Object.assign(ctx, { scheduleAPI, settingAPI, versionAPI, backupAPI });
 const settingsRole = createSettingsRoleModule({ ...ctx, ...ui });
 const settingsTemplate = createSettingsTemplateModule({ ...ctx, ...ui, ...settingsRole });
 const settings = createSettingsModule({ ...ctx, ...ui, ...settingsRole, ...settingsTemplate });
@@ -171,34 +196,6 @@ const searchModule = createSearchModule({
 
 // 合并所有模态框函数到统一接口
 const allModals = { ...modal, ...modalProject, ...modalExport, ...modalBackup };
-
-// 构建 API 包装器
-scheduleAPI = {
-    getSchedules: (p = {}) => apiClient.getSchedules(p),
-    saveSchedule: (p) => ui.withEditAccess(() => apiClient.saveSchedule(p)),
-    deleteSchedule: (d) => ui.withEditAccess(() => apiClient.deleteSchedule(d))
-};
-settingAPI = {
-    getSettings: () => apiClient.getSettings(),
-    saveSettings: (p) => ui.withEditAccess(() => apiClient.saveSettings(p)),
-    getTemplates: () => apiClient.getTemplates(),
-    saveTemplate: (p) => ui.withEditAccess(() => apiClient.saveTemplate(p)),
-    deleteTemplate: (id) => ui.withEditAccess(() => apiClient.deleteTemplate(id)),
-    getAccessSettings: () => apiClient.getAccessSettings(),
-    saveAccessSettings: (p) => apiClient.saveAccessSettings(p)
-};
-versionAPI = { getVersion: () => apiClient.version(), getHealth: () => apiClient.health() };
-backupAPI = {
-    createBackup: () => ui.withEditAccess(() => apiClient.createBackup()),
-    getBackups: () => apiClient.getBackups(),
-    deleteBackup: (p) => ui.withEditAccess(() => apiClient.deleteBackup(p)),
-    restoreBackup: (p) => ui.withEditAccess(() => apiClient.restoreBackup(p)),
-    fetchBackupPayload: (p) => apiClient.fetchBackupPayload(p),
-    verifyPassword: (p) => apiClient.verifyAdminPassword(p)
-};
-
-// 将 API 包装器注入到 ctx（供后续模块使用）
-Object.assign(ctx, { scheduleAPI, settingAPI, versionAPI, backupAPI });
 
 // ── DOM 元素 ──
 const $ = (id) => document.getElementById(id);
