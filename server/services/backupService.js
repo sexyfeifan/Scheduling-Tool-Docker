@@ -2,6 +2,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const { APP_VERSION } = require('../config');
+const logger = require('../logger');
 const { normalizeBackupPayload } = require('../utils/normalize');
 
 function isSafeBackupSegment(value) {
@@ -102,7 +103,7 @@ function createBackupService(store) {
         await fs.rm(path.join(store.backupDir, dir), { recursive: true, force: true });
       }
     } catch (err) {
-      console.error('自动清理备份失败:', err.message);
+      logger.error(err, '自动清理备份失败');
     }
   }
 

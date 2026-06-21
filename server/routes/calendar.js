@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const logger = require('../logger');
 
 function createCalendarRouter({ store }) {
   const router = express.Router();
@@ -40,7 +41,7 @@ function createCalendarRouter({ store }) {
       res.setHeader('Cache-Control', 'public, max-age=3600');
       res.send(icalContent);
     } catch (err) {
-      console.error('[calendar] 生成 iCal 失败:', err);
+      logger.error(err, '生成 iCal 失败');
       res.status(500).json({ message: '生成日历失败' });
     }
   });

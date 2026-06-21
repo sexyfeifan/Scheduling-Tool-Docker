@@ -43,9 +43,10 @@ export function createWebhookModule(ctx) {
     }
 
     async function saveWebhookSettings() {
+        const enabledEl = document.getElementById('webhook-enabled');
         const payload = {
             webhook: {
-                enabled: document.getElementById('webhook-enabled').checked,
+                enabled: enabledEl ? enabledEl.checked : false,
                 platform: document.getElementById('webhook-platform').value,
                 url: document.getElementById('webhook-url').value.trim(),
                 dailyTemplate: document.getElementById('webhook-daily-template').value,

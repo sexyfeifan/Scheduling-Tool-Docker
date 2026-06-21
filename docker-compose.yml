@@ -1,6 +1,6 @@
 services:
   scheduling-tool:
-    image: sexyfeifan/scheduling-tool:2.60
+    image: sexyfeifan/scheduling-tool:2.61
     container_name: scheduling-tool
     ports:
       - "3000:3000"
@@ -10,7 +10,7 @@ services:
     environment:
       - DATA_DIR=/app/data
       - BACKUP_DIR=/app/backups
-      - BACKUP_PASSWORD=${BACKUP_PASSWORD:-change-me}
+      - BACKUP_PASSWORD=${BACKUP_PASSWORD:-sexyfeifan}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]

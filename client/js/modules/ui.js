@@ -3,12 +3,12 @@
  * 包含：XSS 转义、Toast 提示、Loading 遮罩、认证错误检测、编辑密码提示、撤销按钮、输入框切换
  */
 export function createUiModule(ctx) {
-    const { getAdminPassword, setAdminPassword, getEditPassword, undoManager } = ctx;
+    const { getAdminPassword, setAdminPassword, getEditPassword, setEditPassword, undoManager } = ctx;
 
     // XSS 安全：转义 HTML 特殊字符
     function escapeHtml(str) {
         const s = String(str == null ? '' : str);
-        const map = { '&': '\u0026amp;', '<': '\u0026lt;', '>': '\u0026gt;', '"': '\u0026quot;', "'": '\u0026#39;' };
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
         return s.replace(/[&<>"']/g, (ch) => map[ch]);
     }
 
@@ -54,7 +54,7 @@ export function createUiModule(ctx) {
             return false;
         }
 
-        setAdminPassword(password);
+        setEditPassword(password);
         showToast('已临时解锁编辑操作', 'success');
         return true;
     }

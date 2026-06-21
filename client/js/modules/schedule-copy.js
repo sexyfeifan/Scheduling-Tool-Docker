@@ -25,7 +25,7 @@ export function createScheduleCopyModule(ctx) {
         const weekDates = getWeekDates(getCurrentMonday());
         const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
-        const dateSelection = document.getElementById('copy-date-selection');
+        const dateSelection = document.getElementById('copy-date-options');
         if (dateSelection) {
             dateSelection.innerHTML = '';
             weekDates.forEach((date, index) => {
@@ -43,7 +43,7 @@ export function createScheduleCopyModule(ctx) {
             });
         }
 
-        const confirmBtn = document.getElementById('copy-confirm-btn');
+        const confirmBtn = document.getElementById('confirm-copy');
         if (confirmBtn) {
             confirmBtn.onclick = async () => {
                 const selectedBtn = dateSelection ? dateSelection.querySelector('.tag-btn.active') : null;

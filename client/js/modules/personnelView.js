@@ -3,6 +3,8 @@
  * 以人员为行、日期为列的矩阵，显示每个人的排期
  */
 
+import { escapeHtml, escapeAttr, formatDate, getMonday } from './utils.js';
+
 /**
  * 创建人员排期视图模块
  */
@@ -44,7 +46,7 @@ export function createPersonnelViewModule({ api, onJumpToWeek }) {
   }
 
   async function render() {
-    const container = document.getElementById('personnel-view');
+    const container = document.getElementById('personnel-grid');
     if (!container) return;
 
     const startDate = getMonday(new Date(currentDate));
@@ -59,7 +61,7 @@ export function createPersonnelViewModule({ api, onJumpToWeek }) {
     const endDate = dates[dates.length - 1];
 
     // 更新标题
-    const title = document.getElementById('personnel-title');
+    const title = document.getElementById('personnel-display');
     if (title) {
       if (viewMode === 'week') {
         title.textContent = `${dates[0]} ~ ${dates[6]}`;
@@ -175,26 +177,3 @@ const STATUS_COLORS = {
   '已完成': '#10B981',
   '取消': '#EF4444'
 };
-
-function getMonday(date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  return d;
-}
-
-function formatDate(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function escapeHtml(str) {
-  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function escapeAttr(str) {
-  return String(str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}

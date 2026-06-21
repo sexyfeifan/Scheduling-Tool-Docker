@@ -5,8 +5,11 @@ const rateLimit = require('express-rate-limit');
 const cron = require('node-cron');
 
 const { BACKUP_PASSWORD, CLIENT_DIR } = require('./config');
+const logger = require('./logger');
+const pinoHttp = require('pino-http');
 const { securityHeaders } = require('./middleware/securityHeaders');
-const { createRequireAdminPassword, createRequireEditAccess } = require('./middleware/auth');
+const { createRequireAdminPassword, createRequireEditAccess, csrfProtection } = require('./middleware/auth');
+const { verifyPassword } = require('./utils/normalize');
 const { createBackupRouter } = require('./routes/backup');
 const { createSchedulesRouter } = require('./routes/schedules');
 const { createSettingsRouter } = require('./routes/settings');
@@ -24,7 +27,7 @@ const { createSqliteStore } = require('./services/sqliteStore');
 
 const passwordLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 5,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: '请求过于频繁，请稍后再试' }
@@ -52,10 +55,11 @@ function createApp(options = {}) {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrcAttr: ["'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://fonts.loli.net"],
         imgSrc: ["'self'", "data:", "blob:"],
         connectSrc: ["'self'"],
-        fontSrc: ["'self'"],
+        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com", "https://fonts.loli.net"],
         objectSrc: ["'none'"],
         mediaSrc: ["'self'"],
         frameSrc: ["'none'"],
@@ -65,9 +69,11 @@ function createApp(options = {}) {
   }));
 
   app.disable('x-powered-by');
-  app.use(cors());
+  app.use(cors({ origin: true }));
   app.use(express.json({ limit: '1mb' }));
   app.use(securityHeaders);
+  app.use(pinoHttp({ logger, autoLogging: { ignore: (req) => req.url === '/events' } }));
+  app.use(csrfProtection);
 
   // HTTPS redirect hint for production
   if (process.env.NODE_ENV === 'production') {
@@ -95,11 +101,42 @@ function createApp(options = {}) {
 
   // SSE endpoint with heartbeat to prevent zombie connections
   app.get('/events', (req, res) => {
+    const headerAdmin = req.headers['x-admin-password'];
+    const headerEdit = req.headers['x-edit-password'];
+    const cookieStr = req.headers.cookie || '';
+    const cookieEdit = cookieStr.split(';').map(c => c.trim()).find(c => c.startsWith('editPassword='));
+    const cookieEditValue = cookieEdit ? decodeURIComponent(cookieEdit.split('=')[1]) : '';
+
+    let authenticated = false;
+    if (headerAdmin && String(headerAdmin) === String(backupPassword)) {
+      authenticated = true;
+    }
+    if (!authenticated && headerEdit) {
+      const settings = store.readSettings();
+      const expectedHash = settings.access && settings.access.editPasswordHash;
+      if (!expectedHash) {
+        authenticated = true;
+      } else if (verifyPassword(headerEdit, expectedHash)) {
+        authenticated = true;
+      }
+    }
+    if (!authenticated && cookieEditValue) {
+      const settings = store.readSettings();
+      const expectedHash = settings.access && settings.access.editPasswordHash;
+      if (!expectedHash) {
+        authenticated = true;
+      } else if (verifyPassword(cookieEditValue, expectedHash)) {
+        authenticated = true;
+      }
+    }
+    if (!authenticated) {
+      return res.status(401).json({ message: 'SSE 连接需要认证' });
+    }
+
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-      'Access-Control-Allow-Origin': '*'
+      Connection: 'keep-alive'
     });
 
     res.write(': connected\n\n');
@@ -151,7 +188,7 @@ function createApp(options = {}) {
   app.get('/notice', (req, res) => res.sendFile(path.join(CLIENT_DIR, 'preview.html')));
 
   app.use((error, req, res, next) => {
-    console.error(error);
+    logger.error(error);
     const statusCode = error && error.message && /无效/.test(error.message) ? 400 : 500;
     res.status(statusCode).json({ message: error.message || '服务器错误' });
   });
@@ -160,9 +197,9 @@ function createApp(options = {}) {
   const autoCronJob = cron.schedule('0 3 * * *', async () => {
     try {
       await backupService.createBackup();
-      console.log('[cron] 自动备份完成');
+      logger.info('自动备份完成');
     } catch (err) {
-      console.error('[cron] 自动备份失败:', err.message);
+      logger.error(err, '自动备份失败');
     }
   });
 

@@ -5,6 +5,7 @@
  */
 
 const express = require('express');
+const logger = require('../logger');
 
 function createExportRouter({ store }) {
   const router = express.Router();
@@ -22,14 +23,19 @@ function createExportRouter({ store }) {
           date: s.date,
           projects: s.projects
         })),
-        settings
+        settings: (() => {
+          const sanitized = { ...settings };
+          delete sanitized.access;
+          delete sanitized.editPasswordHash;
+          return sanitized;
+        })()
       };
 
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename="排期备份_${formatDate(new Date())}.json"`);
       res.json(exportData);
     } catch (err) {
-      console.error('[export] JSON 导出失败:', err);
+      logger.error(err, 'JSON 导出失败');
       res.status(500).json({ message: '导出失败' });
     }
   });
@@ -70,7 +76,7 @@ function createExportRouter({ store }) {
       res.setHeader('Content-Disposition', `attachment; filename="排期报表_${formatDate(new Date())}.csv"`);
       res.send(BOM + rows.join('\n'));
     } catch (err) {
-      console.error('[export] Excel 导出失败:', err);
+      logger.error(err, 'Excel 导出失败');
       res.status(500).json({ message: '导出失败' });
     }
   });

@@ -4,37 +4,31 @@
  * 动物森友会风格
  * ======================================== */
 
-/* 项目卡片 - 动物森友会风格 */
+/* 项目卡片 — Animal Island UI Card Pattern */
 .project-card {
-    background: white;
     border-radius: 18px;
     padding: 14px;
     margin-bottom: 10px;
-    box-shadow: 0 3px 10px rgba(61, 52, 40, 0.1);
-    border: 2px solid rgba(170, 166, 157, 0.2);
-    position: relative;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
+    position: relative;
+    /* 默认 pattern-default 花纹 */
+    background:
+        radial-gradient(circle, rgba(196, 184, 158, 0.15) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(196, 184, 158, 0.1) 1px, transparent 1px),
+        rgb(247, 243, 223);
+    background-size: 28px 28px, 14px 14px, auto;
+    background-position: 0 0, 7px 7px, 0 0;
+    border: 1.5px solid #d4c4a8;
+    color: #725d42;
 }
 
 .project-card:hover {
-    transform: translateY(-3px) scale(1.01);
-    box-shadow: 0 8px 24px rgba(61, 52, 40, 0.14);
+    transform: translateY(-2px);
     border-color: #19c8b9;
 }
 
-/* 左侧彩色条 */
-.project-card::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: linear-gradient(180deg, #19c8b9, #6fba2c);
-    border-radius: 18px 0 0 18px;
-    opacity: 0.8;
-}
+/* 左侧彩色条 — 已移除花纹卡片不需要 */
 
 .project-card.dragging {
     opacity: 0.5;
@@ -197,19 +191,23 @@
 }
 
 .project-card .project-type.plane {
-    background: linear-gradient(135deg, #19c8b9, #6fba2c);
+    background: #82d5bb;
+    color: #2a6b5a;
 }
 
 .project-card .project-type.video {
-    background: linear-gradient(135deg, #af52de, #e05a5a);
+    background: #f8a6b2;
+    color: #a85565;
 }
 
 .project-card .project-type.live {
-    background: linear-gradient(135deg, #f5c31c, #ff9500);
+    background: #f7cd67;
+    color: #7a6528;
 }
 
 .project-card .project-type.test {
-    background: linear-gradient(135deg, #6fba2c, #19c8b9);
+    background: #b77dee;
+    color: #fff;
 }
 
 /* 卡片操作按钮 */
@@ -237,3 +235,98 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(25, 200, 185, 0.4);
 }
+
+/* 状态卡片配色 — Animal Island UI Color + Pattern */
+.project-card[data-status="已确认"] {
+    background:
+        radial-gradient(circle, rgba(130, 213, 187, 0.18) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(170, 235, 210, 0.12) 1px, transparent 1px),
+        #e8faf5;
+    background-size: 28px 28px, 14px 14px, auto;
+    background-position: 0 0, 7px 7px, 0 0;
+    border-color: #82d5bb;
+    color: #2a6b5a;
+}
+
+
+.project-card[data-status="待确认"] {
+    background:
+        radial-gradient(circle, rgba(247, 205, 103, 0.18) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(255, 230, 160, 0.12) 1px, transparent 1px),
+        #fff8e0;
+    background-size: 28px 28px, 14px 14px, auto;
+    background-position: 0 0, 7px 7px, 0 0;
+    border-color: #f7cd67;
+    color: #7a6528;
+}
+
+
+.project-card[data-status="已完成"] {
+    background:
+        radial-gradient(circle, rgba(136, 157, 240, 0.18) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(180, 195, 255, 0.12) 1px, transparent 1px),
+        #e8edff;
+    background-size: 28px 28px, 14px 14px, auto;
+    background-position: 0 0, 7px 7px, 0 0;
+    border-color: #889df0;
+    color: #4a5a8a;
+}
+
+
+.project-card[data-status="取消"] {
+    background:
+        radial-gradient(circle, rgba(252, 115, 109, 0.18) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(255, 160, 155, 0.12) 1px, transparent 1px),
+        #ffe8e8;
+    background-size: 28px 28px, 14px 14px, auto;
+    background-position: 0 0, 7px 7px, 0 0;
+    border-color: #fc736d;
+    color: #9a3a3a;
+    opacity: 0.7;
+}
+
+/* 项目类型卡片配色 — 动森 Card Color + Pattern */
+.project-card[data-type="平面"] {
+    background:
+        radial-gradient(circle, rgba(130, 213, 187, 0.18) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(170, 235, 210, 0.12) 1px, transparent 1px),
+        #e8faf5;
+    background-size: 28px 28px, 14px 14px, auto;
+    background-position: 0 0, 7px 7px, 0 0;
+    border-color: #82d5bb;
+    color: #2a6b5a;
+}
+
+.project-card[data-type="视频"] {
+    background:
+        radial-gradient(circle, rgba(248, 166, 178, 0.18) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(255, 200, 210, 0.12) 1px, transparent 1px),
+        #fde4e8;
+    background-size: 28px 28px, 14px 14px, auto;
+    background-position: 0 0, 7px 7px, 0 0;
+    border-color: #f8a6b2;
+    color: #a85565;
+}
+
+.project-card[data-type="直播"] {
+    background:
+        radial-gradient(circle, rgba(247, 205, 103, 0.18) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(255, 230, 160, 0.12) 1px, transparent 1px),
+        #fff8e0;
+    background-size: 28px 28px, 14px 14px, auto;
+    background-position: 0 0, 7px 7px, 0 0;
+    border-color: #f7cd67;
+    color: #7a6528;
+}
+
+.project-card[data-type="试做"] {
+    background:
+        radial-gradient(circle, rgba(183, 125, 238, 0.18) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(220, 180, 255, 0.12) 1px, transparent 1px),
+        #f0e8ff;
+    background-size: 28px 28px, 14px 14px, auto;
+    background-position: 0 0, 7px 7px, 0 0;
+    border-color: #b77dee;
+    color: #6a3a9a;
+}
+

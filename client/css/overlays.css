@@ -33,37 +33,46 @@
 
 .toast {
     padding: 14px 24px;
-    border-radius: var(--radius-lg);
-    color: white;
+    border-radius: 16px;
     font-size: 14px;
-    font-weight: 500;
-    box-shadow: var(--shadow-lg);
-    animation: toastIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 600;
+    font-family: 'Nunito', 'Noto Sans SC', sans-serif;
     max-width: 360px;
     word-wrap: break-word;
     display: flex;
     align-items: center;
     gap: 10px;
+    animation: toastIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* 动森风格：奶油底 + 圆点花纹 */
+    background:
+        radial-gradient(circle, rgba(196, 184, 158, 0.15) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(196, 184, 158, 0.1) 1px, transparent 1px),
+        rgb(247, 243, 223);
+    background-size: 28px 28px, 14px 14px, auto;
+    background-position: 0 0, 7px 7px, 0 0;
+    border: 2px solid #d4c4a8;
+    color: #725d42;
+    box-shadow: 0 6px 20px rgba(61, 52, 40, 0.15);
 }
 
 .toast.success {
-    background: linear-gradient(135deg, #34c759, #30d158);
-    box-shadow: 0 4px 20px rgba(52, 199, 89, 0.4);
+    border-color: #6fba2c;
+    color: #3a6b1a;
 }
 
 .toast.error {
-    background: linear-gradient(135deg, #ff3b30, #ff6961);
-    box-shadow: 0 4px 20px rgba(255, 59, 48, 0.4);
+    border-color: #e74c3c;
+    color: #8a2a1a;
 }
 
 .toast.warning {
-    background: linear-gradient(135deg, #ff9500, #ffcc00);
-    box-shadow: 0 4px 20px rgba(255, 149, 0, 0.4);
+    border-color: #f0a030;
+    color: #7a5a10;
 }
 
 .toast.info {
-    background: linear-gradient(135deg, #007aff, #5ac8fa);
-    box-shadow: 0 4px 20px rgba(0, 113, 227, 0.4);
+    border-color: #19c8b9;
+    color: #1a5a55;
 }
 
 .toast.hiding {

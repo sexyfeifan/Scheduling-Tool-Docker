@@ -3,6 +3,8 @@
  * 统计面板：项目类型分布、场地使用频率、人员工作量、状态分布、周趋势
  */
 
+import { escapeHtml } from './utils.js';
+
 /**
  * 创建数据看板视图模块
  */
@@ -20,8 +22,9 @@ export function createDashboardViewModule({ api }) {
   }
 
   async function render() {
-    const container = document.getElementById('dashboard-view');
-    if (!container) return;
+    const overviewContainer = document.getElementById('dashboard-overview');
+    const chartsContainer = document.getElementById('dashboard-charts');
+    if (!chartsContainer) return;
 
     // 获取过去 4 周数据
     const now = new Date();
@@ -42,28 +45,18 @@ export function createDashboardViewModule({ api }) {
     const stats = computeStats(schedules);
 
     // 渲染看板
+    if (overviewContainer) {
+      overviewContainer.innerHTML = renderOverviewCards(stats);
+    }
+
     let html = '<div class="dashboard-grid">';
-
-    // 概览卡片
-    html += renderOverviewCards(stats);
-
-    // 状态分布饼图（CSS 实现）
     html += renderStatusChart(stats);
-
-    // 项目类型分布
     html += renderTypeChart(stats);
-
-    // 场地使用 Top 10
     html += renderTopList('📍 场地使用 Top 10', stats.locationTop, '#3B82F6');
-
-    // 人员工作量 Top 10
     html += renderTopList('👤 人员工作量 Top 10', stats.personTop, '#10B981');
-
-    // 周趋势折线（简化表格）
     html += renderWeeklyTrend(stats);
-
     html += '</div>';
-    container.innerHTML = html;
+    chartsContainer.innerHTML = html;
   }
 
   function computeStats(schedules) {
@@ -261,8 +254,4 @@ function getWeekKey(dateStr) {
   const jan1 = new Date(d.getFullYear(), 0, 1);
   const week = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
   return `${d.getFullYear()}-W${String(week).padStart(2, '0')}`;
-}
-
-function escapeHtml(str) {
-  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

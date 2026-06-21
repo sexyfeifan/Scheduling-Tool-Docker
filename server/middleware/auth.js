@@ -52,7 +52,28 @@ function createRequireEditAccess(store) {
   };
 }
 
+/**
+ * CSRF 防护中间件
+ * 有 body 的 POST/PUT/PATCH 请求必须携带 Content-Type: application/json
+ * 无 body 的请求（Content-Length 为 0 或未设置）自动放行
+ */
+function csrfProtection(req, res, next) {
+  const method = req.method.toUpperCase();
+  if (['POST', 'PUT', 'PATCH'].includes(method)) {
+    const contentLength = parseInt(req.headers['content-length'] || '0', 10);
+    const hasBody = contentLength > 0 || req.headers['transfer-encoding'];
+    if (hasBody) {
+      const contentType = req.headers['content-type'] || '';
+      if (!contentType.includes('application/json')) {
+        return res.status(403).json({ message: '请求缺少必要的安全头' });
+      }
+    }
+  }
+  next();
+}
+
 module.exports = {
   createRequireAdminPassword,
-  createRequireEditAccess
+  createRequireEditAccess,
+  csrfProtection
 };

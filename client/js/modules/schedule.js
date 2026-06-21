@@ -4,7 +4,7 @@
  *       syncScheduleDates, pushUndoSnapshot, undoLastChange,
  *       renderSchedule, loadScheduleData, deleteProject, loadHistoryRecords
  */
-import { getWeekDates, formatDate, formatMonthDay } from './date.js';
+import { getWeekDates, formatDate, formatMonthDay, getWeekNumber } from './date.js';
 import { createDefaultFilters, matchesProjectFilters } from './filters.js';
 
 export function createScheduleModule(ctx) {

@@ -151,12 +151,33 @@ export function createSettingsModule(ctx) {
         }
     }
 
+    async function loadVersionInfo() {
+        try {
+            if (!versionAPI) return;
+            const versionData = await versionAPI.getVersion();
+            const versionInfo = document.getElementById('version-info');
+            if (versionInfo) {
+                const versionNumber = versionInfo.querySelector('.version-number');
+                const versionDate = versionInfo.querySelector('.version-date');
+                if (versionNumber) {
+                    versionNumber.textContent = 'v' + versionData.version;
+                }
+                if (versionDate) {
+                    versionDate.textContent = `${versionData.createDate} · build ${versionData.buildDate}`;
+                }
+            }
+        } catch (error) {
+            console.error('加载版本信息失败:', error);
+        }
+    }
+
     return {
         saveSettings,
         loadSettings,
         updateShareLinkDisplay,
         loadAccessSettings,
         loadHealthStatus,
+        loadVersionInfo,
         updateFilterState,
         getAccessSettings: () => accessSettings
     };

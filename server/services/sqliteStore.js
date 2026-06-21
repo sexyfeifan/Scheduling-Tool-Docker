@@ -3,13 +3,14 @@ const fsNative = require('fs');
 const fs = fsNative.promises;
 
 const { APP_CREATE_DATE, APP_VERSION, BACKUP_DIR, DATA_DIR } = require('../config');
+const logger = require('../logger');
 const {
   DEFAULT_SETTINGS,
   normalizeScheduleList,
   normalizeSettingsPayload,
   normalizeVersionData
 } = require('../utils/normalize');
-const { migrate, needsMigration } = require('./migrator');
+const { migrate, needsMigration, runSqliteMigrations } = require('./migrator');
 
 function createSqliteStore(options = {}) {
   const dataDir = options.dataDir || DATA_DIR;
@@ -80,13 +81,8 @@ function createSqliteStore(options = {}) {
       );
     `);
 
-    // Migration: add detail column if missing
-    try {
-      const cols = db.prepare("PRAGMA table_info(history)").all();
-      if (!cols.some(c => c.name === 'detail')) {
-        db.exec("ALTER TABLE history ADD COLUMN detail TEXT");
-      }
-    } catch (_) {}
+    // Run SQLite schema migrations
+    runSqliteMigrations(db);
 
     // Seed default settings if absent
     const settingsRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('main');
@@ -135,9 +131,9 @@ function createSqliteStore(options = {}) {
           for (const s of rows) insert.run(s.date, s.id, JSON.stringify(s.projects));
         });
         insertMany(schedules);
-        console.log(`[migrate] Imported ${schedules.length} schedule(s) from schedules.json`);
+        logger.info(`Imported ${schedules.length} schedule(s) from schedules.json`);
       } catch (err) {
-        console.warn('[migrate] schedules.json 迁移跳过:', err.message);
+        logger.warn(err, 'schedules.json 迁移跳过');
       }
     }
 
@@ -150,9 +146,9 @@ function createSqliteStore(options = {}) {
         const settings = normalizeSettingsPayload(data || {});
         db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
           .run('main', JSON.stringify(settings));
-        console.log('[migrate] Imported settings from settings.json');
+        logger.info('Imported settings from settings.json');
       } catch (err) {
-        console.warn('[migrate] settings.json 迁移跳过:', err.message);
+        logger.warn(err, 'settings.json 迁移跳过');
       }
     }
   }
@@ -175,12 +171,17 @@ function createSqliteStore(options = {}) {
   function writeSchedules(schedules) {
     const normalized = normalizeScheduleList(schedules);
     const upsert = getDb().prepare('INSERT OR REPLACE INTO schedules (date, id, data) VALUES (?, ?, ?)');
-    const txn = getDb().transaction((rows) => {
-      // Clear and reinsert — keeps it consistent with old fileStore semantics
-      getDb().prepare('DELETE FROM schedules').run();
-      for (const s of rows) upsert.run(s.date, s.id, JSON.stringify(s.projects));
+    const del = getDb().prepare('DELETE FROM schedules WHERE date = ?');
+    const existingDates = new Set(getDb().prepare('SELECT date FROM schedules').all().map(r => r.date));
+    const incomingDates = new Set(normalized.map(s => s.date));
+
+    const txn = getDb().transaction(() => {
+      for (const s of normalized) upsert.run(s.date, s.id, JSON.stringify(s.projects));
+      for (const date of existingDates) {
+        if (!incomingDates.has(date)) del.run(date);
+      }
     });
-    txn(normalized);
+    txn();
   }
 
   function writeScheduleDate(date, id, projects) {
@@ -256,7 +257,7 @@ function createSqliteStore(options = {}) {
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
       getDb().prepare('DELETE FROM history WHERE ts < ?').run(thirtyDaysAgo);
     } catch (err) {
-      console.error('[history] appendHistory failed:', err.message);
+      logger.error(err, 'appendHistory failed');
     }
   }
 

@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const logger = require('../logger');
 
 function createConflictRouter({ store }) {
   const router = express.Router();
@@ -81,7 +82,7 @@ function createConflictRouter({ store }) {
         period: { start, end }
       });
     } catch (err) {
-      console.error('[conflict] 冲突检测失败:', err);
+      logger.error(err, '冲突检测失败');
       res.status(500).json({ message: '冲突检测失败' });
     }
   });

@@ -8,12 +8,59 @@ export function createModalBackupModule(ctx) {
         backupAPI,
         showToast, showLoading, hideLoading, escapeHtml,
         loadScheduleData,
-        openBackupPreview,
     } = ctx;
 
     // ── DOM 引用 ──
     const backupPreviewModal = document.getElementById('backup-preview-modal');
     const backupPreviewBody = document.getElementById('backup-preview-body');
+
+    let pendingRestorePath = '';
+
+    // ─────────────────────────────────────────────────────────
+    // openBackupPreview / closeBackupPreviewModal
+    // ─────────────────────────────────────────────────────────
+    async function openBackupPreview(backupPath) {
+        const backupPayload = await backupAPI.fetchBackupPayload(backupPath);
+        const schedules = Array.isArray(backupPayload.schedules)
+            ? backupPayload.schedules
+            : Object.entries(backupPayload.schedules || {}).map(([date, projects]) => ({ date, projects }));
+        const projectCount = schedules.reduce((sum, item) => sum + (item.projects || []).length, 0);
+        const dateRange = schedules.length > 0
+            ? `${schedules[0].date} 至 ${schedules[schedules.length - 1].date}`
+            : '无排期数据';
+
+        backupPreviewBody.innerHTML = `
+            <p><strong>备份时间：</strong>${escapeHtml(backupPayload.backupDate || backupPayload.exportDate || '未知')}</p>
+            <p><strong>排期日期数：</strong>${schedules.length}</p>
+            <p><strong>项目总数：</strong>${projectCount}</p>
+            <p><strong>日期范围：</strong>${escapeHtml(dateRange)}</p>
+            <p><strong>模板数量：</strong>${(backupPayload.settings && backupPayload.settings.projectTemplates ? backupPayload.settings.projectTemplates.length : 0)}</p>
+            <p class="backup-preview-warning">恢复会覆盖当前排期与设置，系统会先自动生成一份恢复前快照。</p>
+        `;
+        pendingRestorePath = backupPath;
+        backupPreviewModal.style.display = 'block';
+    }
+
+    function closeBackupPreviewModal() {
+        pendingRestorePath = '';
+        backupPreviewModal.style.display = 'none';
+    }
+
+    async function confirmBackupRestore() {
+        if (!pendingRestorePath) return;
+        try {
+            showLoading('正在恢复...');
+            await backupAPI.restoreBackup(pendingRestorePath);
+            if (typeof loadScheduleData === 'function') await loadScheduleData();
+            closeBackupPreviewModal();
+            showToast('恢复成功', 'success');
+        } catch (error) {
+            console.error('恢复失败:', error);
+            showToast(`恢复失败: ${error.message}`, 'error');
+        } finally {
+            hideLoading();
+        }
+    }
 
     // ─────────────────────────────────────────────────────────
     // renderBackupListFromData
@@ -96,5 +143,8 @@ export function createModalBackupModule(ctx) {
     return {
         renderBackupListFromData,
         loadBackupList,
+        openBackupPreview,
+        closeBackupPreviewModal,
+        confirmBackupRestore,
     };
 }

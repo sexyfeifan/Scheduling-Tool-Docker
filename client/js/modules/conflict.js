@@ -3,6 +3,8 @@
  * 在导航栏添加冲突检测按钮，弹出冲突报告
  */
 
+import { escapeHtml, getMonday, formatDate } from './utils.js';
+
 export function createConflictModule({ apiClient }) {
   function init() {
     const btn = document.getElementById('conflict-btn');
@@ -89,25 +91,4 @@ export function createConflictModule({ apiClient }) {
   }
 
   return { init, checkConflicts };
-}
-
-// ── 工具函数 ──
-
-function getMonday(date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  return d;
-}
-
-function formatDate(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function escapeHtml(str) {
-  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

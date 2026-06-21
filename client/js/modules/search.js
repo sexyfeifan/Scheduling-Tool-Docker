@@ -3,6 +3,8 @@
  * 支持全局搜索 + 多条件过滤 + 保存过滤器
  */
 
+import { escapeHtml } from './utils.js';
+
 /**
  * 创建搜索增强模块
  */
@@ -224,8 +226,4 @@ export function createSearchModule({ apiClient, onResults }) {
   }
 
   return { init, performSearch, clearSearch };
-}
-
-function escapeHtml(str) {
-  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

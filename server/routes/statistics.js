@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const logger = require('../logger');
 
 function createStatisticsRouter({ store }) {
   const router = express.Router();
@@ -21,7 +22,7 @@ function createStatisticsRouter({ store }) {
       const stats = computeStatistics(filtered, type || 'overview');
       res.json(stats);
     } catch (err) {
-      console.error('[statistics] 统计失败:', err);
+      logger.error(err, '统计失败');
       res.status(500).json({ message: '统计数据获取失败' });
     }
   });

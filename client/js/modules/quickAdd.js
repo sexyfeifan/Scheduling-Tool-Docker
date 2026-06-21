@@ -3,6 +3,8 @@
  * 一行输入多个关键词，自动解析为项目字段
  */
 
+import { escapeHtml, formatDate, debounce } from './utils.js';
+
 /**
  * 创建快速创建模块
  */
@@ -265,14 +267,14 @@ export function createQuickAddModule({ apiClient, onCreated }) {
 
       el.innerHTML = history.slice(0, 5).map(h => {
         const parts = [h.location, h.director, h.type, h.photographer].filter(Boolean);
-        return `<div class="quick-add-history-item" data='${JSON.stringify(h)}' style="cursor:pointer;padding:4px 8px;margin:2px 0;background:#f8f9fa;border-radius:4px;font-size:12px">
+        return `<div class="quick-add-history-item" data-info='${JSON.stringify(h)}' style="cursor:pointer;padding:4px 8px;margin:2px 0;background:#f8f9fa;border-radius:4px;font-size:12px">
           📌 ${parts.join(' · ')}
         </div>`;
       }).join('');
 
       el.querySelectorAll('.quick-add-history-item').forEach(item => {
         item.addEventListener('click', () => {
-          const data = JSON.parse(item.dataset.attr || '{}');
+          const data = JSON.parse(item.dataset.info || '{}');
           const input = panel.querySelector('#quick-add-input');
           const parts = [data.location, data.director, data.photographer, data.type].filter(Boolean);
           input.value = parts.join(' ');
@@ -305,25 +307,4 @@ export function createQuickAddModule({ apiClient, onCreated }) {
   }
 
   return { init, updateKnownLists };
-}
-
-// ── 工具函数 ──
-
-function formatDate(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function escapeHtml(str) {
-  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function debounce(fn, ms) {
-  let timer;
-  return function (...args) {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn.apply(this, args), ms);
-  };
 }

@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const logger = require('../logger');
 
 function createBatchRouter({ requireEditAccess, sendUpdateToClients, store }) {
   const router = express.Router();
@@ -80,7 +81,7 @@ function createBatchRouter({ requireEditAccess, sendUpdateToClients, store }) {
       sendUpdateToClients({ type: 'batch', action, affected });
       res.json({ success: true, affected, message: `已${action === 'delete' ? '删除' : action === 'move' ? '移动' : '更新'} ${affected} 个项目` });
     } catch (err) {
-      console.error('[batch] 批量操作失败:', err);
+      logger.error(err, '批量操作失败');
       res.status(500).json({ message: '批量操作失败' });
     }
   });

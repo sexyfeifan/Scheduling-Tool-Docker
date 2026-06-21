@@ -3,6 +3,8 @@
  * 显示当月每天的项目条，支持点击查看、点击日期跳转
  */
 
+import { escapeHtml, escapeAttr, formatDate, getMonday } from './utils.js';
+
 /**
  * 创建月视图模块
  */
@@ -35,7 +37,7 @@ export function createMonthViewModule({ api, onJumpToWeek }) {
   }
 
   async function render() {
-    const container = document.getElementById('month-view');
+    const container = document.getElementById('month-grid');
     if (!container) return;
 
     const year = currentDate.getFullYear();
@@ -46,7 +48,7 @@ export function createMonthViewModule({ api, onJumpToWeek }) {
     const endDate = formatDate(lastDay);
 
     // 更新标题
-    const title = document.getElementById('month-title');
+    const title = document.getElementById('month-display');
     if (title) title.textContent = `${year}年${month + 1}月`;
 
     // 获取数据
@@ -137,21 +139,4 @@ export function createMonthViewModule({ api, onJumpToWeek }) {
   }
 
   return { init, render };
-}
-
-// ── 工具函数 ──
-
-function formatDate(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function escapeHtml(str) {
-  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function escapeAttr(str) {
-  return String(str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }

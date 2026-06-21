@@ -39,36 +39,9 @@ export function createModalExportModule(ctx) {
         exportModal.style.display = 'block';
 
         // 绘制排期表到canvas
-        drawScheduleToCanvas();
-
-        // 下载图片
-        downloadImageBtn.onclick = function () {
-            const canvas = document.querySelector('#export-canvas-container canvas');
-            if (!canvas) return;
-
-            const link = document.createElement('a');
-            link.download = `排期表_${new Date().toISOString().slice(0, 10)}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        };
-
-        // 在新标签页打开
-        openInNewTabBtn.onclick = function () {
-            const canvas = document.querySelector('#export-canvas-container canvas');
-            if (!canvas) return;
-
-            const newWindow = window.open();
-            if (newWindow) {
-                newWindow.document.write(`
-                    <html>
-                        <head><title>排期表导出</title></head>
-                        <body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f5f5f5;">
-                            <img src="${canvas.toDataURL('image/png')}" style="max-width:100%;height:auto;">
-                        </body>
-                    </html>
-                `);
-            }
-        };
+        if (typeof drawScheduleToCanvas === 'function') {
+            drawScheduleToCanvas();
+        }
     }
 
     return { showExportModal };

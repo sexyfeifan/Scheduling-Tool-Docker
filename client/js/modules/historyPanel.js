@@ -3,6 +3,8 @@
  * 可视化展示操作历史，支持撤销指定操作
  */
 
+import { escapeHtml, formatDate } from './utils.js';
+
 /**
  * 创建操作历史面板模块
  */
@@ -118,15 +120,4 @@ export function createHistoryPanelModule({ apiClient, onUndone }) {
   }
 
   return { init, togglePanel };
-}
-
-function formatDate(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function escapeHtml(str) {
-  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

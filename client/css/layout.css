@@ -6,9 +6,7 @@
 
 /* 头部样式 - 动物森友会风格 */
 .header {
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: #f8f8f0;
     border-radius: 24px;
     padding: 20px 28px;
     box-shadow: 0 3px 10px 0 rgba(61, 52, 40, 0.1);

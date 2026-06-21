@@ -253,18 +253,19 @@
     }
 
     /* ── Animal Island 组件移动端适配 ── */
-    .animal-switch-track {
+    .switch {
         min-width: 44px;
         height: 24px;
     }
 
-    .animal-switch-track::before {
-        width: 20px;
-        height: 20px;
+    .switch .handle {
+        width: 18px;
+        height: 18px;
+        left: 1px;
     }
 
-    .animal-switch-track:checked::before {
-        transform: translateX(20px);
+    .switch-checked .handle {
+        left: calc(100% - 20px);
     }
 
     .animal-checkbox-wrapper {

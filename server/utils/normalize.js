@@ -66,6 +66,7 @@ function normalizeTextArray(values, maxItems = 200, maxLength = 100) {
 function normalizeProject(project) {
   const validStatuses = ['待确认', '已确认', '已完成', '取消'];
   const rawStatus = project && project.status;
+  const rawStartTime = normalizeText(project && project.startTime, 10);
   const base = {
     name: normalizeText(project && project.name, 120),
     location: normalizeText(project && project.location, 120),
@@ -77,7 +78,7 @@ function normalizeProject(project) {
     audio: normalizeText(project && project.audio, 120),
     business: normalizeText(project && project.business, 120),
     type: normalizeText(project && project.type, 40),
-    startTime: normalizeText(project && project.startTime, 10),
+    startTime: rawStartTime && /^\d{1,2}:\d{2}$/.test(rawStartTime) ? rawStartTime : '',
     laodao: Boolean(project && project.laodao),
     isAdvertiser: Boolean(project && project.isAdvertiser),
     advertiserNo: normalizeText(project && project.advertiserNo, 60),

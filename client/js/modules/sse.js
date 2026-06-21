@@ -3,59 +3,114 @@
  * 通过 Server-Sent Events 监听后端推送，实时更新排期、设置、模板等数据
  */
 export function createSseModule(ctx) {
-    const { setScheduleData, renderSchedule, loadSettings, loadTemplateData, updateProjectFormOptions } = ctx;
+    const {
+        getScheduleData, setScheduleData,
+        renderSchedule, loadSettings, loadTemplateData,
+        updateProjectFormOptions, showToast
+    } = ctx;
 
-    // 连接SSE实现实时同步
+    let eventSource = null;
+    let heartbeatTimer = null;
+    let reconnectTimer = null;
+    let reconnectDelay = 1000;
+    const MAX_RECONNECT_DELAY = 30000;
+    const HEARTBEAT_TIMEOUT = 60000;
+
     function connectSSE() {
-        const eventSource = new EventSource('/events');
+        if (eventSource) {
+            eventSource.close();
+        }
 
-        eventSource.onmessage = function(event) {
-            const data = JSON.parse(event.data);
+        eventSource = new EventSource('/events');
+
+        eventSource.onopen = function () {
+            reconnectDelay = 1000;
+            resetHeartbeat();
+        };
+
+        eventSource.onmessage = function (event) {
+            resetHeartbeat();
+            let data;
+            try {
+                data = JSON.parse(event.data);
+            } catch (e) {
+                return;
+            }
+
+            const scheduleData = getScheduleData();
 
             switch (data.type) {
                 case 'scheduleUpdate':
-                    // 更新本地数据
                     scheduleData[data.date] = data.projects;
-                    // 重新渲染当前周的视图
                     renderSchedule();
                     break;
                 case 'scheduleDelete':
-                    // 从本地数据中删除
                     delete scheduleData[data.date];
-                    // 重新渲染当前周的视图
                     renderSchedule();
                     break;
                 case 'settingsUpdate':
-                    // 更新本地设置
                     window.__currentSettings = data.settings;
-                    roleCategories = data.settings.roleCategories || [];
-                    renderRoleSettings(data.settings);
-                    updateProjectFormOptions();
+                    if (typeof updateProjectFormOptions === 'function') updateProjectFormOptions();
                     break;
                 case 'templateUpdate':
-                    projectTemplates = data.templates || [];
-                    populateTemplateSelect();
-                    renderTemplateList();
+                    if (typeof loadTemplateData === 'function') loadTemplateData();
                     break;
                 case 'restoreComplete':
-                    // 备份恢复后重新拉取完整数据，避免本地状态残留
-                    loadScheduleData();
-                    loadSettings();
-                    loadTemplateData();
+                    if (typeof loadSettings === 'function') loadSettings();
+                    if (typeof loadTemplateData === 'function') loadTemplateData();
                     break;
             }
         };
 
-        eventSource.onerror = function(err) {
-            console.error('SSE连接错误:', err);
+        eventSource.onerror = function () {
             eventSource.close();
-            // 自动重连，延迟 5 秒
-            setTimeout(() => {
-                showToast('实时同步断开，正在重新连接…', 'warning', 5000);
-                connectSSE();
-            }, 5000);
+            eventSource = null;
+            clearHeartbeat();
+            scheduleReconnect();
         };
     }
 
-    return { connectSSE };
+    function resetHeartbeat() {
+        clearHeartbeat();
+        heartbeatTimer = setTimeout(() => {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+            scheduleReconnect();
+        }, HEARTBEAT_TIMEOUT);
+    }
+
+    function clearHeartbeat() {
+        if (heartbeatTimer) {
+            clearTimeout(heartbeatTimer);
+            heartbeatTimer = null;
+        }
+    }
+
+    function scheduleReconnect() {
+        if (reconnectTimer) return;
+        reconnectTimer = setTimeout(() => {
+            reconnectTimer = null;
+            if (typeof showToast === 'function') {
+                showToast('实时同步断开，正在重新连接…', 'warning', 3000);
+            }
+            connectSSE();
+        }, reconnectDelay);
+        reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
+    }
+
+    function disconnect() {
+        clearHeartbeat();
+        if (reconnectTimer) {
+            clearTimeout(reconnectTimer);
+            reconnectTimer = null;
+        }
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+        }
+    }
+
+    return { connectSSE, disconnect };
 }

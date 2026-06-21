@@ -9,13 +9,9 @@
    =================================================== */
 :root {
     --animal-primary: #19c8b9;
-    --animal-primary-color: #19c8b9;
     --animal-primary-hover: #3dd4c6;
-    --animal-primary-color-hover: #3dd4c6;
     --animal-primary-active: #50b9ab;
-    --animal-primary-color-active: #50b9ab;
     --animal-primary-bg: #e6f9f6;
-    --animal-primary-color-bg: #e6f9f6;
     --animal-success-color: #6fba2c;
     --animal-success-color-hover: #85cc45;
     --animal-success-color-active: #5a9e1e;
@@ -63,20 +59,22 @@
 }
 
 /* ===================================================
-   Switch 开关组件
+   Switch 开关组件 — Animal Island UI 规范
    =================================================== */
 .animal-switch {
     display: inline-flex;
     align-items: center;
-    gap: var(--animal-spacing-sm);
+    gap: 10px;
     cursor: pointer;
     user-select: none;
     font-family: var(--animal-font-family);
-    font-size: var(--animal-font-size-base);
+    font-size: 14px;
+    font-weight: 500;
     color: var(--animal-text-color);
+    letter-spacing: 0.01em;
 }
 
-.animal-switch input[type="checkbox"] {
+.switch-input {
     position: absolute;
     opacity: 0;
     width: 0;
@@ -84,55 +82,100 @@
     pointer-events: none;
 }
 
-.animal-switch-track {
+.switch {
     position: relative;
-    width: 44px;
-    height: 24px;
-    background: var(--animal-border-color);
-    border-radius: 12px;
-    transition: all var(--animal-motion-duration-base) var(--animal-motion-ease);
+    display: inline-flex;
+    align-items: center;
+    min-width: 52px;
+    height: 28px;
+    padding: 0;
+    background: #d4c9b4;
+    border: 2.5px solid #c4b89e;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    box-shadow: inset 0 2px 4px rgba(114, 93, 66, 0.15);
     flex-shrink: 0;
 }
 
-.animal-switch-track::before {
-    content: '';
+.switch-checked {
+    background: #86d67a;
+    border-color: #6fba2c;
+    box-shadow: inset 0 2px 4px rgba(90, 158, 30, 0.2);
+}
+
+.switch-disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.switch-small {
+    min-width: 38px;
+    height: 20px;
+    border-width: 2.5px;
+}
+
+.switch-small .handle {
+    width: 14px;
+    height: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 1px;
+}
+
+.switch-small.switch-checked .handle {
+    left: calc(100% - 16px);
+}
+
+.handle {
     position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 18px;
-    height: 18px;
-    background: white;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 2px;
+    width: 21px;
+    height: 21px;
+    background: rgb(247, 243, 223);
+    border: 2.5px solid #c4b89e;
     border-radius: 50%;
-    transition: all var(--animal-motion-duration-base) var(--animal-motion-ease);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.animal-switch input[type="checkbox"]:checked + .animal-switch-track {
-    background: var(--animal-primary-color);
+.switch-checked .handle {
+    left: calc(100% - 24px);
+    border-color: #6fba2c;
 }
 
-.animal-switch input[type="checkbox"]:checked + .animal-switch-track::before {
-    transform: translateX(20px);
+.inner {
+    display: block;
+    padding: 0 8px 0 28px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    line-height: 1;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+    letter-spacing: 0.02em;
 }
 
-.animal-switch input[type="checkbox"]:focus-visible + .animal-switch-track {
-    outline: 2px solid var(--animal-primary-color);
+.switch-checked .inner {
+    padding: 0 28px 0 8px;
+}
+
+.switch-input:focus-visible + .switch {
+    outline: 2px solid #ffcc00;
     outline-offset: 2px;
 }
 
-.animal-switch input[type="checkbox"]:disabled + .animal-switch-track {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
 .animal-switch-label {
-    font-size: var(--animal-font-size-base);
+    font-size: 14px;
+    font-weight: 500;
     color: var(--animal-text-color);
-    transition: color var(--animal-motion-duration-fast) var(--animal-motion-ease);
+    line-height: 1;
 }
 
-.animal-switch input[type="checkbox"]:checked ~ .animal-switch-label {
-    color: var(--animal-primary-color);
+.switch-input:checked ~ .animal-switch-label {
+    color: var(--animal-primary);
 }
 
 /* ===================================================
@@ -182,8 +225,8 @@
 }
 
 .animal-checkbox input[type="checkbox"]:checked + .animal-checkbox-box {
-    background: var(--animal-primary-color);
-    border-color: var(--animal-primary-color);
+    background: var(--animal-primary);
+    border-color: var(--animal-primary);
     animation: checkbox-bounce var(--animal-motion-duration-base) var(--animal-motion-ease);
 }
 
@@ -198,7 +241,7 @@
 }
 
 .animal-checkbox input[type="checkbox"]:focus-visible + .animal-checkbox-box {
-    outline: 2px solid var(--animal-primary-color);
+    outline: 2px solid var(--animal-primary);
     outline-offset: 2px;
 }
 
@@ -211,6 +254,53 @@
 .animal-checkbox-label {
     font-size: var(--animal-font-size-base);
     color: var(--animal-text-color);
+}
+
+/* ===================================================
+   Radio 单选框组件 — Animal Island UI
+   =================================================== */
+.animal-radio-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.animal-radio-item input[type="radio"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    margin: 0;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #c4b89e;
+    border-radius: 50%;
+    background: rgb(247, 243, 223);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.animal-radio-item input[type="radio"]:checked {
+    background: #19c8b9;
+    border-color: #11a89b;
+    background-image: radial-gradient(circle, #fff 3px, transparent 3px);
+    background-size: 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.animal-radio-item .radio-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #725d42;
+    line-height: 1;
+}
+
+.animal-radio-item input[type="radio"]:checked + .radio-label {
+    color: #794f27;
 }
 
 /* ===================================================
@@ -244,8 +334,8 @@
 }
 
 .animal-select:focus {
-    border-color: var(--animal-primary-color);
-    box-shadow: 0 0 0 3px var(--animal-primary-color-bg);
+    border-color: var(--animal-primary);
+    box-shadow: 0 0 0 3px var(--animal-primary-bg);
 }
 
 .animal-select:disabled {
@@ -255,23 +345,131 @@
 }
 
 .animal-select-wrapper::after {
-    content: '';
-    position: absolute;
-    right: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 6px solid var(--animal-text-color-secondary);
-    pointer-events: none;
-    transition: transform var(--animal-motion-duration-fast) var(--animal-motion-ease);
+    display: none;
 }
 
 .animal-select:focus + .animal-select-wrapper::after,
 .animal-select-wrapper:focus-within::after {
-    transform: translateY(-50%) rotate(180deg);
+    display: none;
+}
+
+.animal-select-wrapper.animal-select-custom::after {
+    display: none;
+}
+
+/* ===================================================
+   Custom Select 自定义下拉选择器 — Animal Island UI
+   =================================================== */
+.animal-select-custom {
+    position: relative;
+    display: inline-block;
+    min-width: 140px;
+    font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+}
+
+.animal-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 13px;
+    background: #fff;
+    border: 2px solid #e8dcc8;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+}
+
+.animal-select-trigger:hover {
+    border-color: #d4c4a8;
+    background: #fffdf7;
+}
+
+.animal-select-trigger.open {
+    background: #fff;
+    border-radius: 12px;
+}
+
+.animal-select-trigger .animal-select-value,
+.animal-select-trigger .value {
+    font-size: 14px;
+    color: #725d42;
+    font-weight: 600;
+}
+
+.animal-select-trigger .placeholder {
+    font-size: 14px;
+    color: #a09080;
+}
+
+.animal-select-trigger .animal-select-arrow,
+.animal-select-trigger .arrow {
+    color: #a09080;
+    transition: transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    margin-left: 8px;
+}
+
+.animal-select-trigger.open .animal-select-arrow,
+.animal-select-trigger.open .arrow {
+    transform: rotate(180deg);
+    color: #19c8b9;
+}
+
+.animal-select-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #ffeea0;
+    border-radius: 28px;
+    overflow: visible;
+    padding: 12px 0px;
+    z-index: 100;
+    box-shadow: 0 8px 24px rgba(61, 52, 40, 0.14);
+    display: none;
+}
+
+.animal-select-dropdown.open,
+.animal-select-dropdown.visible {
+    display: block;
+}
+
+.animal-select-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 30px 10px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #725d42;
+    cursor: pointer;
+    position: relative;
+    white-space: nowrap;
+}
+
+.animal-select-option.active {
+    font-weight: 700;
+    z-index: 1;
+}
+
+.animal-select-option:hover {
+    font-weight: 700;
+}
+
+.animal-select-option .pill-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 56%;
+    transform: translateY(-50%);
+    height: 14px;
+    margin: 0 20px;
+    background: #ffcc00;
+    border-radius: 7px;
+    z-index: -1;
+    opacity: 0.3;
 }
 
 /* ===================================================
@@ -312,12 +510,12 @@
 
 .animal-tab.active {
     color: white;
-    background: var(--animal-primary-color);
+    background: var(--animal-primary);
     box-shadow: var(--animal-shadow-sm);
 }
 
 .animal-tab:focus-visible {
-    outline: 2px solid var(--animal-primary-color);
+    outline: 2px solid var(--animal-primary);
     outline-offset: 2px;
 }
 
@@ -341,6 +539,15 @@
 .animal-card:hover {
     box-shadow: var(--animal-shadow-lg);
     transform: translateY(-2px);
+}
+
+.modal-content.animal-card {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.modal-content.animal-card:hover {
+    transform: none;
 }
 
 .animal-card-header {
@@ -372,6 +579,35 @@
     align-items: center;
     justify-content: flex-end;
     gap: var(--animal-spacing-sm);
+}
+
+.animal-card {
+    border-radius: 20px;
+    background: rgb(247, 243, 223);
+    padding: 16px 24px;
+    color: #725d42;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+.animal-card:hover {
+    transform: translateY(-2px);
+}
+.animal-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1.5px dashed #e8dcc8;
+    margin-bottom: 16px;
+}
+.animal-card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #794f27;
+}
+.animal-card-body {
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 /* ===================================================
@@ -465,7 +701,84 @@
 }
 
 /* ===================================================
-   Clock 时钟组件
+   Time HUD 时间组件 — Animal Island UI
+   =================================================== */
+.ac-datetime {
+    display: inline-flex;
+    gap: 20px;
+    align-items: center;
+    align-self: flex-start;
+    width: fit-content;
+    max-width: max-content;
+    padding: 16px 36px;
+    background: linear-gradient(180deg, #fff 0%, #f8f8f0 100%);
+    border: 3px solid #d4cfc3;
+    animation: ac-fade-up 0.5s ease-out;
+    border-radius: 18px;
+}
+
+.ac-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-right: 24px;
+    border-right: 3px solid rgba(159, 146, 125, 0.35);
+}
+
+.ac-weekday {
+    color: #6fba2c;
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.ac-monthday {
+    color: #8b7355;
+    font-weight: 800;
+    font-size: 22px;
+}
+
+.ac-time {
+    display: flex;
+    align-items: center;
+    color: #8b7355;
+    font-weight: 900;
+    font-size: 48px;
+    letter-spacing: 2px;
+}
+
+.ac-colon {
+    position: relative;
+    top: -0.08em;
+    margin: 0 1px;
+    font-size: 48px;
+    color: #8b7355;
+    animation: blink 1s step-end infinite;
+}
+
+.ac-colon-sec {
+    font-size: 32px;
+    opacity: 0.6;
+}
+
+.ac-clock-s {
+    font-size: 28px;
+    font-weight: 700;
+    color: #a09080;
+}
+
+@keyframes blink {
+    50% { opacity: 0; }
+}
+
+@keyframes ac-fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===================================================
+   旧版 Clock 样式（保留兼容）
    =================================================== */
 .animal-clock {
     display: inline-flex;
@@ -523,11 +836,11 @@
     border-top-color: rgba(255, 255, 255, 0.1);
 }
 
-[data-theme="dark"] .animal-switch-track {
+[data-theme="dark"] .switch {
     background: var(--animal-border-color);
 }
 
-[data-theme="dark"] .animal-switch-track::before {
+[data-theme="dark"] .switch .handle {
     background: var(--animal-bg-color);
 }
 
@@ -544,6 +857,33 @@
 
 [data-theme="dark"] .animal-select option {
     background: var(--animal-bg-color-secondary);
+    color: var(--animal-text-color);
+}
+
+[data-theme="dark"] .animal-select-trigger {
+    background: var(--animal-bg-color-secondary);
+    border-color: var(--animal-border-color);
+    color: var(--animal-text-color);
+}
+
+[data-theme="dark"] .animal-select-trigger:hover {
+    border-color: var(--animal-border-color-hover);
+    background: var(--animal-bg-color-secondary);
+}
+
+[data-theme="dark"] .animal-select-trigger .value {
+    color: var(--animal-text-color);
+}
+
+[data-theme="dark"] .animal-select-trigger .placeholder {
+    color: var(--animal-text-color-secondary);
+}
+
+[data-theme="dark"] .animal-select-dropdown {
+    background: #3a3428;
+}
+
+[data-theme="dark"] .animal-select-option {
     color: var(--animal-text-color);
 }
 
@@ -593,14 +933,14 @@
 }
 
 [data-theme="dark"] .tag-btn:hover {
-    border-color: var(--animal-primary-color);
+    border-color: var(--animal-primary);
     background: rgba(25, 200, 185, 0.15);
-    color: var(--animal-primary-color);
+    color: var(--animal-primary);
 }
 
 [data-theme="dark"] .tag-btn.active {
-    background: var(--animal-primary-color);
-    border-color: var(--animal-primary-color);
+    background: var(--animal-primary);
+    border-color: var(--animal-primary);
     color: white;
 }
 
@@ -759,7 +1099,7 @@
 }
 
 [data-theme="dark"] .animal-clock-icon .animal-icon {
-    color: var(--animal-primary-color);
+    color: var(--animal-primary);
 }
 
 /* ===================================================
@@ -1149,54 +1489,69 @@
     color: #e8e2d6;
     border-color: #3a3428;
 }
-#!/bin/sh
-# Substitute QWENPAW_PORT in supervisord template and start supervisord.
-# Default port 8088; override at runtime with -e QWENPAW_PORT=3000.
-set -e
 
-is_auth_enabled() {
-  if [ "${QWENPAW_AUTH_ENABLED+x}" ]; then
-    flag="${QWENPAW_AUTH_ENABLED}"
-  else
-    flag="${COPAW_AUTH_ENABLED:-}"
-  fi
-  flag="$(printf '%s' "$flag" | tr '[:upper:]' '[:lower:]')"
-  [ "$flag" = "true" ] || [ "$flag" = "1" ] || [ "$flag" = "yes" ]
+/* ── 暗色模式补充：加载遮罩 ── */
+[data-theme="dark"] .loading-overlay {
+    background: rgba(0, 0, 0, 0.85);
+}
+[data-theme="dark"] .loading-spinner {
+    border-color: #3a3428;
+    border-top-color: #3dd4c6;
+}
+[data-theme="dark"] .loading-text {
+    color: #e8e2d6;
 }
 
-warn_if_auth_off_container_bind() {
-  if is_auth_enabled; then
-    return
-  fi
-
-  cat >&2 <<EOF
-============================================================
-SECURITY NOTICE: QwenPaw is running in Docker without authentication.
-
-QwenPaw cannot verify whether access to the service is limited to a trusted
-network. Anyone who can reach the service may access QwenPaw APIs without login.
-
-Recommended:
-  - Restrict access to a trusted network or protected environment.
-  - Enable authentication with QWENPAW_AUTH_ENABLED=true if untrusted users or
-    processes may reach the service.
-============================================================
-EOF
+/* ── 暗色模式补充：快速创建面板 ── */
+[data-theme="dark"] #quick-add-panel .modal-content {
+    background: #1a1612;
+    border-color: #3a3428;
+}
+[data-theme="dark"] #quick-add-input {
+    background: #2a2420;
+    border-color: #3a3428;
+    color: #e8e2d6;
+}
+[data-theme="dark"] #quick-add-preview {
+    background: #2a2420;
+    border-color: #3a3428;
+    color: #e8e2d6;
+}
+[data-theme="dark"] .quick-add-history-item {
+    background: #2a2420 !important;
+    color: #e8e2d6;
 }
 
-# Auto-initialize if config.json is missing (bind mount with empty directory).
-if [ ! -f "${QWENPAW_WORKING_DIR}/config.json" ]; then
-  echo "⚠️  No config.json found in ${QWENPAW_WORKING_DIR}"
-  echo "📦 Running initialization..."
-  qwenpaw init --defaults --accept-security
-  echo "✅ Initialization complete!"
-else
-  echo "✓ Config found in ${QWENPAW_WORKING_DIR}, skipping initialization."
-fi
+/* ── 暗色模式补充：冲突检测面板 ── */
+[data-theme="dark"] #conflict-panel .modal-content {
+    background: #1a1612;
+    border-color: #3a3428;
+}
 
-export QWENPAW_PORT="${QWENPAW_PORT:-8088}"
-warn_if_auth_off_container_bind
-envsubst '${QWENPAW_PORT}' \
-  < /etc/supervisor/conf.d/supervisord.conf.template \
-  > /etc/supervisor/conf.d/supervisord.conf
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+/* ── 暗色模式补充：Webhook 推送面板 ── */
+[data-theme="dark"] #webhook-push-modal .modal-content {
+    background: #1a1612;
+    border-color: #3a3428;
+}
+
+/* ── 暗色模式补充：复制日期选项 ── */
+[data-theme="dark"] .copy-date-options {
+    background: #2a2420;
+}
+[data-theme="dark"] .copy-date-options .copy-date-option {
+    background: #2a2420;
+    border-color: #3a3428;
+    color: #e8e2d6;
+}
+[data-theme="dark"] .copy-date-options .copy-date-option.selected {
+    border-color: #3dd4c6;
+    background: rgba(25, 200, 185, 0.15);
+}
+
+/* ── 暗色模式补充：备份预览 ── */
+[data-theme="dark"] .backup-preview-body {
+    color: #e8e2d6;
+}
+[data-theme="dark"] .backup-preview-warning {
+    color: #f59e0b;
+}

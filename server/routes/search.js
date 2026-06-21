@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const logger = require('../logger');
 
 function createSearchRouter({ store }) {
   const router = express.Router();
@@ -65,7 +66,7 @@ function createSearchRouter({ store }) {
 
       res.json({ results, total: results.length });
     } catch (err) {
-      console.error('[search] 搜索失败:', err);
+      logger.error(err, '搜索失败');
       res.status(500).json({ message: '搜索失败' });
     }
   });

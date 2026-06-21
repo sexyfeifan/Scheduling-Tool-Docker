@@ -286,7 +286,7 @@ export function createExportModule(ctx) {
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `罐头场通告排期_数据备份_${formatDate(new Date())}.json`;
+            link.download = `罐头场通告排期_全量备份_${formatDate(new Date())}.json`;
 
             // 触发下载
             document.body.appendChild(link);
@@ -296,10 +296,48 @@ export function createExportModule(ctx) {
             // 释放URL对象
             URL.revokeObjectURL(url);
 
-            showToast('数据导出成功！', 'success');
+            showToast('全量备份导出成功！', 'success');
         } catch (error) {
             console.error('导出数据时出错:', error);
             showToast('导出数据失败：' + error.message, 'error');
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────
+    // exportScheduleOnly - 仅导出排期数据为 JSON 文件（轻量备份）
+    // ────────────────────────────────────────────────────────────
+    async function exportScheduleOnly() {
+        try {
+            // 获取所有排期数据
+            const schedules = await scheduleAPI.getSchedules();
+
+            // 构造导出数据对象（仅排期，不含设置和版本）
+            const exportData = {
+                schedules: schedules,
+                exportDate: new Date().toISOString()
+            };
+
+            // 创建Blob对象
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+
+            // 创建下载链接
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `罐头场通告排期_排期备份_${formatDate(new Date())}.json`;
+
+            // 触发下载
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // 释放URL对象
+            URL.revokeObjectURL(url);
+
+            showToast('排期数据导出成功！', 'success');
+        } catch (error) {
+            console.error('导出排期数据时出错:', error);
+            showToast('导出排期数据失败：' + error.message, 'error');
         }
     }
 
@@ -355,20 +393,25 @@ export function createExportModule(ctx) {
                     // 解析JSON数据
                     const importData = JSON.parse(e.target.result);
 
+                    const hasSettings = importData.settings && typeof importData.settings === 'object' && Object.keys(importData.settings).length > 0;
+                    const backupType = hasSettings ? '全量备份' : '排期备份';
+
                     // 确认是否导入
                     const confirmImport = confirm(`确定要导入以下数据吗？
 
+备份类型: ${backupType}
 备份日期: ${importData.exportDate || '未知'}
-版本: ${importData.version || '未知'}
-
-注意：这将覆盖当前的所有设置和排期数据！`);
+${hasSettings ? '版本: ' + (importData.version || '未知') + '\n' : ''}
+注意：这将覆盖当前的排期数据${hasSettings ? '和设置' : ''}！`);
                     if (!confirmImport) return;
 
                     const beforeState = cloneScheduleState();
                     const importedSchedules = normalizeImportedSchedules(importData.schedules);
 
-                    // 保存设置
-                    await settingAPI.saveSettings(importData.settings || {});
+                    // 仅在全量备份时保存设置
+                    if (hasSettings) {
+                        await settingAPI.saveSettings(importData.settings);
+                    }
 
                     // 先清理当前排期，再写入备份，确保导入结果是完整恢复而不是叠加
                     const existingSchedules = await scheduleAPI.getSchedules();
@@ -392,8 +435,10 @@ export function createExportModule(ctx) {
 
                     // 重新加载数据
                     await loadScheduleData();
-                    await loadSettings();
-                    await loadTemplateData();
+                    if (hasSettings) {
+                        await loadSettings();
+                        await loadTemplateData();
+                    }
 
                     // 更新项目表单选项
                     updateProjectFormOptions();
@@ -452,6 +497,7 @@ export function createExportModule(ctx) {
         downloadImage,
         openImageInNewTab,
         exportAllData,
+        exportScheduleOnly,
         normalizeImportedSchedules,
         handleImportFile,
         exportCSV,
