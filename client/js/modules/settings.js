@@ -5,11 +5,16 @@
  */
 export function createSettingsModule(ctx) {
     const {
-        getScheduleData, settingAPI, versionAPI,
+        getScheduleData, settingAPI,
         showToast, loadScheduleData,
         getRoleCategories, setRoleCategories, getAdminPassword,
         renderRoleSettings, updateProjectFormOptions,
     } = ctx;
+
+    // Lazy access to versionAPI (initialized after module creation)
+    function getVersionAPI() {
+        return ctx.versionAPI;
+    }
 
     let accessSettings = {};
 
@@ -57,6 +62,8 @@ export function createSettingsModule(ctx) {
 
     async function loadHealthStatus() {
         try {
+            const versionAPI = getVersionAPI();
+            if (!versionAPI) return;
             const health = await versionAPI.getHealth();
             if (healthBadge) {
                 healthBadge.textContent = `系统正常 · ${health.schedulesCount}天排期`;
