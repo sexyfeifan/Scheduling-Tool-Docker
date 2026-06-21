@@ -738,3 +738,160 @@
         transform: scale(1) translateY(0);
     }
 }
+
+/* ===================================================
+   SVG 图标暗色模式
+   =================================================== */
+[data-theme="dark"] .animal-icon {
+    color: var(--animal-text-color);
+}
+
+[data-theme="dark"] .btn .animal-icon {
+    color: inherit;
+}
+
+[data-theme="dark"] .view-btn .animal-icon {
+    color: inherit;
+}
+
+[data-theme="dark"] .animal-clock-icon .animal-icon {
+    color: var(--animal-primary-color);
+}
+
+/* ===================================================
+   项目卡片暗色模式
+   =================================================== */
+[data-theme="dark"] .project-card {
+    background: #2a2420;
+    border-color: #3a3428;
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] .project-card .project-title {
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] .project-card .staff-role {
+    background: rgba(25, 200, 185, 0.15);
+}
+
+[data-theme="dark"] .project-card .delete-btn {
+    background: rgba(224, 90, 90, 0.2);
+    color: #e87878;
+}
+
+[data-theme="dark"] .project-card .delete-btn:hover {
+    background: #e05a5a;
+    color: white;
+}
+
+[data-theme="dark"] .laodao-mark {
+    color: #e87878;
+}
+
+[data-theme="dark"] .advertiser-no {
+    color: #8a8aff;
+}
+
+[data-theme="dark"] .copy-btn {
+    background: linear-gradient(135deg, #19c8b9, #6fba2c);
+    color: white;
+}
+
+[data-theme="dark"] .project-card .project-type {
+    opacity: 0.9;
+}
+
+/* ===================================================
+   健康徽章暗色模式
+   =================================================== */
+[data-theme="dark"] .health-badge {
+    background: rgba(25, 200, 185, 0.15);
+    color: #3dd4c6;
+    border-color: rgba(25, 200, 185, 0.4);
+}
+
+[data-theme="dark"] .health-badge[data-state="error"] {
+    background: rgba(224, 90, 90, 0.15);
+    color: #e87878;
+    border-color: rgba(224, 90, 90, 0.4);
+}
+
+/* ===================================================
+   暗色模式下全局颜色微调
+   =================================================== */
+[data-theme="dark"] .week-display {
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] .toolbar {
+    background: #2a2420;
+    border-color: #3a3428;
+}
+
+[data-theme="dark"] .toolbar .btn {
+    background: #3a3428;
+    border-color: #4a4438;
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] .toolbar .btn:hover {
+    background: #4a4438;
+}
+
+[data-theme="dark"] .toolbar .btn.primary {
+    background: #19c8b9;
+    border-color: #19c8b9;
+    color: white;
+}
+#!/bin/sh
+# Substitute QWENPAW_PORT in supervisord template and start supervisord.
+# Default port 8088; override at runtime with -e QWENPAW_PORT=3000.
+set -e
+
+is_auth_enabled() {
+  if [ "${QWENPAW_AUTH_ENABLED+x}" ]; then
+    flag="${QWENPAW_AUTH_ENABLED}"
+  else
+    flag="${COPAW_AUTH_ENABLED:-}"
+  fi
+  flag="$(printf '%s' "$flag" | tr '[:upper:]' '[:lower:]')"
+  [ "$flag" = "true" ] || [ "$flag" = "1" ] || [ "$flag" = "yes" ]
+}
+
+warn_if_auth_off_container_bind() {
+  if is_auth_enabled; then
+    return
+  fi
+
+  cat >&2 <<EOF
+============================================================
+SECURITY NOTICE: QwenPaw is running in Docker without authentication.
+
+QwenPaw cannot verify whether access to the service is limited to a trusted
+network. Anyone who can reach the service may access QwenPaw APIs without login.
+
+Recommended:
+  - Restrict access to a trusted network or protected environment.
+  - Enable authentication with QWENPAW_AUTH_ENABLED=true if untrusted users or
+    processes may reach the service.
+============================================================
+EOF
+}
+
+# Auto-initialize if config.json is missing (bind mount with empty directory).
+if [ ! -f "${QWENPAW_WORKING_DIR}/config.json" ]; then
+  echo "⚠️  No config.json found in ${QWENPAW_WORKING_DIR}"
+  echo "📦 Running initialization..."
+  qwenpaw init --defaults --accept-security
+  echo "✅ Initialization complete!"
+else
+  echo "✓ Config found in ${QWENPAW_WORKING_DIR}, skipping initialization."
+fi
+
+export QWENPAW_PORT="${QWENPAW_PORT:-8088}"
+warn_if_auth_off_container_bind
+envsubst '${QWENPAW_PORT}' \
+  < /etc/supervisor/conf.d/supervisord.conf.template \
+  > /etc/supervisor/conf.d/supervisord.conf
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
