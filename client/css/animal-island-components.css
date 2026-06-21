@@ -1029,6 +1029,122 @@
     border-color: #3a3428;
     color: #e8e2d6;
 }
+
+/* ===================================================
+   暗色/亮色切换按钮暗色模式
+   =================================================== */
+[data-theme="dark"] .theme-toggle {
+    background: #2a2420;
+    border-color: #3a3428;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* ===================================================
+   全局暗色模式覆盖 — 确保无遗漏
+   =================================================== */
+[data-theme="dark"] body {
+    background: linear-gradient(135deg, #1a1612 0%, #2a2420 100%);
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] .main-content {
+    background: rgba(26, 22, 18, 0.95);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background: #2a2420;
+    border-color: #3a3428;
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: #7a7060;
+}
+
+[data-theme="dark"] .btn:not(.primary):not(.delete-btn) {
+    background: #2a2420;
+    border-color: #3a3428;
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] .btn:not(.primary):not(.delete-btn):hover {
+    background: #3a3428;
+}
+
+[data-theme="dark"] .header {
+    background: rgba(42, 36, 32, 0.95);
+    border-color: #3a3428;
+}
+
+[data-theme="dark"] .header h1 {
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] .modal {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] .modal-content {
+    background: #1a1612;
+    border-color: #3a3428;
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] .close {
+    color: #b8b0a0;
+}
+
+[data-theme="dark"] .close:hover {
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] a {
+    color: #3dd4c6;
+}
+
+[data-theme="dark"] a:hover {
+    color: #5de0d3;
+}
+
+[data-theme="dark"] ::selection {
+    background: rgba(25, 200, 185, 0.3);
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] .backup-item,
+[data-theme="dark"] .template-item {
+    background: #2a2420;
+    border-color: #3a3428;
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] .settings-section {
+    background: #2a2420;
+    border-color: #3a3428;
+}
+
+[data-theme="dark"] table {
+    background: #2a2420;
+    border-color: #3a3428;
+}
+
+[data-theme="dark"] th {
+    background: #2a2420;
+    color: #e8e2d6;
+    border-color: #3a3428;
+}
+
+[data-theme="dark"] td {
+    color: #e8e2d6;
+    border-color: #3a3428;
+}
 #!/bin/sh
 # Substitute QWENPAW_PORT in supervisord template and start supervisord.
 # Default port 8088; override at runtime with -e QWENPAW_PORT=3000.
