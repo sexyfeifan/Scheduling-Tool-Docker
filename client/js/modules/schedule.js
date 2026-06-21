@@ -14,7 +14,7 @@ export function createScheduleModule(ctx) {
         apiClient, scheduleAPI, undoManager,
         showToast, showLoading, hideLoading, escapeHtml,
         updateUndoButton, withEditAccess,
-        createProjectCard,
+        createProjectCard, showProjectModal,
     } = ctx;
 
     let scheduleData = getScheduleData();

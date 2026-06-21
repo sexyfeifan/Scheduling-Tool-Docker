@@ -8,6 +8,7 @@
     <meta name="theme-color" content="#3B82F6">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/animal-island-forms.css">
+    <link rel="stylesheet" href="css/animal-island-components.css">
     <script src="js/vendor/html2canvas.min.js"></script>
 </head>
 <body>
@@ -15,7 +16,13 @@
         <!-- 顶部导航栏 -->
         <header class="header">
             <h1>罐头场通告排期</h1>
-            <div class="toolbar">
+            <div class="header-right">
+                <div id="animal-clock" class="animal-clock">
+                    <span class="animal-clock-icon">🕐</span>
+                    <span class="animal-clock-time" id="clock-time">--:--:--</span>
+                    <span class="animal-clock-date" id="clock-date">----/--/--</span>
+                </div>
+                <div class="toolbar">
                 <button id="prev-week" class="btn icon-btn" title="上一周">◀</button>
                 <button id="current-week" class="btn primary icon-btn" title="回到本周">本周</button>
                 <button id="next-week" class="btn icon-btn" title="下一周">▶</button>
@@ -234,13 +241,17 @@
                     </div>
                     <div id="project-role-fields"></div>
                     <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="project-laodao" value="1"> 老刀出镜
+                        <label class="animal-switch">
+                            <input type="checkbox" id="project-laodao" value="1">
+                            <span class="animal-switch-track"></span>
+                            <span class="animal-switch-label">老刀出镜</span>
                         </label>
                     </div>
                     <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="project-advertiser" value="1"> 广告商单
+                        <label class="animal-switch">
+                            <input type="checkbox" id="project-advertiser" value="1">
+                            <span class="animal-switch-track"></span>
+                            <span class="animal-switch-label">广告商单</span>
                         </label>
                         <div id="advertiser-no-wrap" style="display:none;margin-top:6px;">
                             <input type="text" id="project-advertiser-no" class="input-compact" placeholder="请输入项目号">
@@ -292,8 +303,10 @@
                 <span class="close" id="close-export">&times;</span>
                 <h2>导出图片</h2>
                 <div class="form-group" style="margin-bottom:12px;">
-                    <label>
-                        <input type="checkbox" id="export-cross-week"> 跨周数导出
+                    <label class="animal-switch">
+                        <input type="checkbox" id="export-cross-week">
+                        <span class="animal-switch-track"></span>
+                        <span class="animal-switch-label">跨周数导出</span>
                     </label>
                     <div id="export-date-range" style="display:none;margin-top:8px;">
                         <div class="flex-row-md">
@@ -398,8 +411,10 @@
                             <p>设置后，新增、编辑、删除、恢复等操作需要先输入编辑密码。</p>
                         </div>
                         <div class="form-group">
-                            <label>
-                                <input type="checkbox" id="share-enabled-setting"> 启用只读分享链接
+                            <label class="animal-switch">
+                                <input type="checkbox" id="share-enabled-setting">
+                                <span class="animal-switch-track"></span>
+                                <span class="animal-switch-label">启用只读分享链接</span>
                             </label>
                         </div>
                         <div class="form-group">
@@ -450,7 +465,11 @@
                 <!-- Webhook 推送标签页 -->
                 <div id="admin-tab-webhook" class="admin-tab-panel" style="display: none;">
                     <div class="form-group">
-                        <label><input type="checkbox" id="webhook-enabled"> 启用 Webhook 推送</label>
+                        <label class="animal-switch">
+                            <input type="checkbox" id="webhook-enabled">
+                            <span class="animal-switch-track"></span>
+                            <span class="animal-switch-label">启用 Webhook 推送</span>
+                        </label>
                     </div>
                     <div class="form-group">
                         <label>平台类型:</label>

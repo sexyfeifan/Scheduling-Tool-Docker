@@ -619,6 +619,29 @@ async function initApp() {
             }
         });
     }
+
+    // ── 时钟功能 ──
+    function updateClock() {
+        const clockTime = document.getElementById('clock-time');
+        const clockDate = document.getElementById('clock-date');
+        if (!clockTime || !clockDate) return;
+        
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        
+        clockTime.textContent = `${hours}:${minutes}:${seconds}`;
+        clockDate.textContent = `${year}/${month}/${day}`;
+    }
+    
+    // 立即更新一次
+    updateClock();
+    // 每秒更新
+    setInterval(updateClock, 1000);
 }
 
 initApp();
