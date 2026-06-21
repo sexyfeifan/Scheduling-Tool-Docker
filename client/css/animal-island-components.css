@@ -510,6 +510,15 @@
     --animal-mask-bg: rgba(0, 0, 0, .6);
 }
 
+[data-theme="dark"] .toolbar-divider {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] hr,
+[data-theme="dark"] .divider {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
 [data-theme="dark"] .animal-switch-track {
     background: var(--animal-border-color);
 }

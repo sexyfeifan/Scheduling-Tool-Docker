@@ -572,13 +572,39 @@ async function initApp() {
 
     // 从备份恢复按钮
     const restoreFromHostBtn = document.getElementById('restore-from-host');
-    if (restoreFromHostBtn) {
-        restoreFromHostBtn.addEventListener('click', () => {
-            // 刷新备份列表
-            if (typeof modalBackup.loadBackupList === 'function') {
-                modalBackup.loadBackupList();
+    const restoreFileInput = document.getElementById('restore-file-input');
+    if (restoreFromHostBtn && restoreFileInput) {
+        restoreFileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                
+                if (!data.schedules || !Array.isArray(data.schedules)) {
+                    ui.showToast('无效的备份文件格式', 'error');
+                    return;
+                }
+                
+                if (!confirm(`确定从 ${file.name} 恢复数据？\n包含 ${data.schedules.length} 天排期数据，将覆盖当前数据。`)) {
+                    return;
+                }
+                
+                ui.showLoading();
+                await apiClient.restoreBackup({ data });
+                ui.hideLoading();
+                ui.showToast('数据恢复成功！正在刷新...', 'success');
+                
+                // 刷新页面
+                setTimeout(() => location.reload(), 1000);
+            } catch (err) {
+                ui.hideLoading();
+                ui.showToast('恢复失败: ' + (err.message || '未知错误'), 'error');
             }
-            ui.showToast('请从下方备份列表选择要恢复的版本', 'info');
+            
+            // 清空input
+            restoreFileInput.value = '';
         });
     }
 
