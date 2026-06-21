@@ -38,6 +38,7 @@ import { createConflictModule } from './modules/conflict.js';
 import { createKeyboardNavModule } from './modules/keyboardNav.js';
 import { createMobileGesturesModule } from './modules/mobileGestures.js';
 import { createOfflineIndicatorModule } from './modules/offlineIndicator.js';
+import { getIcon } from './modules/animal-icons.js';
 
 // ── 共享状态 ──
 let currentMonday = getMonday(new Date());
@@ -479,6 +480,47 @@ function setupEventListeners() {
     if (importFileInput) importFileInput.addEventListener('change', exp.handleImportFile);
 }
 
+// ── 替换 emoji 为 SVG 图标 ──
+function replaceEmojisWithIcons() {
+    const emojiMap = {
+        '◀': getIcon('prev'),
+        '▶': getIcon('next'),
+        '➕': getIcon('add'),
+        '⚡': getIcon('quick'),
+        '📜': getIcon('history'),
+        '⚠️': getIcon('conflict'),
+        '↩': getIcon('undo'),
+        '🖼': getIcon('export'),
+        '📊': getIcon('dashboard'),
+        '📋': getIcon('notice'),
+        '📌': getIcon('paste'),
+        '🔥': getIcon('heatmap'),
+        '📤': getIcon('webhook'),
+        '⚙': getIcon('settings'),
+        '🔐': getIcon('admin'),
+        '🕐': getIcon('clock'),
+        '📅': getIcon('week'),
+        '📆': getIcon('month'),
+        '👥': getIcon('personnel'),
+        '✕': getIcon('close'),
+    };
+
+    // 替换工具栏按钮中的 emoji
+    document.querySelectorAll('.toolbar .btn, .view-btn').forEach(btn => {
+        const text = btn.textContent;
+        for (const [emoji, icon] of Object.entries(emojiMap)) {
+            if (text.includes(emoji)) {
+                btn.innerHTML = btn.innerHTML.replace(emoji, icon);
+                break;
+            }
+        }
+    });
+
+    // 替换时钟图标
+    const clockIcon = document.querySelector('.animal-clock-icon');
+    if (clockIcon) clockIcon.innerHTML = getIcon('clock');
+}
+
 // ── 初始化应用 ──
 async function initApp() {
     const isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
@@ -519,6 +561,9 @@ async function initApp() {
     keyboardNav.init();
     mobileGestures.init();
     offlineIndicator.init();
+
+    // 替换 emoji 为 SVG 图标
+    replaceEmojisWithIcons();
 
     // 监听视图切换事件，触发各视图渲染
     document.addEventListener('viewInit', (e) => {

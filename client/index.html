@@ -237,9 +237,11 @@
                 <span class="close">&times;</span>
                 <h2>项目信息</h2>
                 <div class="template-toolbar">
-                    <select id="project-template-select" class="toolbar-select">
-                        <option value="">选择项目模板</option>
-                    </select>
+                    <div class="animal-select-wrapper">
+                        <select id="project-template-select" class="animal-select toolbar-select">
+                            <option value="">选择项目模板</option>
+                        </select>
+                    </div>
                     <button type="button" id="apply-template" class="btn">应用模板</button>
                     <button type="button" id="save-template-from-form" class="btn">存为模板</button>
                 </div>
@@ -529,12 +531,14 @@
                     </div>
                     <div class="form-group">
                         <label>平台类型:</label>
-                        <select id="webhook-platform" class="toolbar-select" style="width:100%">
-                            <option value="dingtalk">钉钉</option>
-                            <option value="feishu">飞书</option>
-                            <option value="wecom">企业微信</option>
-                            <option value="custom" selected>自定义</option>
-                        </select>
+                        <div class="animal-select-wrapper">
+                            <select id="webhook-platform" class="animal-select toolbar-select" style="width:100%">
+                                <option value="dingtalk">钉钉</option>
+                                <option value="feishu">飞书</option>
+                                <option value="wecom">企业微信</option>
+                                <option value="custom" selected>自定义</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Webhook URL:</label>
@@ -543,9 +547,11 @@
                     <div class="form-group">
                         <label>日通告推送格式模板:</label>
                         <div class="flex-row-sm">
-                            <select id="webhook-daily-preset" class="toolbar-select flex-1">
-                                <option value="">-- 选择预设模板 --</option>
-                            </select>
+                            <div class="animal-select-wrapper flex-1">
+                                <select id="webhook-daily-preset" class="animal-select toolbar-select">
+                                    <option value="">-- 选择预设模板 --</option>
+                                </select>
+                            </div>
                             <button id="webhook-apply-daily-preset" class="btn btn-nowrap">应用</button>
                         </div>
                         <textarea id="webhook-daily-template" class="template-textarea" rows="8" placeholder="留空使用默认模板"></textarea>
@@ -553,9 +559,11 @@
                     <div class="form-group">
                         <label>周通告推送格式模板:</label>
                         <div class="flex-row-sm">
-                            <select id="webhook-weekly-preset" class="toolbar-select flex-1">
-                                <option value="">-- 选择预设模板 --</option>
-                            </select>
+                            <div class="animal-select-wrapper flex-1">
+                                <select id="webhook-weekly-preset" class="animal-select toolbar-select">
+                                    <option value="">-- 选择预设模板 --</option>
+                                </select>
+                            </div>
                             <button id="webhook-apply-weekly-preset" class="btn btn-nowrap">应用</button>
                         </div>
                         <textarea id="webhook-weekly-template" class="template-textarea" rows="8" placeholder="留空使用默认模板"></textarea>
