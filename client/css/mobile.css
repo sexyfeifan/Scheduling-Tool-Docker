@@ -251,6 +251,101 @@
         transform: scale(0.96);
         opacity: 0.9;
     }
+
+    /* ── Animal Island 组件移动端适配 ── */
+    .animal-switch-track {
+        min-width: 44px;
+        height: 24px;
+    }
+
+    .animal-switch-track::before {
+        width: 20px;
+        height: 20px;
+    }
+
+    .animal-switch-track:checked::before {
+        transform: translateX(20px);
+    }
+
+    .animal-checkbox-wrapper {
+        padding: 10px 0;
+    }
+
+    .animal-select {
+        min-height: 48px;
+        padding: 12px 36px 12px 14px;
+        font-size: 16px;
+    }
+
+    .animal-tabs {
+        gap: 2px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .animal-tab {
+        padding: 8px 14px;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    .animal-card {
+        border-radius: 20px 20px 0 0;
+    }
+
+    .animal-card-header {
+        padding: 16px;
+    }
+
+    .animal-card-body {
+        padding: 16px;
+    }
+
+    .animal-clock {
+        font-size: 12px;
+        padding: 4px 10px;
+    }
+
+    .animal-tooltip-content {
+        display: none;
+    }
+
+    /* 搜索框移动端 */
+    .search-container input {
+        padding: 14px 16px 14px 40px;
+        font-size: 16px;
+        min-height: 48px;
+    }
+
+    /* 热力图移动端 */
+    .heatmap-modal-content {
+        max-width: 100%;
+        width: 100%;
+        max-height: 92vh;
+    }
+
+    .heatmap-bar-row {
+        grid-template-columns: 70px 1fr 30px;
+        gap: 6px;
+    }
+
+    .heatmap-bar-label {
+        font-size: 11px;
+    }
+
+    /* 历史面板移动端 */
+    .history-panel {
+        width: calc(100% - 40px);
+        right: 20px;
+        bottom: 70px;
+    }
+
+    .history-toggle {
+        bottom: 15px;
+        right: 70px;
+        width: 42px;
+        height: 42px;
+    }
 }
 
 /* 更小屏幕 */

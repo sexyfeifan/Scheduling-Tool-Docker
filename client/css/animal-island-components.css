@@ -844,6 +844,191 @@
     border-color: #19c8b9;
     color: white;
 }
+
+/* ===================================================
+   面板(Panels)暗色模式
+   =================================================== */
+[data-theme="dark"] .history-panel {
+    background: #2a2420;
+    border-color: #3a3428;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .history-panel-header {
+    color: #e8e2d6;
+    border-bottom-color: #3a3428;
+}
+
+[data-theme="dark"] .history-toggle {
+    background: #2a2420;
+    border-color: #3a3428;
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] .history-group-label {
+    color: #b8b0a0;
+}
+
+[data-theme="dark"] .history-item:hover {
+    background: rgba(25, 200, 185, 0.12);
+    border-color: rgba(25, 200, 185, 0.3);
+}
+
+[data-theme="dark"] .slide-panel {
+    background: #1a1612;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .slide-panel-header {
+    border-bottom-color: #3a3428;
+}
+
+[data-theme="dark"] .slide-panel-header h3 {
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] .slide-panel-close {
+    color: #b8b0a0;
+}
+
+[data-theme="dark"] .slide-panel-close:hover {
+    background: rgba(170, 166, 157, 0.2);
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] .admin-modal-content {
+    background: #1a1612;
+}
+
+[data-theme="dark"] .admin-tabs {
+    border-bottom-color: #3a3428;
+}
+
+[data-theme="dark"] .admin-tab-btn {
+    color: #b8b0a0;
+}
+
+[data-theme="dark"] .admin-tab-btn:hover {
+    color: #3dd4c6;
+}
+
+[data-theme="dark"] .admin-tab-btn.active {
+    color: #3dd4c6;
+    border-bottom-color: #3dd4c6;
+}
+
+/* ===================================================
+   热力图暗色模式
+   =================================================== */
+[data-theme="dark"] .heatmap-modal-content {
+    background: #1a1612;
+}
+
+[data-theme="dark"] .heatmap-tab-btn {
+    background: #2a2420;
+    border-color: #3a3428;
+    color: #b8b0a0;
+}
+
+[data-theme="dark"] .heatmap-tab-btn:hover {
+    border-color: #19c8b9;
+    color: #3dd4c6;
+}
+
+[data-theme="dark"] .heatmap-tab-btn.active {
+    background: #19c8b9;
+    color: white;
+    border-color: #19c8b9;
+}
+
+[data-theme="dark"] .heatmap-section h3 {
+    color: #e8e2d6;
+    border-bottom-color: #3a3428;
+}
+
+[data-theme="dark"] .heatmap-bar-label {
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] .heatmap-bar-track {
+    background: rgba(58, 52, 40, 0.5);
+}
+
+[data-theme="dark"] .heatmap-bar-count {
+    color: #b8b0a0;
+}
+
+[data-theme="dark"] .heatmap-empty {
+    color: #b8b0a0;
+}
+
+[data-theme="dark"] .heatmap-chart {
+    background: rgba(42, 36, 32, 0.5);
+}
+
+[data-theme="dark"] .heatmap-label-cell {
+    color: #b8b0a0;
+}
+
+[data-theme="dark"] .heatmap-cell {
+    background: rgba(58, 52, 40, 0.5);
+}
+
+[data-theme="dark"] .heatmap-cell-today {
+    outline-color: #3dd4c6;
+}
+
+[data-theme="dark"] .heatmap-chart-legend {
+    color: #b8b0a0;
+}
+
+/* ===================================================
+   今日高亮暗色模式
+   =================================================== */
+[data-theme="dark"] .day-header.today-highlight {
+    background: linear-gradient(135deg, #e87878, #f5c31c) !important;
+}
+
+[data-theme="dark"] .day-header.today-highlight::after {
+    border-top-color: #e87878;
+}
+
+[data-theme="dark"] .day-column.today-highlight {
+    background: linear-gradient(135deg, rgba(224, 90, 90, 0.12), rgba(245, 195, 28, 0.08));
+    border-color: rgba(224, 90, 90, 0.3);
+}
+
+/* ===================================================
+   通知/提示框暗色模式
+   =================================================== */
+[data-theme="dark"] .toast {
+    background: #2a2420;
+    border-color: #3a3428;
+    color: #e8e2d6;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .notice-card,
+[data-theme="dark"] .info-box {
+    background: #2a2420;
+    border-color: #3a3428;
+    color: #e8e2d6;
+}
+
+/* ===================================================
+   分享/链接面板暗色模式
+   =================================================== */
+[data-theme="dark"] .share-link-box {
+    background: #2a2420;
+    border-color: #3a3428;
+    color: #e8e2d6;
+}
+
+[data-theme="dark"] .share-link-box input {
+    background: #1a1612;
+    border-color: #3a3428;
+    color: #e8e2d6;
+}
 #!/bin/sh
 # Substitute QWENPAW_PORT in supervisord template and start supervisord.
 # Default port 8088; override at runtime with -e QWENPAW_PORT=3000.
