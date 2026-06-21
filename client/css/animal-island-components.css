@@ -580,6 +580,48 @@
 }
 
 /* ===================================================
+   Tag Button 暗色模式适配
+   =================================================== */
+[data-theme="dark"] .tag-btn {
+    background: var(--animal-bg-color-secondary);
+    border-color: var(--animal-border-color);
+    color: var(--animal-text-color);
+}
+
+[data-theme="dark"] .tag-btn:hover {
+    border-color: var(--animal-primary-color);
+    background: rgba(25, 200, 185, 0.15);
+    color: var(--animal-primary-color);
+}
+
+[data-theme="dark"] .tag-btn.active {
+    background: var(--animal-primary-color);
+    border-color: var(--animal-primary-color);
+    color: white;
+}
+
+/* ===================================================
+   Modal Card 暗色模式
+   =================================================== */
+[data-theme="dark"] .modal-content.animal-card {
+    background: var(--animal-bg-color-secondary);
+    border-color: var(--animal-border-color);
+}
+
+[data-theme="dark"] .animal-card-header {
+    border-bottom-color: var(--animal-border-color);
+}
+
+[data-theme="dark"] .animal-card-footer {
+    border-top-color: var(--animal-border-color);
+    background: var(--animal-bg-color);
+}
+
+[data-theme="dark"] .animal-card-title {
+    color: var(--animal-text-color);
+}
+
+/* ===================================================
    动画关键帧
    =================================================== */
 @keyframes fadeInUp {

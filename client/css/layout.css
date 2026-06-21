@@ -49,6 +49,12 @@
     letter-spacing: 0;
 }
 
+.header-right {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
 /* 版本信息 */
 .version-info {
     position: fixed;
