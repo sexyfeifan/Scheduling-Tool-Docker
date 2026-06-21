@@ -8,9 +8,13 @@
    CSS Variables (Animal Island UI 标准变量)
    =================================================== */
 :root {
+    --animal-primary: #19c8b9;
     --animal-primary-color: #19c8b9;
+    --animal-primary-hover: #3dd4c6;
     --animal-primary-color-hover: #3dd4c6;
+    --animal-primary-active: #50b9ab;
     --animal-primary-color-active: #50b9ab;
+    --animal-primary-bg: #e6f9f6;
     --animal-primary-color-bg: #e6f9f6;
     --animal-success-color: #6fba2c;
     --animal-success-color-hover: #85cc45;
