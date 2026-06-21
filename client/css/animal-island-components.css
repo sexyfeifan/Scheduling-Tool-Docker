@@ -684,3 +684,57 @@
 .animate-slide-in-right {
     animation: slideInRight var(--animal-motion-duration-base) var(--animal-motion-ease);
 }
+
+/* ===================================================
+   SVG 图标在按钮中的样式
+   =================================================== */
+.btn .animal-icon,
+.icon-btn .animal-icon {
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.view-btn .animal-icon {
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.animal-clock-icon .animal-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* ===================================================
+   form-actions 按钮组
+   =================================================== */
+.form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    justify-content: flex-end;
+}
+
+/* ===================================================
+   弹窗入场动画增强
+   =================================================== */
+.modal-content.animal-card {
+    animation: modalCardIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalCardIn {
+    from {
+        opacity: 0;
+        transform: scale(0.92) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
