@@ -4,3 +4,7 @@ server/.env
 server/coverage/
 backups/*
 !backups/.gitkeep
+data/
+*.db
+*.db-shm
+*.db-wal
