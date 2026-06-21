@@ -132,6 +132,7 @@ Object.defineProperty(window, '__currentMonday', { get: () => currentMonday, con
 const weekDisplay = document.getElementById('week-display');
 const prevWeekBtn = document.getElementById('prev-week');
 const nextWeekBtn = document.getElementById('next-week');
+const thisWeekBtn = document.getElementById('this-week');
 const addProjectBtn = document.getElementById('add-project');
 const exportImageBtn = document.getElementById('export-image');
 const settingsBtn = document.getElementById('settings');
@@ -806,6 +807,10 @@ function personMatches(name, project) {
     if (project.director && splitNames(project.director).includes(name)) return true;
     if (project.photographer && splitNames(project.photographer).includes(name)) return true;
     if (project.production && splitNames(project.production).includes(name)) return true;
+    if (project.rd && splitNames(project.rd).includes(name)) return true;
+    if (project.operational && splitNames(project.operational).includes(name)) return true;
+    if (project.audio && splitNames(project.audio).includes(name)) return true;
+    if (project.business && splitNames(project.business).includes(name)) return true;
     if (project.laodao && name === '老刀') return true;
     return false;
 }
@@ -870,50 +875,96 @@ function renderPersonnelView() {
 
 function detectConflicts() {
     const conflicts = [];
+    const duplicates = [];
     for (const [dateStr, projects] of Object.entries(scheduleData)) {
+        // 检测重复数据：同名项目（含副本）
+        const nameCount = {};
+        projects.forEach((p, idx) => {
+            const baseName = p.name.replace(/\s*\(副本\)\s*$/, '');
+            if (!nameCount[baseName]) nameCount[baseName] = [];
+            nameCount[baseName].push({ fullName: p.name, index: idx });
+        });
+        for (const [baseName, items] of Object.entries(nameCount)) {
+            if (items.length > 1) {
+                duplicates.push({ date: dateStr, baseName, items });
+            }
+        }
+
+        // 检测人员冲突：同人同天不同项目
         const personMap = {};
         projects.forEach((p, idx) => {
-            [p.director, p.photographer, p.production].filter(Boolean).forEach(name => {
+            const names = new Set();
+            splitNames(p.director).forEach(n => names.add(n));
+            splitNames(p.photographer).forEach(n => names.add(n));
+            splitNames(p.production).forEach(n => names.add(n));
+            splitNames(p.rd).forEach(n => names.add(n));
+            splitNames(p.operational).forEach(n => names.add(n));
+            splitNames(p.audio).forEach(n => names.add(n));
+            splitNames(p.business).forEach(n => names.add(n));
+            if (p.laodao) names.add('老刀');
+            names.forEach(name => {
                 if (!personMap[name]) personMap[name] = [];
                 personMap[name].push({ name: p.name, index: idx });
             });
         });
         for (const [person, items] of Object.entries(personMap)) {
-            if (items.length > 1) {
-                conflicts.push({ person, date: dateStr, projects: items });
+            const uniqueProjects = [...new Set(items.map(i => i.name.replace(/\s*\(副本\)\s*$/, '')))];
+            if (uniqueProjects.length > 1) {
+                conflicts.push({ person, date: dateStr, projects: uniqueProjects });
             }
         }
     }
-    return conflicts.sort((a, b) => a.date.localeCompare(b.date));
+    return { conflicts: conflicts.sort((a, b) => a.date.localeCompare(b.date)), duplicates };
 }
 
 function showConflictModal() {
     const modal = document.getElementById('conflict-modal');
     const content = document.getElementById('conflict-content');
-    const conflicts = detectConflicts();
+    const { conflicts, duplicates } = detectConflicts();
 
-    if (conflicts.length === 0) {
+    if (conflicts.length === 0 && duplicates.length === 0) {
         content.innerHTML = '<div class="conflict-none">排期无冲突，一切正常</div>';
     } else {
-        content.innerHTML = `<p style="margin-bottom:12px;color:#e59266;font-weight:600;">发现 ${conflicts.length} 处冲突</p>` +
-            conflicts.map((c, ci) => `
-                <div class="conflict-item">
-                    <div class="conflict-person">${escapeHtml(c.person)}</div>
-                    <div class="conflict-date">${c.date}</div>
+        let html = '';
+
+        // 重复数据
+        if (duplicates.length > 0) {
+            html += `<p style="margin:0 0 12px;color:#f0a030;font-weight:600;">发现 ${duplicates.length} 处重复数据</p>`;
+            html += duplicates.map(d => `
+                <div class="conflict-item" style="border-color:#f0a030;background:#fff8e0;">
+                    <div class="conflict-person" style="color:#7a6528;">${escapeHtml(d.baseName)}</div>
+                    <div class="conflict-date">${d.date}</div>
                     <div class="conflict-projects">
-                        ${c.projects.map(p => `
-                            <span class="conflict-project" data-date="${c.date}" data-index="${p.index}" style="cursor:pointer;" title="点击查看">
-                                ${escapeHtml(p.name)}
-                                <span class="conflict-delete" data-date="${c.date}" data-index="${p.index}" title="删除此项目">×</span>
+                        ${d.items.map(item => `
+                            <span class="conflict-project" data-date="${d.date}" data-index="${item.index}" style="cursor:pointer;background:#fff0e8;border-color:#e59266;" title="点击查看">
+                                ${escapeHtml(item.fullName)}
+                                <span class="conflict-delete" data-date="${d.date}" data-index="${item.index}" title="删除此项目">×</span>
                             </span>
                         `).join('')}
                     </div>
                 </div>
             `).join('');
+        }
+
+         // 人员冲突
+        if (conflicts.length > 0) {
+            html += `<p style="margin:${duplicates.length > 0 ? '20px' : '0'} 0 12px;color:#e59266;font-weight:600;">发现 ${conflicts.length} 处人员冲突</p>`;
+            html += conflicts.map(c => `
+                <div class="conflict-item">
+                    <div class="conflict-person">${escapeHtml(c.person)}</div>
+                    <div class="conflict-date">${c.date}</div>
+                    <div class="conflict-projects">
+                        ${c.projects.map(p => `<span class="conflict-project conflict-jump" data-date="${c.date}" style="cursor:pointer;" title="点击跳转到该周">${escapeHtml(p)}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        content.innerHTML = html;
     }
     modal.style.display = 'flex';
 
-    content.querySelectorAll('.conflict-project').forEach(el => {
+    content.querySelectorAll('.conflict-project[data-index]').forEach(el => {
         el.addEventListener('click', (e) => {
             if (e.target.classList.contains('conflict-delete')) return;
             const date = el.dataset.date;
@@ -940,7 +991,18 @@ function showConflictModal() {
         });
     });
 
-    updateConflictBadge(conflicts.length);
+    content.querySelectorAll('.conflict-jump').forEach(el => {
+        el.addEventListener('click', () => {
+            const date = el.dataset.date;
+            currentMonday = getMonday(new Date(date + 'T00:00:00'));
+            updateWeekDisplay();
+            loadScheduleData().then(() => renderSchedule());
+            switchView('week');
+            modal.style.display = 'none';
+        });
+    });
+
+    updateConflictBadge(conflicts.length + duplicates.length);
 }
 
 function updateConflictBadge(count) {
@@ -984,8 +1046,8 @@ async function initApp() {
     await loadTemplateData();
 
     // Initial conflict check
-    const conflicts = detectConflicts();
-    updateConflictBadge(conflicts.length);
+    const { conflicts, duplicates } = detectConflicts();
+    updateConflictBadge(conflicts.length + duplicates.length);
     
     // 移动端默认显示今日日期
     if (isMobile) {
@@ -1154,8 +1216,8 @@ function connectSSE() {
                 renderSchedule();
                 break;
             case 'settingsUpdate':
-                // 更新本地设置
                 window.__currentSettings = data.settings;
+                currentSettings = data.settings;
                 roleCategories = data.settings.roleCategories || [];
                 renderRoleSettings(data.settings);
                 renderProjectTypes(data.settings);
@@ -1199,15 +1261,13 @@ let lastRenderedSchedule = {};
 
 // 渲染排期表
 function renderSchedule() {
-    const weekDates = getWeekDates(currentMonday);
+    const weekDates = getWeekDates(new Date(currentMonday));
     const dayColumns = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     const dayHeaders = ['monday-header', 'tuesday-header', 'wednesday-header', 'thursday-header', 'friday-header', 'saturday-header', 'sunday-header'];
     
-    // 获取今天的日期用于高亮
     const today = new Date();
     const todayStr = formatDate(today);
     
-    // 更新星期标题，显示准确日期
     const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
     dayHeaders.forEach((headerId, index) => {
         const header = document.getElementById(headerId);
@@ -1217,7 +1277,6 @@ function renderSchedule() {
         const day = date.getDate();
         header.innerHTML = `${weekdays[index]} (${month}/${day}) <button class="notice-day-btn" data-date="${dateStr}">通告单</button><button class="sort-day-btn" data-date="${dateStr}" title="按开始时间一键排序">⇅ 排序</button>`;
 
-        // 今日高亮
         if (dateStr === todayStr) {
             header.classList.add('today-highlight');
         } else {
@@ -1229,21 +1288,15 @@ function renderSchedule() {
         const column = document.getElementById(columnId);
         const dateStr = formatDate(weekDates[index]);
         
-        // 今日高亮列
         if (dateStr === todayStr) {
             column.classList.add('today-highlight');
         } else {
             column.classList.remove('today-highlight');
         }
 
-        const currentData = JSON.stringify(scheduleData[dateStr] || []);
-        const lastData = JSON.stringify(lastRenderedSchedule[dateStr] || []);
-        if (currentData === lastData) return;
-        
-        // 清空现有内容
+        // 全量清空重渲染
         column.innerHTML = '';
         
-        // 添加快速添加按钮
         const addBtn = document.createElement('button');
         addBtn.className = 'add-btn';
         addBtn.innerHTML = '+';
@@ -1254,7 +1307,6 @@ function renderSchedule() {
         });
         column.appendChild(addBtn);
         
-        // 添加拖拽事件监听器
         column.addEventListener('dragover', handleDragOver);
         column.addEventListener('dragenter', handleDragEnter);
         column.addEventListener('dragleave', handleDragLeave);
@@ -1262,7 +1314,6 @@ function renderSchedule() {
         
         const dayProjects = (scheduleData[dateStr] || []).filter((project) => matchesProjectFilters(project, filterState));
 
-        // 如果有该项目日期的数据，则渲染项目卡片
         if (dayProjects.length > 0) {
             dayProjects.forEach((project) => {
                 const originalIndex = (scheduleData[dateStr] || []).indexOf(project);
@@ -1270,14 +1321,12 @@ function renderSchedule() {
                 column.appendChild(projectCard);
             });
         } else {
-            // 显示空状态
             const emptyState = document.createElement('div');
             emptyState.className = 'empty-state';
             emptyState.textContent = (scheduleData[dateStr] && scheduleData[dateStr].length > 0) ? '未匹配筛选条件' : '🈚️';
             column.appendChild(emptyState);
         }
     });
-    lastRenderedSchedule = JSON.parse(JSON.stringify(scheduleData));
 }
 
 // 创建项目卡片
@@ -1443,14 +1492,23 @@ function setupEventListeners() {
     // 周切换按钮
     prevWeekBtn.addEventListener('click', () => {
         currentMonday.setDate(currentMonday.getDate() - 7);
+        lastRenderedSchedule = {};
         updateWeekDisplay();
-        renderSchedule();
+        loadScheduleData();
     });
     
     nextWeekBtn.addEventListener('click', () => {
         currentMonday.setDate(currentMonday.getDate() + 7);
+        lastRenderedSchedule = {};
         updateWeekDisplay();
-        renderSchedule();
+        loadScheduleData();
+    });
+
+    if (thisWeekBtn) thisWeekBtn.addEventListener('click', () => {
+        currentMonday = getMonday(new Date());
+        updateWeekDisplay();
+        switchView('week');
+        loadScheduleData();
     });
     
     // 添加项目按钮
@@ -1464,8 +1522,8 @@ function setupEventListeners() {
     // 粘贴识别按钮
     pasteRecognitionBtn.addEventListener('click', handlePasteRecognition);
     
-    // 设置按钮
-    settingsBtn.addEventListener('click', () => {
+    // 设置按钮（已合并到管理页面）
+    if (settingsBtn) settingsBtn.addEventListener('click', () => {
         showSettingsModal();
     });
 
@@ -3178,19 +3236,10 @@ function initStartTimeOptions() {
 // 从API加载排期数据
 async function loadScheduleData() {
     try {
-        const startDate = new Date(currentMonday);
-        startDate.setDate(startDate.getDate() - 28);
-        const endDate = new Date(currentMonday);
-        endDate.setDate(endDate.getDate() + 35);
-        scheduleData = await scheduleAPI.getSchedules({
-            from: formatDate(startDate),
-            to: formatDate(endDate)
-        });
-            
+        scheduleData = await scheduleAPI.getSchedules();
         renderSchedule();
     } catch (error) {
         console.error('加载排期数据时出错:', error);
-        // 使用空对象作为默认值
         scheduleData = {};
         renderSchedule();
     }

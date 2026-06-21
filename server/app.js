@@ -99,40 +99,8 @@ function createApp(options = {}) {
     return `${req.protocol}://${req.get('host')}`;
   }
 
-  // SSE endpoint with heartbeat to prevent zombie connections
+  // SSE endpoint — read-only real-time sync, no auth required (write endpoints are protected)
   app.get('/events', (req, res) => {
-    const headerAdmin = req.headers['x-admin-password'];
-    const headerEdit = req.headers['x-edit-password'];
-    const cookieStr = req.headers.cookie || '';
-    const cookieEdit = cookieStr.split(';').map(c => c.trim()).find(c => c.startsWith('editPassword='));
-    const cookieEditValue = cookieEdit ? decodeURIComponent(cookieEdit.split('=')[1]) : '';
-
-    let authenticated = false;
-    if (headerAdmin && String(headerAdmin) === String(backupPassword)) {
-      authenticated = true;
-    }
-    if (!authenticated && headerEdit) {
-      const settings = store.readSettings();
-      const expectedHash = settings.access && settings.access.editPasswordHash;
-      if (!expectedHash) {
-        authenticated = true;
-      } else if (verifyPassword(headerEdit, expectedHash)) {
-        authenticated = true;
-      }
-    }
-    if (!authenticated && cookieEditValue) {
-      const settings = store.readSettings();
-      const expectedHash = settings.access && settings.access.editPasswordHash;
-      if (!expectedHash) {
-        authenticated = true;
-      } else if (verifyPassword(cookieEditValue, expectedHash)) {
-        authenticated = true;
-      }
-    }
-    if (!authenticated) {
-      return res.status(401).json({ message: 'SSE 连接需要认证' });
-    }
-
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
