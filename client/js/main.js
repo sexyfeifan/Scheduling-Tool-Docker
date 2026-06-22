@@ -3827,26 +3827,41 @@ function drawScheduleToCanvas() {
     tempContainer.appendChild(mainContent);
     document.body.appendChild(tempContainer);
 
-    htmlToImage.toPng(tempContainer, {
-        pixelRatio: 3,
+    // 导出前临时替换所有卡片背景为纯色，避免 html2canvas alpha 合成 bug
+    const allCards = tempContainer.querySelectorAll('.project-card');
+    const originalBgs = [];
+    allCards.forEach(card => {
+        originalBgs.push(card.style.background);
+        const cardType = card.dataset.type || '';
+        const cardStatus = card.dataset.status || '';
+        const solidBg = {
+            '平面': '#e8faf5', '视频': '#fde4e8', '直播': '#fff8e0', '试做': '#f0e8ff',
+            '已确认': '#e8faf5', '待确认': '#fff8e0', '已完成': '#e8edff', '取消': '#ffe8e8'
+        }[cardType] || { '已确认': '#e8faf5', '待确认': '#fff8e0', '已完成': '#e8edff', '取消': '#ffe8e8' }[cardStatus] || '#f8f4eb';
+        card.style.setProperty('background', solidBg, 'important');
+    });
+
+    html2canvas(tempContainer, {
+        scale: 3,
+        useCORS: true,
         backgroundColor: '#f8f8f0',
-        filter: (el) => !el.classList || !el.classList.contains('export-ignore')
-    }).then(dataUrl => {
-        const img = new Image();
-        img.onload = () => {
-            exportCanvas.width = img.width;
-            exportCanvas.height = img.height;
-            const exportCtx = exportCanvas.getContext('2d');
-            exportCtx.drawImage(img, 0, 0);
-            document.body.removeChild(tempContainer);
-            downloadImageBtn.disabled = false;
-            openInNewTabBtn.disabled = false;
-            downloadImageBtn.textContent = '下载图片';
-            openInNewTabBtn.textContent = '在新标签页打开';
-        };
-        img.src = dataUrl;
+        logging: false,
+        allowTaint: true
+    }).then(canvas => {
+        const exportCtx = exportCanvas.getContext('2d');
+        exportCanvas.width = canvas.width;
+        exportCanvas.height = canvas.height;
+        exportCtx.drawImage(canvas, 0, 0);
+        // 恢复原始背景
+        allCards.forEach((card, i) => { card.style.background = originalBgs[i]; });
+        document.body.removeChild(tempContainer);
+        downloadImageBtn.disabled = false;
+        openInNewTabBtn.disabled = false;
+        downloadImageBtn.textContent = '下载图片';
+        openInNewTabBtn.textContent = '在新标签页打开';
     }).catch(error => {
         console.error('导出图片时出错:', error);
+        allCards.forEach((card, i) => { card.style.background = originalBgs[i]; });
         if (tempContainer.parentNode) document.body.removeChild(tempContainer);
         downloadImageBtn.disabled = false;
         openInNewTabBtn.disabled = false;
