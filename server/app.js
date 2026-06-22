@@ -59,7 +59,7 @@ function createApp(options = {}) {
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://fonts.loli.net"],
         imgSrc: ["'self'", "data:", "blob:"],
         connectSrc: ["'self'"],
-        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com", "https://fonts.loli.net"],
+        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com", "https://fonts.loli.net", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
         objectSrc: ["'none'"],
         mediaSrc: ["'self'"],
         frameSrc: ["'none'"],

@@ -3833,6 +3833,8 @@ function drawScheduleToCanvas() {
     tempContainer.appendChild(mainContent);
     document.body.appendChild(tempContainer);
 
+    // 延迟截图，确保 CSS 渐变/动画渲染完成（html2canvas 有时在 CSS 未完成时就截图）
+    setTimeout(() => {
     html2canvas(tempContainer, {
         scale: 2,
         useCORS: true,
@@ -3867,6 +3869,7 @@ function drawScheduleToCanvas() {
         openInNewTabBtn.textContent = '在新标签页打开';
         showToast('导出图片时出错，请重试', 'error');
     });
+    }, 300); // 300ms 延迟确保 CSS 渲染完成
 }
 
 // 下载图片
