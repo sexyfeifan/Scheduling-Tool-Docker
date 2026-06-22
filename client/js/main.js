@@ -1490,14 +1490,14 @@ function setupEventListeners() {
     });
     
     // 周切换按钮
-    prevWeekBtn.addEventListener('click', () => {
+    if (prevWeekBtn) prevWeekBtn.addEventListener('click', () => {
         currentMonday.setDate(currentMonday.getDate() - 7);
         lastRenderedSchedule = {};
         updateWeekDisplay();
         loadScheduleData();
     });
     
-    nextWeekBtn.addEventListener('click', () => {
+    if (nextWeekBtn) nextWeekBtn.addEventListener('click', () => {
         currentMonday.setDate(currentMonday.getDate() + 7);
         lastRenderedSchedule = {};
         updateWeekDisplay();
@@ -1512,15 +1512,15 @@ function setupEventListeners() {
     });
     
     // 添加项目按钮
-    addProjectBtn.addEventListener('click', () => {
+    if (addProjectBtn) addProjectBtn.addEventListener('click', () => {
         showProjectModal();
     });
     
     // 导出图片按钮
-    exportImageBtn.addEventListener('click', showExportModal);
+    if (exportImageBtn) exportImageBtn.addEventListener('click', showExportModal);
     
     // 粘贴识别按钮
-    pasteRecognitionBtn.addEventListener('click', handlePasteRecognition);
+    if (pasteRecognitionBtn) pasteRecognitionBtn.addEventListener('click', handlePasteRecognition);
     
     // 设置按钮（已合并到管理页面）
     if (settingsBtn) settingsBtn.addEventListener('click', () => {
@@ -1543,7 +1543,7 @@ function setupEventListeners() {
         }
     });
 
-    undoActionBtn.addEventListener('click', async () => {
+    if (undoActionBtn) undoActionBtn.addEventListener('click', async () => {
         try {
             await undoLastChange();
         } catch (error) {
@@ -1560,8 +1560,8 @@ function setupEventListeners() {
         updateFilterState();
     });
 
-    applyTemplateBtn.addEventListener('click', applySelectedTemplate);
-    saveTemplateFromFormBtn.addEventListener('click', async () => {
+    if (applyTemplateBtn) applyTemplateBtn.addEventListener('click', applySelectedTemplate);
+    if (saveTemplateFromFormBtn) saveTemplateFromFormBtn.addEventListener('click', async () => {
         try {
             await saveTemplateFromCurrentForm();
         } catch (error) {
@@ -1580,12 +1580,12 @@ function setupEventListeners() {
     });
     
     // 取消编辑按钮
-    cancelEditBtn.addEventListener('click', () => {
+    if (cancelEditBtn) cancelEditBtn.addEventListener('click', () => {
         projectModal.style.display = 'none';
     });
     
     // 保存设置按钮
-    saveSettingsBtn.addEventListener('click', saveSettings);
+    if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveSettings);
 
     // 添加职能按钮
     if (addRoleCategoryBtn) {
@@ -1691,19 +1691,14 @@ function setupEventListeners() {
     }
     
     // 数据导出按钮
-    exportDataBtn.addEventListener('click', exportAllData);
-    
-    // 数据导入按钮
-    importDataBtn.addEventListener('click', () => {
+    if (exportDataBtn) exportDataBtn.addEventListener('click', exportAllData);
+    if (importDataBtn) importDataBtn.addEventListener('click', () => {
         importFileInput.click();
     });
-    
-    // 文件选择事件
-    importFileInput.addEventListener('change', handleImportFile);
-
-    closeBackupPreviewBtn.addEventListener('click', closeBackupPreviewModal);
-    cancelBackupRestoreBtn.addEventListener('click', closeBackupPreviewModal);
-    confirmBackupRestoreBtn.addEventListener('click', async () => {
+    if (importFileInput) importFileInput.addEventListener('change', handleImportFile);
+    if (closeBackupPreviewBtn) closeBackupPreviewBtn.addEventListener('click', closeBackupPreviewModal);
+    if (cancelBackupRestoreBtn) cancelBackupRestoreBtn.addEventListener('click', closeBackupPreviewModal);
+    if (confirmBackupRestoreBtn) confirmBackupRestoreBtn.addEventListener('click', async () => {
         if (!pendingRestorePath) {
             return;
         }
@@ -1726,15 +1721,16 @@ function setupEventListeners() {
     
     // 添加新选项按钮
     // 日期选择功能
-    selectDateBtn.addEventListener('click', showDatePicker);
-    projectDateInput.addEventListener('click', showDatePicker);
+    // 日期选择功能
+    if (selectDateBtn) selectDateBtn.addEventListener('click', showDatePicker);
+    if (projectDateInput) projectDateInput.addEventListener('click', showDatePicker);
     
     // 日期选择器事件
-    closeDatePickerBtn.addEventListener('click', () => {
+    if (closeDatePickerBtn) closeDatePickerBtn.addEventListener('click', () => {
         datePickerModal.style.display = 'none';
     });
     
-    prevMonthBtn.addEventListener('click', () => {
+    if (prevMonthBtn) prevMonthBtn.addEventListener('click', () => {
         currentMonth--;
         if (currentMonth < 0) {
             currentMonth = 11;
@@ -1743,7 +1739,7 @@ function setupEventListeners() {
         renderCalendar();
     });
     
-    nextMonthBtn.addEventListener('click', () => {
+    if (nextMonthBtn) nextMonthBtn.addEventListener('click', () => {
         currentMonth++;
         if (currentMonth > 11) {
             currentMonth = 0;
@@ -1752,41 +1748,34 @@ function setupEventListeners() {
         renderCalendar();
     });
     
-    confirmDateBtn.addEventListener('click', confirmDateSelection);
+    if (confirmDateBtn) confirmDateBtn.addEventListener('click', confirmDateSelection);
     
-    cancelDateBtn.addEventListener('click', () => {
+    if (cancelDateBtn) cancelDateBtn.addEventListener('click', () => {
         datePickerModal.style.display = 'none';
     });
     
-    // 点击模态框外部关闭日期选择器
-    datePickerModal.addEventListener('click', (e) => {
+    if (datePickerModal) datePickerModal.addEventListener('click', (e) => {
         if (e.target === datePickerModal) {
             datePickerModal.style.display = 'none';
         }
     });
     
-    // 表单提交
-    projectForm.addEventListener('submit', (e) => {
+    if (projectForm) projectForm.addEventListener('submit', (e) => {
         e.preventDefault();
         saveProject();
     });
     
-    // 图片导出模态框事件
-    closeExportBtn.addEventListener('click', () => {
+    if (closeExportBtn) closeExportBtn.addEventListener('click', () => {
         exportModal.style.display = 'none';
     });
     
-    downloadImageBtn.addEventListener('click', downloadImage);
-    
-    // 添加在新标签页打开图片事件
-    openInNewTabBtn.addEventListener('click', openImageInNewTab);
-    
-    cancelExportBtn.addEventListener('click', () => {
+    if (downloadImageBtn) downloadImageBtn.addEventListener('click', downloadImage);
+    if (openInNewTabBtn) openInNewTabBtn.addEventListener('click', openImageInNewTab);
+    if (cancelExportBtn) cancelExportBtn.addEventListener('click', () => {
         exportModal.style.display = 'none';
     });
     
-    // 点击模态框外部关闭图片导出模态框
-    exportModal.addEventListener('click', (e) => {
+    if (exportModal) exportModal.addEventListener('click', (e) => {
         if (e.target === exportModal) {
             exportModal.style.display = 'none';
         }
@@ -3692,6 +3681,7 @@ function drawScheduleToCanvas() {
         d.setDate(d.getDate() + 1);
     }
     const totalDays = allDates.length;
+    console.log('[export]', { startDate: formatDate(startDate), endDate: formatDate(endDate), totalDays, isCrossWeek, scheduleDataKeys: Object.keys(scheduleData).length });
 
     // 构建标题文本
     function formatDateChinese(dt) {
@@ -3806,14 +3796,10 @@ function drawScheduleToCanvas() {
                 if (deleteBtn) deleteBtn.remove();
                 const copyBtn = cleanCard.querySelector('.copy-btn');
                 if (copyBtn) copyBtn.remove();
-                // 只覆盖背景，用实际颜色替代 transparent，保留类名其他样式
+                // 导出时用纯色背景，不用渐变（html2canvas 对 rgba 渲染有 bug）
                 const cardType = project.type || '';
-                const cardBg = { '平面':'#e8faf5', '视频':'#fde4e8', '直播':'#fff8e0', '试做':'#f0e8ff' }[cardType] || 'rgb(247, 243, 223)';
-                const d1 = cardType ? 'rgba(255,255,255,0.25)' : 'rgba(196, 184, 158, 0.15)';
-                const d2 = cardType ? 'rgba(255,255,255,0.15)' : 'rgba(196, 184, 158, 0.1)';
-                cleanCard.style.setProperty('background',
-                    `radial-gradient(circle, ${d1} 1.5px, ${cardBg} 1.5px), radial-gradient(circle, ${d2} 1px, ${cardBg} 1px), ${cardBg}`,
-                    'important');
+                const cardBg = { '平面':'#e8faf5', '视频':'#fde4e8', '直播':'#fff8e0', '试做':'#f0e8ff' }[cardType] || '#f8f4eb';
+                cleanCard.style.setProperty('background', cardBg, 'important');
                 if (cols > 10) {
                     cleanCard.style.fontSize = '11px';
                     cleanCard.style.padding = '6px';
