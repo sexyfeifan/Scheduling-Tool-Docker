@@ -3827,24 +3827,24 @@ function drawScheduleToCanvas() {
     tempContainer.appendChild(mainContent);
     document.body.appendChild(tempContainer);
 
-    html2canvas(tempContainer, {
-        scale: 3,
-        useCORS: true,
+    htmlToImage.toPng(tempContainer, {
+        pixelRatio: 3,
         backgroundColor: '#f8f8f0',
-        logging: false,
-        allowTaint: true,
-        imageRendering: () => true,
-        removeContainer: true
-    }).then(canvas => {
-        const exportCtx = exportCanvas.getContext('2d');
-        exportCanvas.width = canvas.width;
-        exportCanvas.height = canvas.height;
-        exportCtx.drawImage(canvas, 0, 0);
-        document.body.removeChild(tempContainer);
-        downloadImageBtn.disabled = false;
-        openInNewTabBtn.disabled = false;
-        downloadImageBtn.textContent = '下载图片';
-        openInNewTabBtn.textContent = '在新标签页打开';
+        filter: (el) => !el.classList || !el.classList.contains('export-ignore')
+    }).then(dataUrl => {
+        const img = new Image();
+        img.onload = () => {
+            exportCanvas.width = img.width;
+            exportCanvas.height = img.height;
+            const exportCtx = exportCanvas.getContext('2d');
+            exportCtx.drawImage(img, 0, 0);
+            document.body.removeChild(tempContainer);
+            downloadImageBtn.disabled = false;
+            openInNewTabBtn.disabled = false;
+            downloadImageBtn.textContent = '下载图片';
+            openInNewTabBtn.textContent = '在新标签页打开';
+        };
+        img.src = dataUrl;
     }).catch(error => {
         console.error('导出图片时出错:', error);
         if (tempContainer.parentNode) document.body.removeChild(tempContainer);
