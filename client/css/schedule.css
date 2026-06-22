@@ -12,10 +12,10 @@
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
-    /* 默认 pattern-default 花纹（用实际背景色替代 transparent，兼容 html2canvas） */
+    /* 默认 pattern-default 花纹 */
     background:
-        radial-gradient(circle, rgba(196, 184, 158, 0.15) 1.5px, transparent 1.5px),
-        radial-gradient(circle, rgba(196, 184, 158, 0.1) 1px, transparent 1px),
+        radial-gradient(circle, rgba(196, 184, 158, 0.08) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(196, 184, 158, 0.05) 1px, transparent 1px),
         rgb(247, 243, 223);
     background-size: 28px 28px, 14px 14px, auto;
     background-position: 0 0, 7px 7px, 0 0;
@@ -239,8 +239,8 @@
 /* 状态卡片配色 — Animal Island UI Color + Pattern */
 .project-card[data-status="已确认"] {
     background:
-        radial-gradient(circle, rgba(130, 213, 187, 0.18) 1.5px, transparent 1.5px),
-        radial-gradient(circle, rgba(170, 235, 210, 0.12) 1px, transparent 1px),
+        radial-gradient(circle, rgba(130, 213, 187, 0.12) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(170, 235, 210, 0.08) 1px, transparent 1px),
         #e8faf5;
     background-size: 28px 28px, 14px 14px, auto;
     background-position: 0 0, 7px 7px, 0 0;
@@ -251,8 +251,8 @@
 
 .project-card[data-status="待确认"] {
     background:
-        radial-gradient(circle, rgba(247, 205, 103, 0.18) 1.5px, transparent 1.5px),
-        radial-gradient(circle, rgba(255, 230, 160, 0.12) 1px, transparent 1px),
+        radial-gradient(circle, rgba(247, 205, 103, 0.12) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(255, 230, 160, 0.08) 1px, transparent 1px),
         #fff8e0;
     background-size: 28px 28px, 14px 14px, auto;
     background-position: 0 0, 7px 7px, 0 0;
@@ -263,8 +263,8 @@
 
 .project-card[data-status="已完成"] {
     background:
-        radial-gradient(circle, rgba(136, 157, 240, 0.18) 1.5px, transparent 1.5px),
-        radial-gradient(circle, rgba(180, 195, 255, 0.12) 1px, transparent 1px),
+        radial-gradient(circle, rgba(136, 157, 240, 0.12) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(180, 195, 255, 0.08) 1px, transparent 1px),
         #e8edff;
     background-size: 28px 28px, 14px 14px, auto;
     background-position: 0 0, 7px 7px, 0 0;
@@ -275,8 +275,8 @@
 
 .project-card[data-status="取消"] {
     background:
-        radial-gradient(circle, rgba(252, 115, 109, 0.18) 1.5px, transparent 1.5px),
-        radial-gradient(circle, rgba(255, 160, 155, 0.12) 1px, transparent 1px),
+        radial-gradient(circle, rgba(252, 115, 109, 0.12) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(255, 160, 155, 0.08) 1px, transparent 1px),
         #ffe8e8;
     background-size: 28px 28px, 14px 14px, auto;
     background-position: 0 0, 7px 7px, 0 0;
@@ -288,8 +288,8 @@
 /* 项目类型卡片配色 — 动森 Card Color + Pattern */
 .project-card[data-type="平面"] {
     background:
-        radial-gradient(circle, rgba(130, 213, 187, 0.18) 1.5px, transparent 1.5px),
-        radial-gradient(circle, rgba(170, 235, 210, 0.12) 1px, transparent 1px),
+        radial-gradient(circle, rgba(130, 213, 187, 0.12) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(170, 235, 210, 0.08) 1px, transparent 1px),
         #e8faf5;
     background-size: 28px 28px, 14px 14px, auto;
     background-position: 0 0, 7px 7px, 0 0;
@@ -299,8 +299,8 @@
 
 .project-card[data-type="视频"] {
     background:
-        radial-gradient(circle, rgba(248, 166, 178, 0.18) 1.5px, transparent 1.5px),
-        radial-gradient(circle, rgba(255, 200, 210, 0.12) 1px, transparent 1px),
+        radial-gradient(circle, rgba(248, 166, 178, 0.12) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(255, 200, 210, 0.08) 1px, transparent 1px),
         #fde4e8;
     background-size: 28px 28px, 14px 14px, auto;
     background-position: 0 0, 7px 7px, 0 0;
@@ -310,8 +310,8 @@
 
 .project-card[data-type="直播"] {
     background:
-        radial-gradient(circle, rgba(247, 205, 103, 0.18) 1.5px, transparent 1.5px),
-        radial-gradient(circle, rgba(255, 230, 160, 0.12) 1px, transparent 1px),
+        radial-gradient(circle, rgba(247, 205, 103, 0.12) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(255, 230, 160, 0.08) 1px, transparent 1px),
         #fff8e0;
     background-size: 28px 28px, 14px 14px, auto;
     background-position: 0 0, 7px 7px, 0 0;
@@ -321,8 +321,8 @@
 
 .project-card[data-type="试做"] {
     background:
-        radial-gradient(circle, rgba(183, 125, 238, 0.18) 1.5px, transparent 1.5px),
-        radial-gradient(circle, rgba(220, 180, 255, 0.12) 1px, transparent 1px),
+        radial-gradient(circle, rgba(183, 125, 238, 0.12) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(220, 180, 255, 0.08) 1px, transparent 1px),
         #f0e8ff;
     background-size: 28px 28px, 14px 14px, auto;
     background-position: 0 0, 7px 7px, 0 0;

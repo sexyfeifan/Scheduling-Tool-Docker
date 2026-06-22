@@ -3806,14 +3806,6 @@ function drawScheduleToCanvas() {
                 if (deleteBtn) deleteBtn.remove();
                 const copyBtn = cleanCard.querySelector('.copy-btn');
                 if (copyBtn) copyBtn.remove();
-                // 保留 CSS 类（排版/字体/边框正确），只覆盖背景为纯色避免 html2canvas alpha 合成 bug
-                const cardType = project.type || '';
-                const cardStatus = project.status || '';
-                const solidBg = {
-                    '平面': '#e8faf5', '视频': '#fde4e8', '直播': '#fff8e0', '试做': '#f0e8ff',
-                    '已确认': '#e8faf5', '待确认': '#fff8e0', '已完成': '#e8edff', '取消': '#ffe8e8'
-                }[cardType] || { '已确认': '#e8faf5', '待确认': '#fff8e0', '已完成': '#e8edff', '取消': '#ffe8e8' }[cardStatus] || '#f8f4eb';
-                cleanCard.style.setProperty('background', solidBg, 'important');
                 dayColumn.appendChild(cleanCard);
             });
         } else {
@@ -3837,20 +3829,6 @@ function drawScheduleToCanvas() {
     tempContainer.appendChild(mainContent);
     document.body.appendChild(tempContainer);
 
-    // 导出前临时替换所有卡片背景为纯色，避免 html2canvas alpha 合成 bug
-    const allCards = tempContainer.querySelectorAll('.project-card');
-    const originalBgs = [];
-    allCards.forEach(card => {
-        originalBgs.push(card.style.background);
-        const cardType = card.dataset.type || '';
-        const cardStatus = card.dataset.status || '';
-        const solidBg = {
-            '平面': '#e8faf5', '视频': '#fde4e8', '直播': '#fff8e0', '试做': '#f0e8ff',
-            '已确认': '#e8faf5', '待确认': '#fff8e0', '已完成': '#e8edff', '取消': '#ffe8e8'
-        }[cardType] || { '已确认': '#e8faf5', '待确认': '#fff8e0', '已完成': '#e8edff', '取消': '#ffe8e8' }[cardStatus] || '#f8f4eb';
-        card.style.setProperty('background', solidBg, 'important');
-    });
-
     html2canvas(tempContainer, {
         scale: 3,
         useCORS: true,
@@ -3862,7 +3840,6 @@ function drawScheduleToCanvas() {
         if ((canvas.width < 100 || canvas.height < 100) && exportRetryCount < MAX_EXPORT_RETRIES) {
             exportRetryCount++;
             console.log(`[export] 渲染结果异常，自动重试 ${exportRetryCount}/${MAX_EXPORT_RETRIES}`);
-            allCards.forEach((card, i) => { card.style.background = originalBgs[i]; });
             document.body.removeChild(tempContainer);
             drawScheduleToCanvas();
             return;
@@ -3872,8 +3849,6 @@ function drawScheduleToCanvas() {
         exportCanvas.width = canvas.width;
         exportCanvas.height = canvas.height;
         exportCtx.drawImage(canvas, 0, 0);
-        // 恢复原始背景
-        allCards.forEach((card, i) => { card.style.background = originalBgs[i]; });
         document.body.removeChild(tempContainer);
         downloadImageBtn.disabled = false;
         openInNewTabBtn.disabled = false;
@@ -3881,7 +3856,6 @@ function drawScheduleToCanvas() {
         openInNewTabBtn.textContent = '在新标签页打开';
     }).catch(error => {
         console.error('导出图片时出错:', error);
-        allCards.forEach((card, i) => { card.style.background = originalBgs[i]; });
         if (tempContainer.parentNode) document.body.removeChild(tempContainer);
         downloadImageBtn.disabled = false;
         openInNewTabBtn.disabled = false;
