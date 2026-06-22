@@ -3806,6 +3806,11 @@ function drawScheduleToCanvas() {
                 if (deleteBtn) deleteBtn.remove();
                 const copyBtn = cleanCard.querySelector('.copy-btn');
                 if (copyBtn) copyBtn.remove();
+                // 导出时用纯色背景覆盖花纹，避免 html2canvas 半透明叠加
+                const type = project.type || '';
+                const solidBg = { '平面':'#e8faf5', '视频':'#fde4e8', '直播':'#fff8e0', '试做':'#f0e8ff' };
+                cleanCard.style.background = solidBg[type] || '#fff';
+                cleanCard.style.border = '1.5px solid #d4c4a8';
                 if (cols > 10) {
                     cleanCard.style.fontSize = '11px';
                     cleanCard.style.padding = '6px';
