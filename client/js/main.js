@@ -3806,6 +3806,10 @@ function drawScheduleToCanvas() {
                 if (deleteBtn) deleteBtn.remove();
                 const copyBtn = cleanCard.querySelector('.copy-btn');
                 if (copyBtn) copyBtn.remove();
+                if (cols > 10) {
+                    cleanCard.style.fontSize = '11px';
+                    cleanCard.style.padding = '6px';
+                }
                 dayColumn.appendChild(cleanCard);
             });
         } else {
@@ -3830,7 +3834,7 @@ function drawScheduleToCanvas() {
     document.body.appendChild(tempContainer);
 
     html2canvas(tempContainer, {
-        scale: 3,
+        scale: 2,
         useCORS: true,
         backgroundColor: '#f8f8f0',
         logging: false,
