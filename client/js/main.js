@@ -3786,14 +3786,14 @@ function drawScheduleToCanvas() {
     scheduleContainer.style.display = 'grid';
     scheduleContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
     scheduleContainer.style.minHeight = '600px';
-    scheduleContainer.style.background = 'rgba(247, 243, 223, 0.5)';
+    scheduleContainer.style.background = '#f8f8f0';
 
     for (let i = 0; i < totalDays; i++) {
         const dayColumn = document.createElement('div');
         dayColumn.style.borderRight = (i === totalDays - 1) ? 'none' : '1px solid #c4b89e';
         dayColumn.style.padding = cols > 10 ? '8px' : '16px';
         dayColumn.style.minHeight = '600px';
-        dayColumn.style.background = 'rgba(247, 243, 223, 0.3)';
+        dayColumn.style.background = '#f8f8f0';
 
         const dateStr = formatDate(allDates[i]);
         const projects = scheduleData[dateStr] || [];
