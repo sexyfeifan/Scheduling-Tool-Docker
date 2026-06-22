@@ -3796,14 +3796,28 @@ function drawScheduleToCanvas() {
                 if (deleteBtn) deleteBtn.remove();
                 const copyBtn = cleanCard.querySelector('.copy-btn');
                 if (copyBtn) copyBtn.remove();
-                // 导出时用纯色背景，不用渐变（html2canvas 对 rgba 渲染有 bug）
+                // 彻底移除 CSS 类，用 inline style 避免 html2canvas 读取 CSS 类中的 transparent
+                const computed = window.getComputedStyle(projectCard);
+                cleanCard.className = '';
+                cleanCard.style.cssText = '';
                 const cardType = project.type || '';
                 const cardBg = { '平面':'#e8faf5', '视频':'#fde4e8', '直播':'#fff8e0', '试做':'#f0e8ff' }[cardType] || '#f8f4eb';
-                cleanCard.style.setProperty('background', cardBg, 'important');
-                if (cols > 10) {
-                    cleanCard.style.fontSize = '11px';
-                    cleanCard.style.padding = '6px';
-                }
+                const cardBorder = { '平面':'#82d5bb', '视频':'#f8a6b2', '直播':'#f7cd67', '试做':'#b77dee' }[cardType] || '#d4c4a8';
+                cleanCard.style.background = cardBg;
+                cleanCard.style.border = `1.5px solid ${cardBorder}`;
+                cleanCard.style.borderRadius = computed.borderRadius || '12px';
+                cleanCard.style.padding = cols > 10 ? '6px' : (computed.padding || '12px');
+                cleanCard.style.marginBottom = computed.marginBottom || '8px';
+                cleanCard.style.color = computed.color || '#725d42';
+                cleanCard.style.fontFamily = computed.fontFamily || "'Nunito', 'Noto Sans SC', sans-serif";
+                cleanCard.style.fontSize = cols > 10 ? '11px' : (computed.fontSize || '13px');
+                cleanCard.style.position = 'relative';
+                // 子元素也移除类名，保留 inline style
+                cleanCard.querySelectorAll('*').forEach(el => {
+                    if (el.className && typeof el.className === 'string') {
+                        el.dataset.origClass = el.className;
+                    }
+                });
                 dayColumn.appendChild(cleanCard);
             });
         } else {
