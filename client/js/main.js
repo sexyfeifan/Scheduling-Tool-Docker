@@ -3796,6 +3796,14 @@ function drawScheduleToCanvas() {
                 if (deleteBtn) deleteBtn.remove();
                 const copyBtn = cleanCard.querySelector('.copy-btn');
                 if (copyBtn) copyBtn.remove();
+                // 保留 CSS 类（排版/字体/边框正确），只覆盖背景为纯色避免 html2canvas alpha 合成 bug
+                const cardType = project.type || '';
+                const cardStatus = project.status || '';
+                const solidBg = {
+                    '平面': '#e8faf5', '视频': '#fde4e8', '直播': '#fff8e0', '试做': '#f0e8ff',
+                    '已确认': '#e8faf5', '待确认': '#fff8e0', '已完成': '#e8edff', '取消': '#ffe8e8'
+                }[cardType] || { '已确认': '#e8faf5', '待确认': '#fff8e0', '已完成': '#e8edff', '取消': '#ffe8e8' }[cardStatus] || '#f8f4eb';
+                cleanCard.style.setProperty('background', solidBg, 'important');
                 dayColumn.appendChild(cleanCard);
             });
         } else {
