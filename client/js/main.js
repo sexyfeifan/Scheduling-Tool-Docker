@@ -3812,11 +3812,20 @@ function drawScheduleToCanvas() {
                 cleanCard.style.fontFamily = computed.fontFamily || "'Nunito', 'Noto Sans SC', sans-serif";
                 cleanCard.style.fontSize = cols > 10 ? '11px' : (computed.fontSize || '13px');
                 cleanCard.style.position = 'relative';
-                // 子元素也移除类名，保留 inline style
-                cleanCard.querySelectorAll('*').forEach(el => {
-                    if (el.className && typeof el.className === 'string') {
-                        el.dataset.origClass = el.className;
-                    }
+                // 复制子元素计算样式（类型标签、拍摄地等依赖 .project-card 父类的元素）
+                const origChildren = projectCard.querySelectorAll('*');
+                const clonedChildren = cleanCard.querySelectorAll('*');
+                const cssProps = ['background', 'backgroundColor', 'color', 'border', 'borderRadius', 'padding', 'margin', 'fontSize', 'fontWeight', 'fontFamily', 'display', 'alignItems', 'gap', 'whiteSpace', 'lineHeight', 'opacity'];
+                origChildren.forEach((origEl, idx) => {
+                    const cloneEl = clonedChildren[idx];
+                    if (!cloneEl) return;
+                    const origComputed = window.getComputedStyle(origEl);
+                    cssProps.forEach(prop => {
+                        const val = origComputed[prop];
+                        if (val && val !== 'none' && val !== 'normal' && val !== '0px') {
+                            cloneEl.style[prop] = val;
+                        }
+                    });
                 });
                 dayColumn.appendChild(cleanCard);
             });

@@ -1,7 +1,7 @@
 {
   "name": "罐头场排期系统",
   "short_name": "排期系统",
-  "description": "罐头场通告排期Web版 - v2.62",
+  "description": "罐头场通告排期Web版 - v2.63",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
