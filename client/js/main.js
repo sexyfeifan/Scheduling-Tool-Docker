@@ -3806,21 +3806,26 @@ function drawScheduleToCanvas() {
                 if (deleteBtn) deleteBtn.remove();
                 const copyBtn = cleanCard.querySelector('.copy-btn');
                 if (copyBtn) copyBtn.remove();
-                // 移除 CSS 类，用纯 inline style，避免 html2canvas 对 transparent 关键字的渲染 bug
+                // 移除 CSS 类，用 inline style 还原花纹但避免 transparent 关键字
                 cleanCard.className = '';
                 const type = project.type || '';
-                const solidBg = { '平面':'#e8faf5', '视频':'#fde4e8', '直播':'#fff8e0', '试做':'#f0e8ff' };
-                const solidBorder = { '平面':'#82d5bb', '视频':'#f8a6b2', '直播':'#f7cd67', '试做':'#b77dee' };
-                cleanCard.style.background = solidBg[type] || '#fff';
-                cleanCard.style.border = `1.5px solid ${solidBorder[type] || '#d4c4a8'}`;
+                const typeBg = { '平面':'#e8faf5', '视频':'#fde4e8', '直播':'#fff8e0', '试做':'#f0e8ff' };
+                const typeBorder = { '平面':'#82d5bb', '视频':'#f8a6b2', '直播':'#f7cd67', '试做':'#b77dee' };
+                const bg = typeBg[type] || 'rgb(247, 243, 223)';
+                const dotColor = type ? 'rgba(255,255,255,0.25)' : 'rgba(196, 184, 158, 0.15)';
+                const dotColor2 = type ? 'rgba(255,255,255,0.15)' : 'rgba(196, 184, 158, 0.1)';
+                cleanCard.style.background =
+                    `radial-gradient(circle, ${dotColor} 1.5px, ${bg} 1.5px), ` +
+                    `radial-gradient(circle, ${dotColor2} 1px, ${bg} 1px), ${bg}`;
+                cleanCard.style.backgroundSize = '28px 28px, 14px 14px, auto';
+                cleanCard.style.backgroundPosition = '0 0, 7px 7px, 0 0';
+                cleanCard.style.border = `1.5px solid ${typeBorder[type] || '#d4c4a8'}`;
                 cleanCard.style.borderRadius = '12px';
                 cleanCard.style.padding = cols > 10 ? '6px' : '12px';
                 cleanCard.style.marginBottom = '8px';
                 cleanCard.style.color = '#725d42';
                 cleanCard.style.fontFamily = "'Nunito', 'Noto Sans SC', sans-serif";
-                if (cols > 10) {
-                    cleanCard.style.fontSize = '11px';
-                }
+                if (cols > 10) cleanCard.style.fontSize = '11px';
                 dayColumn.appendChild(cleanCard);
             });
         } else {
