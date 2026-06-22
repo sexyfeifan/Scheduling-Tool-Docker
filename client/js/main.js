@@ -3806,14 +3806,20 @@ function drawScheduleToCanvas() {
                 if (deleteBtn) deleteBtn.remove();
                 const copyBtn = cleanCard.querySelector('.copy-btn');
                 if (copyBtn) copyBtn.remove();
-                // 导出时用纯色背景覆盖花纹，避免 html2canvas 半透明叠加
+                // 移除 CSS 类，用纯 inline style，避免 html2canvas 对 transparent 关键字的渲染 bug
+                cleanCard.className = '';
                 const type = project.type || '';
                 const solidBg = { '平面':'#e8faf5', '视频':'#fde4e8', '直播':'#fff8e0', '试做':'#f0e8ff' };
+                const solidBorder = { '平面':'#82d5bb', '视频':'#f8a6b2', '直播':'#f7cd67', '试做':'#b77dee' };
                 cleanCard.style.background = solidBg[type] || '#fff';
-                cleanCard.style.border = '1.5px solid #d4c4a8';
+                cleanCard.style.border = `1.5px solid ${solidBorder[type] || '#d4c4a8'}`;
+                cleanCard.style.borderRadius = '12px';
+                cleanCard.style.padding = cols > 10 ? '6px' : '12px';
+                cleanCard.style.marginBottom = '8px';
+                cleanCard.style.color = '#725d42';
+                cleanCard.style.fontFamily = "'Nunito', 'Noto Sans SC', sans-serif";
                 if (cols > 10) {
                     cleanCard.style.fontSize = '11px';
-                    cleanCard.style.padding = '6px';
                 }
                 dayColumn.appendChild(cleanCard);
             });
