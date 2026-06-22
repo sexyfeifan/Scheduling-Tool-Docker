@@ -1771,6 +1771,14 @@ function setupEventListeners() {
     
     if (downloadImageBtn) downloadImageBtn.addEventListener('click', downloadImage);
     if (openInNewTabBtn) openInNewTabBtn.addEventListener('click', openImageInNewTab);
+    const refreshExportBtn = document.getElementById('refresh-export');
+    if (refreshExportBtn) refreshExportBtn.addEventListener('click', () => {
+        downloadImageBtn.disabled = true;
+        openInNewTabBtn.disabled = true;
+        downloadImageBtn.textContent = '生成中…';
+        openInNewTabBtn.textContent = '生成中…';
+        drawScheduleToCanvas();
+    });
     if (cancelExportBtn) cancelExportBtn.addEventListener('click', () => {
         exportModal.style.display = 'none';
     });
@@ -3653,12 +3661,14 @@ function showExportModal() {
     exportModal.style.display = 'block';
     downloadImageBtn.disabled = true;
     openInNewTabBtn.disabled = true;
-    downloadImageBtn.textContent = '生成中…';
-    openInNewTabBtn.textContent = '生成中…';
-    drawScheduleToCanvas();
+    downloadImageBtn.textContent = '点击生成';
+    openInNewTabBtn.textContent = '点击生成';
 }
 
 // 在canvas上绘制排期表（支持跨周导出）
+let exportRetryCount = 0;
+const MAX_EXPORT_RETRIES = 3;
+
 function drawScheduleToCanvas() {
     // 确定日期范围
     let startDate, endDate;
@@ -3848,6 +3858,16 @@ function drawScheduleToCanvas() {
         logging: false,
         allowTaint: true
     }).then(canvas => {
+        // 自动重试：检查渲染结果是否有效（宽高 > 100）
+        if ((canvas.width < 100 || canvas.height < 100) && exportRetryCount < MAX_EXPORT_RETRIES) {
+            exportRetryCount++;
+            console.log(`[export] 渲染结果异常，自动重试 ${exportRetryCount}/${MAX_EXPORT_RETRIES}`);
+            allCards.forEach((card, i) => { card.style.background = originalBgs[i]; });
+            document.body.removeChild(tempContainer);
+            drawScheduleToCanvas();
+            return;
+        }
+        exportRetryCount = 0;
         const exportCtx = exportCanvas.getContext('2d');
         exportCanvas.width = canvas.width;
         exportCanvas.height = canvas.height;
@@ -3873,11 +3893,18 @@ function drawScheduleToCanvas() {
 
 // 下载图片
 function downloadImage() {
-    const canvas = exportCanvas;
-    const link = document.createElement('a');
-    link.download = '罐头场通告排期.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    drawScheduleToCanvas();
+    // 等渲染完成后下载（drawScheduleToCanvas 内部会在成功后启用按钮）
+    const checkReady = setInterval(() => {
+        if (!downloadImageBtn.disabled) {
+            clearInterval(checkReady);
+            const canvas = exportCanvas;
+            const link = document.createElement('a');
+            link.download = '罐头场通告排期.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    }, 200);
 }
 
 // 移动端保存图片到相册
@@ -3885,21 +3912,26 @@ function downloadImage() {
 
 // 在新标签页打开图片
 function openImageInNewTab() {
-    const canvas = exportCanvas;
-    try {
-        // 将canvas转换为数据URL并在新标签页打开
-        const dataURL = canvas.toDataURL('image/png');
-        const newWindow = window.open();
-        if (!newWindow) {
-            showToast('浏览器拦截了弹出窗口，请允许弹窗后重试，或使用下载功能', 'warning');
-            return;
+    drawScheduleToCanvas();
+    const checkReady = setInterval(() => {
+        if (!openInNewTabBtn.disabled) {
+            clearInterval(checkReady);
+            const canvas = exportCanvas;
+            try {
+                const dataURL = canvas.toDataURL('image/png');
+                const newWindow = window.open();
+                if (!newWindow) {
+                    showToast('浏览器拦截了弹出窗口，请允许弹窗后重试', 'warning');
+                    return;
+                }
+                newWindow.document.write(`<img src="${dataURL}" alt="罐头场通告排期" style="width:100%;height:auto;" />`);
+                newWindow.document.close();
+            } catch (error) {
+                console.error('在新标签页打开图片时出错:', error);
+                showToast('无法在新标签页打开图片，请尝试下载图片', 'warning');
+            }
         }
-        newWindow.document.write(`<img src="${dataURL}" alt="罐头场通告排期" style="width:100%;height:auto;" />`);
-        newWindow.document.close();
-    } catch (error) {
-        console.error('在新标签页打开图片时出错:', error);
-        showToast('无法在新标签页打开图片，请尝试下载图片', 'warning');
-    }
+    }, 200);
 }
 
 // 导出所有数据
