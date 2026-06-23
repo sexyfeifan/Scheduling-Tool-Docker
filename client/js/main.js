@@ -3651,6 +3651,7 @@ async function handleDrop(e) {
 
 // 显示导出模态框
 function showExportModal() {
+    // 设置默认日期
     const weekDates = getWeekDates(currentMonday);
     if (exportStartDateInput) exportStartDateInput.value = formatDate(weekDates[0]);
     if (exportEndDateInput) exportEndDateInput.value = formatDate(weekDates[6]);
@@ -3665,47 +3666,185 @@ function showExportModal() {
     drawScheduleToCanvas();
 }
 
-// 在canvas上绘制排期表 — 直接截取页面上已渲染的内容
+// 在canvas上绘制排期表（支持跨周导出）— 完全还原 v2.59-beta5
 function drawScheduleToCanvas() {
-    const target = document.querySelector('.main-content');
-    if (!target) {
-        showToast('未找到排期区域', 'error');
-        return;
+    let startDate, endDate;
+    const isCrossWeek = exportCrossWeekCheckbox && exportCrossWeekCheckbox.checked;
+
+    if (isCrossWeek && exportStartDateInput && exportEndDateInput && exportStartDateInput.value && exportEndDateInput.value) {
+        startDate = new Date(exportStartDateInput.value + 'T00:00:00');
+        endDate = new Date(exportEndDateInput.value + 'T00:00:00');
+    } else {
+        const weekDates = getWeekDates(currentMonday);
+        startDate = weekDates[0];
+        endDate = weekDates[6];
     }
 
-    downloadImageBtn.disabled = true;
-    openInNewTabBtn.disabled = true;
-    downloadImageBtn.textContent = '生成中…';
-    openInNewTabBtn.textContent = '生成中…';
+    const allDates = [];
+    const d = new Date(startDate);
+    while (d <= endDate) {
+        allDates.push(new Date(d));
+        d.setDate(d.getDate() + 1);
+    }
+    const totalDays = allDates.length;
 
-    // 截取前临时隐藏操作按钮
-    const hiddenEls = target.querySelectorAll('.notice-day-btn, .sort-day-btn, .copy-btn, .delete-btn, .add-btn, .empty-state');
-    const hiddenStyles = [];
-    hiddenEls.forEach(el => {
-        hiddenStyles.push(el.style.display);
-        el.style.display = 'none';
-    });
+    function formatDateChinese(dt) {
+        return `${dt.getMonth() + 1}月${dt.getDate()}日`;
+    }
+    const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
-    html2canvas(target, {
+    let headerText;
+    if (totalDays <= 7) {
+        const weekNumber = getWeekNumber(startDate);
+        headerText = `第${weekNumber}周通告 ${formatDateChinese(startDate)} - ${formatDateChinese(endDate)}`;
+    } else {
+        headerText = `通告排期 ${formatDateChinese(startDate)} - ${formatDateChinese(endDate)}`;
+    }
+
+    // 创建临时DOM
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.top = '-9999px';
+    tempContainer.style.background = '#f8f8f0';
+    tempContainer.style.fontFamily = 'Nunito, "Noto Sans SC", -apple-system, "PingFang SC", sans-serif';
+    tempContainer.style.padding = '24px';
+    tempContainer.style.minHeight = '800px';
+    tempContainer.style.fontKerning = 'none';
+    tempContainer.style.textRendering = 'optimizeSpeed';
+    tempContainer.style.letterSpacing = '0';
+    tempContainer.style.wordSpacing = '0';
+
+    const cols = totalDays;
+    const colWidth = Math.max(180, Math.min(240, 1680 / cols));
+    const containerWidth = colWidth * cols + 48;
+    tempContainer.style.width = containerWidth + 'px';
+
+    // 头部
+    const header = document.createElement('div');
+    header.style.background = 'rgb(247, 243, 223)';
+    header.style.borderRadius = '24px';
+    header.style.padding = '28px 32px';
+    header.style.boxShadow = '0 3px 10px rgba(61, 52, 40, 0.10)';
+    header.style.marginBottom = '24px';
+    header.style.textAlign = 'center';
+    header.style.border = '2px solid #c4b89e';
+
+    const title = document.createElement('div');
+    title.textContent = '罐头场通告排期';
+    title.style.fontSize = '28px';
+    title.style.fontWeight = '700';
+    title.style.color = '#794f27';
+    title.style.marginBottom = '12px';
+    title.style.letterSpacing = '0.02em';
+
+    const weekInfoLine = document.createElement('div');
+    weekInfoLine.textContent = headerText;
+    weekInfoLine.style.fontWeight = '600';
+    weekInfoLine.style.fontSize = '16px';
+    weekInfoLine.style.color = '#9f927d';
+
+    header.appendChild(title);
+    header.appendChild(weekInfoLine);
+
+    // 主内容区域
+    const mainContent = document.createElement('div');
+    mainContent.style.background = 'rgb(247, 243, 223)';
+    mainContent.style.borderRadius = '24px';
+    mainContent.style.overflow = 'hidden';
+    mainContent.style.boxShadow = '0 3px 10px rgba(61, 52, 40, 0.10)';
+    mainContent.style.border = '2px solid #c4b89e';
+
+    // 星期标题行
+    const weekHeader = document.createElement('div');
+    weekHeader.style.display = 'grid';
+    weekHeader.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    weekHeader.style.background = 'linear-gradient(135deg, #19c8b9 0%, #11a89b 100%)';
+    weekHeader.style.color = 'white';
+
+    for (let i = 0; i < totalDays; i++) {
+        const dayHeader = document.createElement('div');
+        dayHeader.style.padding = '18px 12px';
+        dayHeader.style.textAlign = 'center';
+        dayHeader.style.fontWeight = '600';
+        dayHeader.style.fontSize = cols > 10 ? '12px' : '14px';
+        const dt = allDates[i];
+        const dow = dt.getDay() === 0 ? 6 : dt.getDay() - 1;
+        dayHeader.textContent = `${weekdays[dow]} (${dt.getMonth() + 1}/${dt.getDate()})`;
+        weekHeader.appendChild(dayHeader);
+    }
+
+    // 排期容器
+    const scheduleContainer = document.createElement('div');
+    scheduleContainer.style.display = 'grid';
+    scheduleContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    scheduleContainer.style.minHeight = '600px';
+    scheduleContainer.style.background = 'rgba(247, 243, 223, 0.5)';
+
+    for (let i = 0; i < totalDays; i++) {
+        const dayColumn = document.createElement('div');
+        dayColumn.style.borderRight = (i === totalDays - 1) ? 'none' : '1px solid #c4b89e';
+        dayColumn.style.padding = cols > 10 ? '8px' : '16px';
+        dayColumn.style.minHeight = '600px';
+        dayColumn.style.background = 'rgba(247, 243, 223, 0.3)';
+
+        const dateStr = formatDate(allDates[i]);
+        const projects = scheduleData[dateStr] || [];
+
+        if (projects.length > 0) {
+            projects.forEach((project, projectIndex) => {
+                const projectCard = createProjectCard(project, dateStr, projectIndex);
+                const cleanCard = projectCard.cloneNode(true);
+                const deleteBtn = cleanCard.querySelector('.delete-btn');
+                if (deleteBtn) deleteBtn.remove();
+                const copyBtn = cleanCard.querySelector('.copy-btn');
+                if (copyBtn) copyBtn.remove();
+                if (cols > 10) {
+                    cleanCard.style.fontSize = '11px';
+                    cleanCard.style.padding = '6px';
+                }
+                dayColumn.appendChild(cleanCard);
+            });
+        } else {
+            const emptyState = document.createElement('div');
+            emptyState.className = 'empty-state';
+            emptyState.style.color = '#9f927d';
+            emptyState.style.textAlign = 'center';
+            emptyState.style.padding = '40px 20px';
+            emptyState.style.fontSize = cols > 10 ? '24px' : '36px';
+            emptyState.style.opacity = '0.6';
+            emptyState.textContent = '🈚️';
+            dayColumn.appendChild(emptyState);
+        }
+
+        scheduleContainer.appendChild(dayColumn);
+    }
+
+    mainContent.appendChild(weekHeader);
+    mainContent.appendChild(scheduleContainer);
+    tempContainer.appendChild(header);
+    tempContainer.appendChild(mainContent);
+    document.body.appendChild(tempContainer);
+
+    html2canvas(tempContainer, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#f8f8f0',
         logging: false,
         allowTaint: true
     }).then(canvas => {
-        // 恢复按钮显示
-        hiddenEls.forEach((el, i) => { el.style.display = hiddenStyles[i]; });
         const exportCtx = exportCanvas.getContext('2d');
         exportCanvas.width = canvas.width;
         exportCanvas.height = canvas.height;
         exportCtx.drawImage(canvas, 0, 0);
+        document.body.removeChild(tempContainer);
         downloadImageBtn.disabled = false;
         openInNewTabBtn.disabled = false;
         downloadImageBtn.textContent = '下载图片';
         openInNewTabBtn.textContent = '在新标签页打开';
     }).catch(error => {
-        hiddenEls.forEach((el, i) => { el.style.display = hiddenStyles[i]; });
         console.error('导出图片时出错:', error);
+        if (tempContainer.parentNode) document.body.removeChild(tempContainer);
         downloadImageBtn.disabled = false;
         openInNewTabBtn.disabled = false;
         downloadImageBtn.textContent = '下载图片';
@@ -3716,45 +3855,29 @@ function drawScheduleToCanvas() {
 
 // 下载图片
 function downloadImage() {
-    drawScheduleToCanvas();
-    // 等渲染完成后下载（drawScheduleToCanvas 内部会在成功后启用按钮）
-    const checkReady = setInterval(() => {
-        if (!downloadImageBtn.disabled) {
-            clearInterval(checkReady);
-            const canvas = exportCanvas;
-            const link = document.createElement('a');
-            link.download = '罐头场通告排期.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        }
-    }, 200);
+    const canvas = exportCanvas;
+    const link = document.createElement('a');
+    link.download = '罐头场通告排期.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
 }
-
-// 移动端保存图片到相册
-// 已移除此功能
 
 // 在新标签页打开图片
 function openImageInNewTab() {
-    drawScheduleToCanvas();
-    const checkReady = setInterval(() => {
-        if (!openInNewTabBtn.disabled) {
-            clearInterval(checkReady);
-            const canvas = exportCanvas;
-            try {
-                const dataURL = canvas.toDataURL('image/png');
-                const newWindow = window.open();
-                if (!newWindow) {
-                    showToast('浏览器拦截了弹出窗口，请允许弹窗后重试', 'warning');
-                    return;
-                }
-                newWindow.document.write(`<img src="${dataURL}" alt="罐头场通告排期" style="width:100%;height:auto;" />`);
-                newWindow.document.close();
-            } catch (error) {
-                console.error('在新标签页打开图片时出错:', error);
-                showToast('无法在新标签页打开图片，请尝试下载图片', 'warning');
-            }
+    const canvas = exportCanvas;
+    try {
+        const dataURL = canvas.toDataURL('image/png');
+        const newWindow = window.open();
+        if (!newWindow) {
+            showToast('浏览器拦截了弹出窗口，请允许弹窗后重试，或使用下载功能', 'warning');
+            return;
         }
-    }, 200);
+        newWindow.document.write(`<img src="${dataURL}" alt="罐头场通告排期" style="width:100%;height:auto;" />`);
+        newWindow.document.close();
+    } catch (error) {
+        console.error('在新标签页打开图片时出错:', error);
+        showToast('无法在新标签页打开图片，请尝试下载图片', 'warning');
+    }
 }
 
 // 导出所有数据
