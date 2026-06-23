@@ -3685,7 +3685,6 @@ function drawScheduleToCanvas() {
         logging: false,
         allowTaint: true
     }).then(canvas => {
-        exportRetryCount = 0;
         const exportCtx = exportCanvas.getContext('2d');
         exportCanvas.width = canvas.width;
         exportCanvas.height = canvas.height;
