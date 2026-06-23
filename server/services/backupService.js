@@ -130,6 +130,7 @@ function createBackupService(store) {
     const backupFile = await resolveBackupFile(backupPath);
     const payload = normalizeBackupPayload(JSON.parse(await fs.readFile(backupFile, 'utf8')));
 
+    // 先创建恢复前快照
     const snapshotDir = path.join(store.backupDir, createBackupFolderName('before_restore'));
     await fs.mkdir(snapshotDir, { recursive: true });
     await fs.writeFile(
@@ -142,9 +143,20 @@ function createBackupService(store) {
       'utf8'
     );
 
-    await store.writeSettings(payload.settings);
-    await store.writeSchedules(payload.schedules);
-    await store.writeVersion(payload.version);
+    // 使用事务保证原子性：要么全部成功，要么全部回滚
+    const db = store.db;
+    const restoreTransaction = db.transaction(() => {
+      store.writeSettings(payload.settings);
+      store.writeSchedules(payload.schedules);
+      store.writeVersion(payload.version);
+    });
+
+    try {
+      restoreTransaction();
+    } catch (error) {
+      // 事务会自动回滚
+      throw new Error(`恢复备份失败: ${error.message}`);
+    }
   }
 
   async function deleteBackup(backupPath) {

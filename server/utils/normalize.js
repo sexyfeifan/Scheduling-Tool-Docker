@@ -40,7 +40,23 @@ const DEFAULT_SETTINGS = {
 };
 
 function isValidDateString(value) {
-  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+  // 首先检查格式
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  // 检查日期是否真实存在（如拒绝 2024-02-30）
+  const date = new Date(value + 'T00:00:00');
+
+  // 检查日期是否有效
+  if (isNaN(date.getTime())) {
+    return false;
+  }
+
+  // 检查解析后的日期是否与输入匹配
+  // 这样可以捕获如 2024-02-30 这样的无效日期
+  const isoDate = date.toISOString().split('T')[0];
+  return isoDate === value;
 }
 
 function normalizeText(value, maxLength = 200) {
@@ -131,7 +147,9 @@ function normalizeTemplateList(templates) {
 }
 
 function hashPassword(password) {
-  return bcrypt.hashSync(String(password), 10);
+  // 提高 bcrypt cost factor 从 10 到 12，增强安全性
+  // cost factor 每增加 1，计算时间翻倍，更难暴力破解
+  return bcrypt.hashSync(String(password), 12);
 }
 
 function verifyPassword(candidate, hash) {

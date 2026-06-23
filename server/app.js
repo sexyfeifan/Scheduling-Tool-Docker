@@ -110,11 +110,20 @@ function createApp(options = {}) {
     res.write(': connected\n\n');
     connectedClients.push(res);
 
+    // 心跳检测，每 25 秒发送一次
     const heartbeat = setInterval(() => {
       res.write(': ping\n\n');
     }, 25000);
 
+    // 连接超时保护：1小时后自动断开，防止僵尸连接累积
+    const connectionTimeout = setTimeout(() => {
+      clearInterval(heartbeat);
+      res.end();
+      connectedClients = connectedClients.filter((client) => client !== res);
+    }, 3600000); // 1小时 = 3600000毫秒
+
     req.on('close', () => {
+      clearTimeout(connectionTimeout);
       clearInterval(heartbeat);
       connectedClients = connectedClients.filter((client) => client !== res);
     });
