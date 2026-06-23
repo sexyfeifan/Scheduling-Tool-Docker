@@ -4,9 +4,15 @@
 
 > 当前版本：**v2.63** | Docker Hub: `sexyfeifan/scheduling-tool:2.63`
 
+[![Docker Pulls](https://img.shields.io/docker/pulls/sexyfeifan/scheduling-tool)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
+[![Docker Image Size](https://img.shields.io/docker/image-size/sexyfeifan/scheduling-tool/latest)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
+[![GitHub](https://img.shields.io/github/license/sexyfeifan/Scheduling-Tool-Docker)](https://github.com/sexyfeifan/Scheduling-Tool-Docker)
+
 ## 简介
 
 单用户共享排期管理系统，所有用户看到相同数据，支持实时同步。Docker 一键部署，适用于 NAS、云服务器等任何支持 Docker 的环境。
+
+**多架构支持**: ✅ AMD64 (Intel/AMD) | ✅ ARM64 (Apple Silicon, ARM服务器)
 
 ## 功能特点
 
@@ -71,10 +77,35 @@
 
 ## 快速开始
 
-### Docker Compose（推荐）
+### 使用 Docker Hub 镜像（推荐）
 
 ```bash
-cd Scheduling-Tool-Docker
+# 创建目录
+mkdir -p scheduling-tool && cd scheduling-tool
+
+# 创建 docker-compose.yml
+cat > docker-compose.yml << 'EOF'
+services:
+  scheduling-tool:
+    image: sexyfeifan/scheduling-tool:2.63
+    container_name: scheduling-tool
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+      - ./backups:/app/backups
+    environment:
+      - DATA_DIR=/app/data
+      - BACKUP_DIR=/app/backups
+      - BACKUP_PASSWORD=${BACKUP_PASSWORD:-sexyfeifan}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+EOF
 
 # 可选：设置管理员密码
 export BACKUP_PASSWORD='your-strong-password'
@@ -85,33 +116,35 @@ docker compose up -d
 # 访问 http://localhost:3000
 ```
 
-### 手动构建
+### 从源码构建
 
 ```bash
-docker build -t scheduling-tool .
+git clone https://github.com/sexyfeifan/Scheduling-Tool-Docker.git
+cd Scheduling-Tool-Docker
 
-docker run -d \
-  --name scheduling-tool \
-  -p 3000:3000 \
-  -v $(pwd)/data:/app/data \
-  -v $(pwd)/backups:/app/backups \
-  -e BACKUP_PASSWORD=your-password \
-  --restart unless-stopped \
-  scheduling-tool
+# 可选：设置管理员密码
+export BACKUP_PASSWORD='your-strong-password'
+
+# 启动
+docker compose up -d
 ```
 
-### 更新
+### 更新到最新版本
 
 ```bash
 docker compose pull && docker compose up -d
 ```
 
-### 推送到 Docker Hub
+### 构建多架构镜像（开发者）
 
 ```bash
+# 创建并使用 buildx builder
+docker buildx create --name multiarch-builder --use
+
+# 构建并推送多架构镜像
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -t sexyfeifan/scheduling-tool:2.61 \
+  -t sexyfeifan/scheduling-tool:2.63 \
   -t sexyfeifan/scheduling-tool:latest \
   --push .
 ```
@@ -164,6 +197,20 @@ docker buildx build \
 - 2GB+ 磁盘空间
 - 1GB RAM
 
+**支持的平台**:
+- ✅ Intel/AMD 64位服务器
+- ✅ Apple Silicon (M1/M2/M3) Mac
+- ✅ ARM 服务器 (AWS Graviton, 树莓派等)
+
+## 环境变量
+
+| 变量名 | 默认值 | 说明 |
+|--------|--------|------|
+| `PORT` | `3000` | 服务端口 |
+| `DATA_DIR` | `/app/data` | 数据目录 |
+| `BACKUP_DIR` | `/app/backups` | 备份目录 |
+| `BACKUP_PASSWORD` | `sexyfeifan` | 管理员密码（强烈建议修改）|
+
 ## 数据持久化
 
 ```
@@ -213,12 +260,58 @@ docker buildx build \
 
 ## 更新日志
 
-| 版本 | 日期 | 说明 |
-|------|------|------|
-| v2.63 | 2026-06-23 | 导出图片样式修复 / 事件绑定 null 守卫 / 全量按钮功能恢复 |
-| v2.62 | 2026-06-22 | 周切换数据修复 / SSE回退 / 人员全字段匹配 / 预警重复检测 / 管理页合并设置 |
-| v2.61 | 2026-06-22 | 动森风格 UI / 多视图 / 冲突预警 / 安全加固 / 性能优化 |
-| v2.60 | 2026-06-20 | 15 个功能模块：视图增强 / 效率工具 / PWA / 架构优化 |
-| v2.59 | 2026-06-14 | 跨周导出 / 广告商单 / 暗色模式 / 快捷键 / CI |
-| v2.58 | - | 动态职能管理 / 商务职能 |
-| v2.54 | - | 月视图优化 / 数据安全与恢复 |
+### v2.63 (2026-06-23) - 稳定性与安全性重大更新
+
+**🐛 Bug 修复**:
+- 修复 SSE 无限重连问题（添加最多5次重连限制和指数退避策略）
+- 修复备份恢复操作无事务保护问题（使用 SQLite 事务保证原子性）
+- 修复 API 响应 JSON 解析错误可能导致客户端崩溃
+- 修复导出图片颜色偏淡问题（使用不透明背景色）
+- 完善日期验证（检查日期合法性，拒绝如 2024-02-30 的无效日期）
+
+**🔒 安全增强**:
+- 提高密码哈希强度（bcrypt cost factor 从 10 提升到 12）
+- 添加 SSE 连接超时限制（1小时自动断开，防止僵尸连接累积）
+- 添加所有 API 请求 30 秒超时设置
+
+**⚡ 性能优化**:
+- 优化搜索性能（添加 300ms 防抖，减少不必要的渲染）
+- 添加项目名称长度验证（最多 120 字符，避免 UI 问题）
+
+**🏗️ 架构改进**:
+- 导出图片样式修复
+- 事件绑定 null 守卫
+- 全量按钮功能恢复
+- 多架构 Docker 镜像支持（AMD64 + ARM64）
+
+### v2.62 (2026-06-22)
+- 周切换数据修复
+- SSE 回退机制
+- 人员全字段匹配
+- 预警重复检测
+- 管理页合并设置
+
+### v2.61 (2026-06-22)
+- 动森风格 UI
+- 多视图支持
+- 冲突预警
+- 安全加固
+- 性能优化
+
+### v2.60 (2026-06-20)
+- 15 个功能模块
+- 视图增强
+- 效率工具
+- PWA 支持
+- 架构优化
+
+### v2.59 (2026-06-14)
+- 跨周导出
+- 广告商单
+- 暗色模式
+- 快捷键
+- CI/CD
+
+### 早期版本
+- v2.58: 动态职能管理 / 商务职能
+- v2.54: 月视图优化 / 数据安全与恢复
