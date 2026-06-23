@@ -3678,6 +3678,14 @@ function drawScheduleToCanvas() {
     downloadImageBtn.textContent = '生成中…';
     openInNewTabBtn.textContent = '生成中…';
 
+    // 截取前临时隐藏操作按钮
+    const hiddenEls = target.querySelectorAll('.notice-day-btn, .sort-day-btn, .copy-btn, .delete-btn, .add-btn, .empty-state');
+    const hiddenStyles = [];
+    hiddenEls.forEach(el => {
+        hiddenStyles.push(el.style.display);
+        el.style.display = 'none';
+    });
+
     html2canvas(target, {
         scale: 2,
         useCORS: true,
@@ -3685,6 +3693,8 @@ function drawScheduleToCanvas() {
         logging: false,
         allowTaint: true
     }).then(canvas => {
+        // 恢复按钮显示
+        hiddenEls.forEach((el, i) => { el.style.display = hiddenStyles[i]; });
         const exportCtx = exportCanvas.getContext('2d');
         exportCanvas.width = canvas.width;
         exportCanvas.height = canvas.height;
@@ -3694,6 +3704,7 @@ function drawScheduleToCanvas() {
         downloadImageBtn.textContent = '下载图片';
         openInNewTabBtn.textContent = '在新标签页打开';
     }).catch(error => {
+        hiddenEls.forEach((el, i) => { el.style.display = hiddenStyles[i]; });
         console.error('导出图片时出错:', error);
         downloadImageBtn.disabled = false;
         openInNewTabBtn.disabled = false;
