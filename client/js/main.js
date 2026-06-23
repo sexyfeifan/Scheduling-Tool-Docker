@@ -997,21 +997,31 @@ function setupEventListeners() {
     });
     
     // 导出图片按钮
-    exportImageBtn.addEventListener('click', showExportModal);
-    
+    if (exportImageBtn) {
+        exportImageBtn.addEventListener('click', showExportModal);
+    }
+
     // 粘贴识别按钮
-    pasteRecognitionBtn.addEventListener('click', handlePasteRecognition);
-    
+    if (pasteRecognitionBtn) {
+        pasteRecognitionBtn.addEventListener('click', handlePasteRecognition);
+    }
+
     // 设置按钮
-    settingsBtn.addEventListener('click', () => {
-        showSettingsModal();
-    });
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            showSettingsModal();
+        });
+    }
 
     // 管理员设置按钮
-    if (adminBtn) adminBtn.addEventListener('click', showAdminModal);
+    if (adminBtn) {
+        adminBtn.addEventListener('click', showAdminModal);
+    }
 
     // 热力图按钮
-    if (heatmapBtn) heatmapBtn.addEventListener('click', showHeatmapModal);
+    if (heatmapBtn) {
+        heatmapBtn.addEventListener('click', showHeatmapModal);
+    }
 
     // 通告单按钮（事件委托，因为按钮在 renderSchedule 每次重建）
     document.addEventListener('click', (e) => {
@@ -1023,52 +1033,65 @@ function setupEventListeners() {
         }
     });
 
-    undoActionBtn.addEventListener('click', async () => {
-        try {
-            await undoLastChange();
-        } catch (error) {
-            console.error('撤销失败:', error);
-            showToast(error.message || '撤销失败', 'error');
-        }
-    });
+    if (undoActionBtn) {
+        undoActionBtn.addEventListener('click', async () => {
+            try {
+                await undoLastChange();
+            } catch (error) {
+                console.error('撤销失败:', error);
+                showToast(error.message || '撤销失败', 'error');
+            }
+        });
+    }
 
     // 搜索输入防抖优化：避免每次按键都触发渲染
-    let searchDebounceTimer;
-    searchProjectsInput.addEventListener('input', () => {
-        clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(updateFilterState, 300); // 300ms 防抖延迟
-    });
-
-    filterTypeSelect.addEventListener('change', updateFilterState);
-    clearFiltersBtn.addEventListener('click', () => {
-        searchProjectsInput.value = '';
-        filterTypeSelect.value = '';
-        updateFilterState();
-    });
-
-    applyTemplateBtn.addEventListener('click', applySelectedTemplate);
-    saveTemplateFromFormBtn.addEventListener('click', async () => {
-        try {
-            await saveTemplateFromCurrentForm();
-        } catch (error) {
-            console.error('保存模板失败:', error);
-            showToast(error.message || '保存模板失败', 'error');
-        }
-    });
-    
-    // 模态框关闭按钮
-    closeModalButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            projectModal.style.display = 'none';
-            settingsModal.style.display = 'none';
-            exportModal.style.display = 'none';
+    if (searchProjectsInput && filterTypeSelect && clearFiltersBtn) {
+        let searchDebounceTimer;
+        searchProjectsInput.addEventListener('input', () => {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(updateFilterState, 300); // 300ms 防抖延迟
         });
-    });
-    
+
+        filterTypeSelect.addEventListener('change', updateFilterState);
+        clearFiltersBtn.addEventListener('click', () => {
+            searchProjectsInput.value = '';
+            filterTypeSelect.value = '';
+            updateFilterState();
+        });
+    }
+
+    if (applyTemplateBtn) {
+        applyTemplateBtn.addEventListener('click', applySelectedTemplate);
+    }
+
+    if (saveTemplateFromFormBtn) {
+        saveTemplateFromFormBtn.addEventListener('click', async () => {
+            try {
+                await saveTemplateFromCurrentForm();
+            } catch (error) {
+                console.error('保存模板失败:', error);
+                showToast(error.message || '保存模板失败', 'error');
+            }
+        });
+    }
+
+    // 模态框关闭按钮
+    if (closeModalButtons && closeModalButtons.length > 0) {
+        closeModalButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                if (projectModal) projectModal.style.display = 'none';
+                if (settingsModal) settingsModal.style.display = 'none';
+                if (exportModal) exportModal.style.display = 'none';
+            });
+        });
+    }
+
     // 取消编辑按钮
-    cancelEditBtn.addEventListener('click', () => {
-        projectModal.style.display = 'none';
-    });
+    if (cancelEditBtn && projectModal) {
+        cancelEditBtn.addEventListener('click', () => {
+            projectModal.style.display = 'none';
+        });
+    }
     
     // 保存设置按钮
     saveSettingsBtn.addEventListener('click', saveSettings);
