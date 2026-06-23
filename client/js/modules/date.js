@@ -18,9 +18,10 @@ export function formatMonthDay(date) {
 
 export function getWeekDates(monday) {
     const dates = [];
+    const base = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate());
     for (let index = 0; index < 7; index += 1) {
-        const date = new Date(monday);
-        date.setDate(monday.getDate() + index);
+        const date = new Date(base);
+        date.setDate(base.getDate() + index);
         dates.push(date);
     }
     return dates;

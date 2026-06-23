@@ -40,7 +40,23 @@ const DEFAULT_SETTINGS = {
 };
 
 function isValidDateString(value) {
-  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+  // 首先检查格式
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  // 检查日期是否真实存在（如拒绝 2024-02-30）
+  const date = new Date(value + 'T00:00:00');
+
+  // 检查日期是否有效
+  if (isNaN(date.getTime())) {
+    return false;
+  }
+
+  // 检查解析后的日期是否与输入匹配
+  // 这样可以捕获如 2024-02-30 这样的无效日期
+  const isoDate = date.toISOString().split('T')[0];
+  return isoDate === value;
 }
 
 function normalizeText(value, maxLength = 200) {
@@ -66,6 +82,7 @@ function normalizeTextArray(values, maxItems = 200, maxLength = 100) {
 function normalizeProject(project) {
   const validStatuses = ['待确认', '已确认', '已完成', '取消'];
   const rawStatus = project && project.status;
+  const rawStartTime = normalizeText(project && project.startTime, 10);
   const base = {
     name: normalizeText(project && project.name, 120),
     location: normalizeText(project && project.location, 120),
@@ -77,7 +94,7 @@ function normalizeProject(project) {
     audio: normalizeText(project && project.audio, 120),
     business: normalizeText(project && project.business, 120),
     type: normalizeText(project && project.type, 40),
-    startTime: normalizeText(project && project.startTime, 10),
+    startTime: rawStartTime && /^\d{1,2}:\d{2}$/.test(rawStartTime) ? rawStartTime : '',
     laodao: Boolean(project && project.laodao),
     isAdvertiser: Boolean(project && project.isAdvertiser),
     advertiserNo: normalizeText(project && project.advertiserNo, 60),
@@ -130,7 +147,9 @@ function normalizeTemplateList(templates) {
 }
 
 function hashPassword(password) {
-  return bcrypt.hashSync(String(password), 10);
+  // 提高 bcrypt cost factor 从 10 到 12，增强安全性
+  // cost factor 每增加 1，计算时间翻倍，更难暴力破解
+  return bcrypt.hashSync(String(password), 12);
 }
 
 function verifyPassword(candidate, hash) {
@@ -313,6 +332,13 @@ function wrapStructuredData(data) {
   };
 }
 
+function timingSafeEqual(a, b) {
+  const bufA = Buffer.from(String(a));
+  const bufB = Buffer.from(String(b));
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 module.exports = {
   DEFAULT_ROLE_CATEGORIES,
   DEFAULT_SETTINGS,
@@ -335,5 +361,6 @@ module.exports = {
   normalizeVersionData,
   sanitizeAccessForClient,
   sanitizeSettingsForClient,
+  timingSafeEqual,
   wrapStructuredData
 };

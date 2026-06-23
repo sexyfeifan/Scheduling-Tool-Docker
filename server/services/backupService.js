@@ -2,6 +2,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const { APP_VERSION } = require('../config');
+const logger = require('../logger');
 const { normalizeBackupPayload } = require('../utils/normalize');
 
 function isSafeBackupSegment(value) {
@@ -77,10 +78,33 @@ function createBackupService(store) {
       appVersion: APP_VERSION
     }, null, 2), 'utf8');
 
+    // 自动清理：保留最近 20 份备份
+    await autoCleanupBackups(20);
+
     return {
       backupPath: `/backups/${dirName}/backup.json`,
       backups: (await listBackups()).slice(0, 20)
     };
+  }
+
+  async function autoCleanupBackups(keepCount = 20) {
+    try {
+      const entries = await fs.readdir(store.backupDir, { withFileTypes: true });
+      const dirs = entries
+        .filter(e => e.isDirectory() && e.name.startsWith('backup_'))
+        .map(e => e.name)
+        .sort()
+        .reverse();
+
+      if (dirs.length <= keepCount) return;
+
+      const toDelete = dirs.slice(keepCount);
+      for (const dir of toDelete) {
+        await fs.rm(path.join(store.backupDir, dir), { recursive: true, force: true });
+      }
+    } catch (err) {
+      logger.error(err, '自动清理备份失败');
+    }
   }
 
   async function resolveBackupFile(backupPath) {
@@ -106,6 +130,7 @@ function createBackupService(store) {
     const backupFile = await resolveBackupFile(backupPath);
     const payload = normalizeBackupPayload(JSON.parse(await fs.readFile(backupFile, 'utf8')));
 
+    // 先创建恢复前快照
     const snapshotDir = path.join(store.backupDir, createBackupFolderName('before_restore'));
     await fs.mkdir(snapshotDir, { recursive: true });
     await fs.writeFile(
@@ -118,9 +143,20 @@ function createBackupService(store) {
       'utf8'
     );
 
-    await store.writeSettings(payload.settings);
-    await store.writeSchedules(payload.schedules);
-    await store.writeVersion(payload.version);
+    // 使用事务保证原子性：要么全部成功，要么全部回滚
+    const db = store.db;
+    const restoreTransaction = db.transaction(() => {
+      store.writeSettings(payload.settings);
+      store.writeSchedules(payload.schedules);
+      store.writeVersion(payload.version);
+    });
+
+    try {
+      restoreTransaction();
+    } catch (error) {
+      // 事务会自动回滚
+      throw new Error(`恢复备份失败: ${error.message}`);
+    }
   }
 
   async function deleteBackup(backupPath) {

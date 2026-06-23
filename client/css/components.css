@@ -1,0 +1,668 @@
+/* ========================================
+ * components.css — 按钮、主内容区、星期标题、排期网格
+ * 罐头场通告排期系统 v2.60
+ * 动物森友会风格
+ * ======================================== */
+
+/* 按钮样式 - 动物森友会风格 */
+.btn {
+    font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+    font-weight: 600;
+    border-radius: 50px;
+    padding: 10px 20px;
+    border: 2px solid rgba(170, 166, 157, 0.4);
+    background: #f8f8f0;
+    color: #794f27;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 2px 4px rgba(61, 52, 40, 0.06);
+    font-size: 13px;
+    min-height: 38px;
+}
+
+.btn:hover {
+    background: #f0e8d8;
+    border-color: rgba(130, 113, 87, 0.5);
+    box-shadow: 0 3px 10px rgba(61, 52, 40, 0.1);
+    transform: translateY(-1px);
+}
+
+.btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(61, 52, 40, 0.06);
+}
+
+.btn.primary {
+    background: #19c8b9;
+    border-color: #19c8b9;
+    color: white;
+    box-shadow: 0 3px 10px rgba(25, 200, 185, 0.3);
+}
+
+.btn.primary:hover {
+    background: #3dd4c6;
+    border-color: #3dd4c6;
+    box-shadow: 0 4px 16px rgba(25, 200, 185, 0.4);
+}
+
+.btn.secondary {
+    background: #f0e8d8;
+    border-color: rgba(170, 166, 157, 0.4);
+    color: #794f27;
+}
+
+.btn.secondary:hover {
+    background: #e8e2d6;
+}
+
+.btn:not(.primary):not(.secondary):not(.delete-btn) {
+    background: rgba(248, 248, 240, 0.9);
+    color: #794f27;
+    border: 2px solid rgba(170, 166, 157, 0.3);
+}
+
+.btn:not(.primary):not(.secondary):not(.delete-btn):hover {
+    background: #f0e8d8;
+    border-color: rgba(130, 113, 87, 0.4);
+}
+
+/* 删除按钮 */
+.delete-btn {
+    background: #e05a5a;
+    border-color: #e05a5a;
+    color: white;
+}
+
+.delete-btn:hover {
+    background: #e87878;
+    border-color: #e87878;
+}
+
+/* 主内容区域 */
+.main-content {
+    background: #f8f8f0;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(61, 52, 40, 0.14);
+    border: 2px solid #d4c4a8;
+}
+
+/* 星期标题 */
+.week-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: #19c8b9;
+    color: #fff;
+    border: none;
+    border-radius: 18px 18px 0 0;
+    font-weight: 700;
+}
+
+.day-header {
+    padding: 14px 12px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 14px;
+    font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+    letter-spacing: 0;
+    transition: all 0.2s ease;
+    min-width: 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+
+.day-header:last-child {
+    border-right: none;
+}
+
+/* 移动端日期切换选中状态 */
+.day-header.active {
+    position: relative;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.day-header.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #6fba2c;
+}
+
+/* 移动端显示今日日期 */
+.day-column.active-day {
+    display: block !important;
+}
+
+/* 排期容器 */
+.schedule-container {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    min-height: 600px;
+    background: transparent;
+}
+
+.day-column {
+    border-right: 2px solid rgba(170, 166, 157, 0.15);
+    padding: 16px;
+    min-height: 600px;
+    min-width: 0;
+    transition: all 0.3s ease;
+    background: transparent;
+    position: relative;
+}
+
+.day-column:last-child {
+    border-right: none;
+}
+
+.day-column:hover {
+    background: rgba(248, 248, 240, 0.8);
+}
+
+.day-column.drag-over {
+    background: rgba(25, 200, 185, 0.1);
+    border-radius: 18px;
+}
+
+/* 空状态 */
+.empty-state {
+    color: #c4b89e;
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 48px;
+    opacity: 0.6;
+}
+
+/* 项目状态标签 */
+.status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    margin-top: 6px;
+    line-height: 1.6;
+    font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+}
+
+.status-pending {
+    background: rgba(170, 166, 157, 0.2);
+    color: #9f927d;
+    border: 1px solid rgba(170, 166, 157, 0.3);
+}
+
+.status-confirmed {
+    background: rgba(111, 186, 44, 0.15);
+    color: #5a9e1e;
+    border: 1px solid rgba(111, 186, 44, 0.3);
+}
+
+.status-done {
+    background: rgba(25, 200, 185, 0.15);
+    color: #19c8b9;
+    border: 1px solid rgba(25, 200, 185, 0.3);
+}
+
+.status-cancelled {
+    background: rgba(224, 90, 90, 0.15);
+    color: #c94444;
+    border: 1px solid rgba(224, 90, 90, 0.3);
+}
+
+/* 暗色模式切换按钮 */
+.theme-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(170, 166, 157, 0.3);
+    background: rgba(248, 248, 240, 0.95);
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(61, 52, 40, 0.1);
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 24px rgba(61, 52, 40, 0.14);
+}
+
+/* 历史记录项 */
+.history-item {
+    padding: 10px 14px;
+    font-size: 13px;
+    border-radius: 16px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(248, 248, 240, 0.5);
+    border: 1px solid rgba(170, 166, 157, 0.15);
+    transition: all 0.2s ease;
+}
+
+.history-item:hover {
+    background: rgba(25, 200, 185, 0.08);
+    border-color: rgba(25, 200, 185, 0.2);
+}
+
+.history-item-label {
+    color: #794f27;
+    font-weight: 500;
+}
+
+.history-item-time {
+    color: #c4b89e;
+    font-size: 11px;
+}
+
+/* 星期列添加按钮 */
+.day-column .add-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #19c8b9;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(25, 200, 185, 0.4);
+    transition: all 0.2s ease;
+}
+
+.day-column:hover .add-btn {
+    display: flex;
+}
+
+.day-column .add-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(25, 200, 185, 0.5);
+    background: #3dd4c6;
+}
+
+/* 今日高亮 — 只保留文字加粗，不改变背景色 */
+.day-header.today-highlight {
+    font-weight: 900;
+    position: relative;
+}
+
+.day-header.today-highlight::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #fff;
+}
+
+.day-column.today-highlight {
+    background: linear-gradient(135deg, rgba(224, 90, 90, 0.08), rgba(245, 195, 28, 0.05));
+    border: 2px solid rgba(224, 90, 90, 0.2);
+    border-radius: 18px;
+}
+
+/* 日期输入容器 */
+.date-input-container {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.date-input-container input {
+    flex: 1;
+    cursor: pointer;
+    background: white;
+    border: 2px solid rgba(170, 166, 157, 0.3);
+    border-radius: 16px;
+    padding: 10px 14px;
+    font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+    color: #794f27;
+}
+
+.date-input-container input:focus {
+    outline: none;
+    border-color: #19c8b9;
+    box-shadow: 0 0 0 3px rgba(25, 200, 185, 0.15);
+}
+
+/* ── 视图切换按钮 ── */
+.view-btn.active {
+    background: #19c8b9;
+    color: #fff;
+    border-color: #19c8b9;
+}
+
+.view-panel {
+    padding: 0;
+}
+
+/* ── 单日视图 ── */
+.day-view-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: #f8f8f0;
+    border-bottom: 2px solid #d4c4a8;
+}
+
+.day-view-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #794f27;
+    min-width: 200px;
+    text-align: center;
+}
+
+.day-view-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    min-height: 400px;
+    background: #f8f8f0;
+}
+
+.day-view-empty {
+    text-align: center;
+    color: #a09080;
+    padding: 60px 20px;
+    font-size: 16px;
+}
+
+/* ── 月视图 ── */
+.month-view-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: #f8f8f0;
+    border-bottom: 2px solid #d4c4a8;
+}
+
+.month-view-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #794f27;
+    min-width: 160px;
+    text-align: center;
+}
+
+.month-toggle {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.month-toggle .btn.small {
+    padding: 4px 12px;
+    font-size: 12px;
+    border-radius: 50px;
+}
+
+.month-toggle .btn.small.active {
+    background: #19c8b9;
+    color: #fff;
+}
+
+.month-view-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    padding: 16px;
+    background: #f8f8f0;
+}
+
+.month-day-header {
+    text-align: center;
+    font-weight: 700;
+    font-size: 12px;
+    color: #794f27;
+    padding: 8px 4px;
+    background: #d4c4a8;
+    border-radius: 4px;
+}
+
+.month-day-cell {
+    min-height: 80px;
+    padding: 6px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1.5px solid #e8dcc8;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.month-day-cell:hover {
+    border-color: #19c8b9;
+}
+
+.month-day-cell.today {
+    border-color: #ffcc00;
+    background: #fffde8;
+}
+
+.month-day-cell.empty {
+    background: #f5f0e8;
+    border-color: transparent;
+}
+
+.month-day-num {
+    font-size: 12px;
+    font-weight: 700;
+    color: #794f27;
+    margin-bottom: 4px;
+}
+
+.month-day-item {
+    font-size: 10px;
+    padding: 2px 4px;
+    margin-bottom: 2px;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── 人员排期矩阵 ── */
+.personnel-view-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: #f8f8f0;
+    border-bottom: 2px solid #d4c4a8;
+}
+
+.personnel-view-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #794f27;
+    min-width: 200px;
+    text-align: center;
+}
+
+.personnel-view-table {
+    padding: 16px;
+    background: #f8f8f0;
+    overflow-x: auto;
+}
+
+.personnel-matrix {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    table-layout: fixed;
+}
+
+.personnel-matrix th {
+    background: #d4c4a8;
+    color: #5a3a1a;
+    font-weight: 700;
+    padding: 10px 8px;
+    text-align: center;
+    border: 1px solid #c4b090;
+    white-space: nowrap;
+}
+
+.personnel-matrix th:first-child {
+    width: 100px;
+}
+
+.personnel-matrix th.today-col {
+    background: #19c8b9;
+    color: #fff;
+}
+
+.personnel-matrix td {
+    padding: 8px;
+    border: 1px solid #e8dcc8;
+    vertical-align: top;
+    background: #fff;
+    text-align: center;
+}
+
+.personnel-matrix td.today-col {
+    background: #f0fffe;
+}
+
+.personnel-matrix .person-name {
+    font-weight: 700;
+    color: #794f27;
+    background: rgb(247, 243, 223);
+    white-space: nowrap;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.personnel-cell-item {
+    font-size: 11px;
+    padding: 3px 6px;
+    margin-bottom: 3px;
+    border-radius: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── 冲突预警 ── */
+.conflict-item {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    background: #fff0e8;
+    border: 1.5px solid #e59266;
+    border-radius: 12px;
+}
+
+.conflict-person {
+    font-weight: 700;
+    color: #8a4a2a;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.conflict-date {
+    font-size: 12px;
+    color: #a09080;
+    margin-bottom: 6px;
+}
+
+.conflict-projects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.conflict-project {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: #fde4e8;
+    color: #a85565;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.conflict-project:hover {
+    background: #f8a6b2;
+    color: #fff;
+}
+
+.conflict-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(168, 85, 101, 0.2);
+    color: #a85565;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.conflict-delete:hover {
+    background: #e74c3c;
+    color: #fff;
+}
+
+.conflict-none {
+    text-align: center;
+    padding: 40px;
+    color: #6fba2c;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.conflict-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 50px;
+    background: #fc736d;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    position: relative;
+    top: -8px;
+    left: -4px;
+}

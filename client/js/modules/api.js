@@ -27,30 +27,52 @@ export function createApiClient({
             headers['x-edit-password'] = getEditPassword();
         }
 
-        const response = await fetch(`${baseUrl}${path}`, {
-            ...options,
-            headers
-        });
+        // 添加请求超时控制：30秒超时
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-        if (!response.ok) {
-            let errorPayload = {};
-            try {
-                errorPayload = await response.json();
-            } catch (error) {
-                errorPayload = { message: response.statusText || '请求失败' };
+        try {
+            const response = await fetch(`${baseUrl}${path}`, {
+                ...options,
+                headers,
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                let errorPayload = {};
+                try {
+                    errorPayload = await response.json();
+                } catch (error) {
+                    errorPayload = { message: response.statusText || '请求失败' };
+                }
+
+                const apiError = new Error(errorPayload.message || '请求失败');
+                apiError.status = response.status;
+                throw apiError;
             }
 
-            const apiError = new Error(errorPayload.message || '请求失败');
-            apiError.status = response.status;
-            throw apiError;
-        }
+            const responseType = response.headers.get('content-type') || '';
+            if (responseType.includes('application/json')) {
+                try {
+                    return await response.json();
+                } catch (error) {
+                    throw new Error('服务器响应格式错误：无法解析 JSON');
+                }
+            }
 
-        const responseType = response.headers.get('content-type') || '';
-        if (responseType.includes('application/json')) {
-            return response.json();
-        }
+            return response.text();
+        } catch (error) {
+            clearTimeout(timeoutId);
 
-        return response.text();
+            // 处理超时错误
+            if (error.name === 'AbortError') {
+                throw new Error('请求超时，请检查网络连接');
+            }
+
+            throw error;
+        }
     }
 
     return {
@@ -125,7 +147,23 @@ export function createApiClient({
             if (!response.ok) {
                 throw new Error('读取备份预览失败');
             }
-            return response.json();
+            try {
+                return await response.json();
+            } catch (error) {
+                throw new Error('备份文件格式错误：无法解析 JSON');
+            }
+        },
+        get: (path) => request(path),
+        post: (path, body) => request(path, { method: 'POST', body: JSON.stringify(body) }),
+        getBlob: async (path) => {
+            const adminPassword = getAdminPassword ? getAdminPassword() : '';
+            const editPassword = getEditPassword ? getEditPassword() : '';
+            const headers = {};
+            if (adminPassword) headers['x-admin-password'] = adminPassword;
+            if (editPassword) headers['x-edit-password'] = editPassword;
+            const response = await fetch(`${baseUrl}${path}`, { headers });
+            if (!response.ok) throw new Error(`请求失败: ${response.status}`);
+            return response.blob();
         }
     };
 }

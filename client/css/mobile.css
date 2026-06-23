@@ -1,0 +1,621 @@
+/* ========================================
+ * mobile.css — 响应式媒体查询
+ * 罐头场通告排期系统 v2.59
+ * ======================================== */
+
+/* ========================================
+ * mobile.css — 响应式媒体查询
+ * 罐头场通告排期系统 v2.59
+ * ======================================== */
+/* ── 响应式设计 - 移动端优化 ── */
+@media (max-width: 768px) {
+    /* 安全区域 */
+    .container {
+        padding: 12px;
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+    
+    /* 头部优化 */
+    .header {
+        padding: 16px;
+        padding-top: max(16px, env(safe-area-inset-top));
+        border-radius: var(--radius-lg);
+        margin-bottom: 16px;
+    }
+    
+    .header h1 {
+        font-size: 20px;
+        text-align: center;
+        margin-bottom: 16px;
+    }
+    
+    /* 工具栏 - 紧凑布局 */
+    .toolbar {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .toolbar .toolbar-divider {
+        display: none;
+    }
+
+    /* 核心按钮 - 新增项目 */
+    .toolbar .btn.primary {
+        order: -2;
+        flex: 1 1 45%;
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    /* 导航按钮组 */
+    #prev-week, #next-week, #current-week {
+        padding: 8px 10px;
+        font-size: 13px;
+        flex: 1;
+    }
+
+    /* 周显示 */
+    .week-display {
+        flex: 0 0 100%;
+        margin: 6px 0;
+        text-align: center;
+        font-size: 14px;
+        padding: 8px;
+        order: -1;
+    }
+
+    /* 图标按钮移动端 */
+    .btn.icon-btn {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    /* 次要按钮 */
+    .toolbar .btn.secondary,
+    .toolbar .btn:not(.primary):not(#prev-week):not(#next-week):not(#current-week) {
+        flex: 1 1 30%;
+        padding: 8px 6px;
+        font-size: 11px;
+    }
+    
+    /* 星期标题 */
+    .week-header {
+        gap: 2px;
+        padding: 4px 0;
+    }
+    
+    .day-header {
+        padding: 10px 4px;
+        font-size: 11px;
+    }
+    
+    /* 排期列 */
+    .schedule-container {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+    
+    .day-column {
+        border-right: none;
+        border-bottom: 8px solid rgba(0, 0, 0, 0.04);
+        min-height: 140px;
+        padding: 12px;
+    }
+    
+    .day-column:last-child {
+        border-bottom: none;
+    }
+    
+    /* 项目卡片 - 紧凑设计 */
+    .project-card {
+        padding: 12px;
+        margin-bottom: 10px;
+    }
+    
+    .project-card .project-title {
+        font-size: 14px;
+    }
+    
+    /* 增大触摸区域 */
+    .project-card .delete-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
+    }
+    
+    .project-card .project-location {
+        font-size: 12px;
+    }
+    
+    .staff-role {
+        font-size: 11px;
+        padding: 3px 6px;
+    }
+    
+    .project-card .project-type {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+    
+    .copy-btn {
+        padding: 8px 12px;
+        font-size: 11px;
+    }
+    
+    /* 快速添加按钮 */
+    .day-column .add-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 18px;
+    }
+    
+    /* 空状态 */
+    .empty-state {
+        padding: 20px;
+        font-size: 32px;
+    }
+    
+    /* 模态框 - 底部弹出 */
+    .modal {
+        align-items: flex-end;
+    }
+    
+    .modal-content {
+        margin: 0;
+        margin-top: auto;
+        margin-bottom: auto;
+        padding: 20px;
+        padding-bottom: max(24px, env(safe-area-inset-bottom));
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        width: 100%;
+        max-width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* 表单优化 */
+    .form-group {
+        margin-bottom: 16px;
+    }
+    
+    .form-group label {
+        font-size: 14px;
+    }
+    
+    /* 16px 字体防止 iOS 缩放 */
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 14px 16px;
+        font-size: 16px;
+        min-height: 48px;
+    }
+    
+    /* 表单按钮 - 大触摸区域 */
+    .form-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+        padding: 14px 20px;
+        font-size: 15px;
+        min-height: 48px;
+    }
+    
+    /* 日期选择器 */
+    .days {
+        gap: 4px;
+    }
+    
+    .day {
+        height: 40px;
+        font-size: 14px;
+    }
+    
+    /* 复制选项 */
+    .copy-date-options {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+    }
+    
+    /* Toast */
+    #toast-container {
+        top: max(12px, env(safe-area-inset-top));
+        right: 12px;
+        left: 12px;
+    }
+    
+    .toast {
+        max-width: 100%;
+        padding: 14px 18px;
+    }
+    
+    /* 禁用 hover 效果 - 触摸优化 */
+    .project-card:hover,
+    .btn:hover,
+    .day-column:hover {
+        transform: none;
+    }
+    
+    /* 激活态效果 */
+    .project-card:active {
+        transform: scale(0.98);
+    }
+    
+    .btn:active {
+        transform: scale(0.96);
+        opacity: 0.9;
+    }
+
+    /* ── Animal Island 组件移动端适配 ── */
+    .switch {
+        min-width: 44px;
+        height: 24px;
+    }
+
+    .switch .handle {
+        width: 18px;
+        height: 18px;
+        left: 1px;
+    }
+
+    .switch-checked .handle {
+        left: calc(100% - 20px);
+    }
+
+    .animal-checkbox-wrapper {
+        padding: 10px 0;
+    }
+
+    .animal-select {
+        min-height: 48px;
+        padding: 12px 36px 12px 14px;
+        font-size: 16px;
+    }
+
+    .animal-tabs {
+        gap: 2px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .animal-tab {
+        padding: 8px 14px;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    .animal-card {
+        border-radius: 20px 20px 0 0;
+    }
+
+    .animal-card-header {
+        padding: 16px;
+    }
+
+    .animal-card-body {
+        padding: 16px;
+    }
+
+    .animal-clock {
+        font-size: 12px;
+        padding: 4px 10px;
+    }
+
+    .animal-tooltip-content {
+        display: none;
+    }
+
+    /* 搜索框移动端 */
+    .search-container input {
+        padding: 14px 16px 14px 40px;
+        font-size: 16px;
+        min-height: 48px;
+    }
+
+    /* 热力图移动端 */
+    .heatmap-modal-content {
+        max-width: 100%;
+        width: 100%;
+        max-height: 92vh;
+    }
+
+    .heatmap-bar-row {
+        grid-template-columns: 70px 1fr 30px;
+        gap: 6px;
+    }
+
+    .heatmap-bar-label {
+        font-size: 11px;
+    }
+
+    /* 历史面板移动端 */
+    .history-panel {
+        width: calc(100% - 40px);
+        right: 20px;
+        bottom: 70px;
+    }
+
+    .history-toggle {
+        bottom: 15px;
+        right: 70px;
+        width: 42px;
+        height: 42px;
+    }
+}
+
+/* 更小屏幕 */
+@media (max-width: 480px) {
+    .container {
+        padding: 8px;
+    }
+    
+    .header {
+        padding: 12px;
+    }
+    
+    .header h1 {
+        font-size: 18px;
+    }
+    
+    .toolbar .btn.primary {
+        font-size: 13px;
+        padding: 10px 12px;
+    }
+    
+    .day-header {
+        font-size: 10px;
+    }
+    
+    .project-card {
+        padding: 10px;
+    }
+    
+    .project-card .project-title {
+        font-size: 13px;
+    }
+}
+
+/* 横屏模式 */
+@media (max-width: 768px) and (orientation: landscape) {
+    .header {
+        padding: 12px 20px;
+    }
+    
+    .modal-content {
+        max-height: 90vh;
+    }
+}
+
+/* ========================================
+   大屏幕优化 - 笔记本/桌面
+   ======================================== */
+@media (min-width: 1200px) {
+    .container {
+        padding: 32px 40px;
+    }
+    
+    .header {
+        padding: 28px 40px;
+    }
+    
+    .header h1 {
+        font-size: 32px;
+    }
+    
+    .week-display {
+        font-size: 20px;
+        min-width: 280px;
+    }
+    
+    .day-header {
+        padding: 20px 16px;
+        font-size: 15px;
+    }
+    
+    .day-column {
+        padding: 20px;
+        min-height: 700px;
+    }
+    
+    .schedule-container {
+        min-height: 700px;
+    }
+    
+    .project-card {
+        padding: 18px;
+    }
+    
+    .project-card .project-title {
+        font-size: 16px;
+    }
+}
+
+/* ========================================
+   超宽屏幕优化 - 大显示器
+   ======================================== */
+@media (min-width: 1600px) {
+    .container {
+        max-width: 1900px;
+        padding: 40px 48px;
+    }
+    
+    .header {
+        padding: 32px 48px;
+    }
+    
+    .header h1 {
+        font-size: 36px;
+    }
+    
+    .toolbar {
+        gap: 16px;
+    }
+    
+    .btn {
+        padding: 12px 24px;
+        font-size: 15px;
+    }
+    
+    .week-display {
+        font-size: 22px;
+        min-width: 320px;
+        padding: 12px 20px;
+    }
+    
+    .day-header {
+        padding: 24px 20px;
+        font-size: 16px;
+    }
+    
+    .day-column {
+        padding: 24px;
+        min-height: 800px;
+    }
+    
+    .schedule-container {
+        min-height: 800px;
+    }
+    
+    .project-card {
+        padding: 20px;
+    }
+    
+    .project-card .project-title {
+        font-size: 17px;
+    }
+    
+    .project-card .project-location {
+        font-size: 14px;
+    }
+    
+    .staff-role {
+        font-size: 13px;
+    }
+}
+
+/* ========================================
+   平板横屏专项优化
+   ======================================== */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+    .container {
+        padding: 16px 20px;
+    }
+    
+    .header {
+        padding: 16px 24px;
+        margin-bottom: 16px;
+    }
+    
+    .header h1 {
+        font-size: 22px;
+        margin-bottom: 12px;
+    }
+    
+    .toolbar {
+        justify-content: center;
+    }
+    
+    .toolbar .btn {
+        padding: 8px 14px;
+        font-size: 12px;
+    }
+    
+    .week-display {
+        font-size: 15px;
+        min-width: 180px;
+        margin: 0 10px;
+    }
+    
+    .day-column {
+        min-height: 180px;
+        padding: 10px;
+    }
+    
+    .schedule-container {
+        min-height: 200px;
+    }
+    
+    .project-card {
+        padding: 10px;
+        margin-bottom: 8px;
+    }
+    
+    .project-card .project-title {
+        font-size: 12px;
+    }
+    
+    .project-card .delete-btn {
+        width: 20px;
+        height: 20px;
+        font-size: 14px;
+    }
+    
+    .project-card .project-location {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+    
+    .staff-role {
+        font-size: 9px;
+        padding: 2px 4px;
+    }
+    
+    .copy-btn {
+        padding: 5px 8px;
+        font-size: 10px;
+    }
+}
+
+/* ── 通告单打印样式 ── */
+@media print {
+    body > *:not(#notice-modal) { display: none !important; }
+    #notice-modal { position: static !important; background: none !important; }
+    .notice-modal-content {
+        box-shadow: none !important;
+        max-height: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .notice-modal-content .close,
+    .notice-modal-content .form-actions { display: none !important; }
+    .notice-body { overflow: visible !important; }
+}
+
+/* ── 暗色模式（系统偏好） ── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    --glass-bg: rgba(30, 30, 46, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.2);
+    --text-primary: #f5f5f7;
+    --text-secondary: #a1a1a6;
+    --text-tertiary: #6e6e73;
+  }
+
+  body { background: var(--bg-gradient); color: var(--text-primary); }
+  .project-card, .modal-content, .settings-section, .backup-item, .template-item {
+    background: var(--glass-bg); border-color: var(--glass-border); color: var(--text-primary);
+  }
+  input, select, textarea { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: var(--text-primary); }
+  input::placeholder, textarea::placeholder { color: var(--text-tertiary); }
+  .day-column { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); }
+  .day-header { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+  .week-navigation { background: rgba(255,255,255,0.05); }
+  .header { background: rgba(255,255,255,0.08); }
+  .toast { background: rgba(30,30,46,0.95); color: var(--text-primary); border-color: var(--glass-border); }
+  .modal { background-color: rgba(0,0,0,0.7); }
+  .close:hover { color: var(--text-primary); }
+  table { background: rgba(255,255,255,0.05); }
+  th { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+  td { border-color: rgba(255,255,255,0.08); color: var(--text-primary); }
+}

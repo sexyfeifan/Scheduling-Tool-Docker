@@ -24,7 +24,7 @@ Object.defineProperty(window, '__currentMonday', { get: () => currentMonday, con
 const weekDisplay = document.getElementById('week-display');
 const prevWeekBtn = document.getElementById('prev-week');
 const nextWeekBtn = document.getElementById('next-week');
-const currentWeekBtn = document.getElementById('current-week');
+const currentWeekBtn = document.getElementById('this-week');
 const addProjectBtn = document.getElementById('add-project');
 const exportImageBtn = document.getElementById('export-image');
 const settingsBtn = document.getElementById('settings');
@@ -112,6 +112,7 @@ const exportCrossWeekCheckbox = document.getElementById('export-cross-week');
 const exportDateRangeDiv = document.getElementById('export-date-range');
 const exportStartDateInput = document.getElementById('export-start-date');
 const exportEndDateInput = document.getElementById('export-end-date');
+const regenerateExportBtn = document.getElementById('regenerate-export');
 
 // 日期选择器变量
 let selectedDate = null;
@@ -658,12 +659,19 @@ function setupMobileDateSwitch() {
 }
 
 // 连接SSE实现实时同步
+let sseReconnectAttempts = 0;
+const SSE_MAX_RECONNECT_ATTEMPTS = 5;
+const SSE_BASE_DELAY = 5000;
+
 function connectSSE() {
     const eventSource = new EventSource('/events');
-    
+
     eventSource.onmessage = function(event) {
         const data = JSON.parse(event.data);
-        
+
+        // 连接成功，重置重连计数
+        sseReconnectAttempts = 0;
+
         switch (data.type) {
             case 'scheduleUpdate':
                 // 更新本地数据
@@ -697,15 +705,25 @@ function connectSSE() {
                 break;
         }
     };
-    
+
     eventSource.onerror = function(err) {
         console.error('SSE连接错误:', err);
         eventSource.close();
-        // 自动重连，延迟 5 秒
+
+        // 检查重连次数限制
+        if (sseReconnectAttempts >= SSE_MAX_RECONNECT_ATTEMPTS) {
+            showToast('实时同步连接失败次数过多，请刷新页面', 'error', 10000);
+            return;
+        }
+
+        // 指数退避策略：延迟时间随重连次数增加而增加
+        const delay = Math.min(SSE_BASE_DELAY * Math.pow(2, sseReconnectAttempts), 60000);
+        sseReconnectAttempts++;
+
         setTimeout(() => {
-            showToast('实时同步断开，正在重新连接…', 'warning', 5000);
+            showToast(`正在重新连接实时同步（第${sseReconnectAttempts}次）...`, 'warning', 5000);
             connectSSE();
-        }, 5000);
+        }, delay);
     };
 }
 
@@ -979,21 +997,31 @@ function setupEventListeners() {
     });
     
     // 导出图片按钮
-    exportImageBtn.addEventListener('click', showExportModal);
-    
+    if (exportImageBtn) {
+        exportImageBtn.addEventListener('click', showExportModal);
+    }
+
     // 粘贴识别按钮
-    pasteRecognitionBtn.addEventListener('click', handlePasteRecognition);
-    
+    if (pasteRecognitionBtn) {
+        pasteRecognitionBtn.addEventListener('click', handlePasteRecognition);
+    }
+
     // 设置按钮
-    settingsBtn.addEventListener('click', () => {
-        showSettingsModal();
-    });
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            showSettingsModal();
+        });
+    }
 
     // 管理员设置按钮
-    if (adminBtn) adminBtn.addEventListener('click', showAdminModal);
+    if (adminBtn) {
+        adminBtn.addEventListener('click', showAdminModal);
+    }
 
     // 热力图按钮
-    if (heatmapBtn) heatmapBtn.addEventListener('click', showHeatmapModal);
+    if (heatmapBtn) {
+        heatmapBtn.addEventListener('click', showHeatmapModal);
+    }
 
     // 通告单按钮（事件委托，因为按钮在 renderSchedule 每次重建）
     document.addEventListener('click', (e) => {
@@ -1005,46 +1033,65 @@ function setupEventListeners() {
         }
     });
 
-    undoActionBtn.addEventListener('click', async () => {
-        try {
-            await undoLastChange();
-        } catch (error) {
-            console.error('撤销失败:', error);
-            showToast(error.message || '撤销失败', 'error');
-        }
-    });
-
-    searchProjectsInput.addEventListener('input', updateFilterState);
-    filterTypeSelect.addEventListener('change', updateFilterState);
-    clearFiltersBtn.addEventListener('click', () => {
-        searchProjectsInput.value = '';
-        filterTypeSelect.value = '';
-        updateFilterState();
-    });
-
-    applyTemplateBtn.addEventListener('click', applySelectedTemplate);
-    saveTemplateFromFormBtn.addEventListener('click', async () => {
-        try {
-            await saveTemplateFromCurrentForm();
-        } catch (error) {
-            console.error('保存模板失败:', error);
-            showToast(error.message || '保存模板失败', 'error');
-        }
-    });
-    
-    // 模态框关闭按钮
-    closeModalButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            projectModal.style.display = 'none';
-            settingsModal.style.display = 'none';
-            exportModal.style.display = 'none';
+    if (undoActionBtn) {
+        undoActionBtn.addEventListener('click', async () => {
+            try {
+                await undoLastChange();
+            } catch (error) {
+                console.error('撤销失败:', error);
+                showToast(error.message || '撤销失败', 'error');
+            }
         });
-    });
-    
+    }
+
+    // 搜索输入防抖优化：避免每次按键都触发渲染
+    if (searchProjectsInput && filterTypeSelect && clearFiltersBtn) {
+        let searchDebounceTimer;
+        searchProjectsInput.addEventListener('input', () => {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(updateFilterState, 300); // 300ms 防抖延迟
+        });
+
+        filterTypeSelect.addEventListener('change', updateFilterState);
+        clearFiltersBtn.addEventListener('click', () => {
+            searchProjectsInput.value = '';
+            filterTypeSelect.value = '';
+            updateFilterState();
+        });
+    }
+
+    if (applyTemplateBtn) {
+        applyTemplateBtn.addEventListener('click', applySelectedTemplate);
+    }
+
+    if (saveTemplateFromFormBtn) {
+        saveTemplateFromFormBtn.addEventListener('click', async () => {
+            try {
+                await saveTemplateFromCurrentForm();
+            } catch (error) {
+                console.error('保存模板失败:', error);
+                showToast(error.message || '保存模板失败', 'error');
+            }
+        });
+    }
+
+    // 模态框关闭按钮
+    if (closeModalButtons && closeModalButtons.length > 0) {
+        closeModalButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                if (projectModal) projectModal.style.display = 'none';
+                if (settingsModal) settingsModal.style.display = 'none';
+                if (exportModal) exportModal.style.display = 'none';
+            });
+        });
+    }
+
     // 取消编辑按钮
-    cancelEditBtn.addEventListener('click', () => {
-        projectModal.style.display = 'none';
-    });
+    if (cancelEditBtn && projectModal) {
+        cancelEditBtn.addEventListener('click', () => {
+            projectModal.style.display = 'none';
+        });
+    }
     
     // 保存设置按钮
     saveSettingsBtn.addEventListener('click', saveSettings);
@@ -1074,7 +1121,26 @@ function setupEventListeners() {
     // 跨周导出勾选切换
     if (exportCrossWeekCheckbox && exportDateRangeDiv) {
         exportCrossWeekCheckbox.addEventListener('change', () => {
-            exportDateRangeDiv.style.display = exportCrossWeekCheckbox.checked ? 'flex' : 'none';
+            exportDateRangeDiv.style.display = exportCrossWeekCheckbox.checked ? 'block' : 'none';
+        });
+    }
+
+    // 跨周导出生成按钮
+    if (regenerateExportBtn) {
+        regenerateExportBtn.addEventListener('click', () => {
+            if (!exportStartDateInput.value || !exportEndDateInput.value) {
+                showToast('请选择起始日和结束日', 'warning');
+                return;
+            }
+            if (exportStartDateInput.value > exportEndDateInput.value) {
+                showToast('起始日不能晚于结束日', 'warning');
+                return;
+            }
+            downloadImageBtn.disabled = true;
+            openInNewTabBtn.disabled = true;
+            downloadImageBtn.textContent = '生成中…';
+            openInNewTabBtn.textContent = '生成中…';
+            drawScheduleToCanvas();
         });
     }
 
@@ -1444,6 +1510,12 @@ async function saveProject() {
     
     if (!project.name) {
         showToast('请输入项目名称', 'warning');
+        return;
+    }
+
+    // 验证项目名称长度，避免过长导致UI问题
+    if (project.name.length > 120) {
+        showToast('项目名称过长（最多120字符）', 'warning');
         return;
     }
     
@@ -3030,13 +3102,13 @@ function drawScheduleToCanvas() {
 
     // 头部
     const header = document.createElement('div');
-    header.style.background = 'rgba(255, 255, 255, 0.95)';
+    header.style.background = '#ffffff';  // 改为不透明白色
     header.style.borderRadius = '24px';
     header.style.padding = '28px 32px';
     header.style.boxShadow = '0 4px 24px rgba(0, 0, 0, 0.15)';
     header.style.marginBottom = '24px';
     header.style.textAlign = 'center';
-    header.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+    header.style.border = '1px solid #e0e0e0';  // 改为不透明边框
 
     const title = document.createElement('div');
     title.textContent = '罐头场通告排期';
@@ -3056,11 +3128,11 @@ function drawScheduleToCanvas() {
 
     // 主内容区域
     const mainContent = document.createElement('div');
-    mainContent.style.background = 'rgba(255, 255, 255, 0.95)';
+    mainContent.style.background = '#ffffff';  // 改为不透明白色
     mainContent.style.borderRadius = '24px';
     mainContent.style.overflow = 'hidden';
     mainContent.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.15)';
-    mainContent.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+    mainContent.style.border = '1px solid #e0e0e0';  // 改为不透明边框
 
     // 星期标题行
     const weekHeader = document.createElement('div');
@@ -3086,14 +3158,14 @@ function drawScheduleToCanvas() {
     scheduleContainer.style.display = 'grid';
     scheduleContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
     scheduleContainer.style.minHeight = '600px';
-    scheduleContainer.style.background = 'rgba(255, 255, 255, 0.5)';
+    scheduleContainer.style.background = '#fafafa';  // 改为不透明浅灰色
 
     for (let i = 0; i < totalDays; i++) {
         const dayColumn = document.createElement('div');
         dayColumn.style.borderRight = (i === totalDays - 1) ? 'none' : '1px solid rgba(0, 0, 0, 0.06)';
         dayColumn.style.padding = cols > 10 ? '8px' : '16px';
         dayColumn.style.minHeight = '600px';
-        dayColumn.style.background = 'rgba(255, 255, 255, 0.3)';
+        dayColumn.style.background = '#ffffff';  // 改为不透明白色
 
         const dateStr = formatDate(allDates[i]);
         const projects = scheduleData[dateStr] || [];
@@ -3102,10 +3174,44 @@ function drawScheduleToCanvas() {
             projects.forEach((project, projectIndex) => {
                 const projectCard = createProjectCard(project, dateStr, projectIndex);
                 const cleanCard = projectCard.cloneNode(true);
+
+                // 移除删除和复制按钮
                 const deleteBtn = cleanCard.querySelector('.delete-btn');
                 if (deleteBtn) deleteBtn.remove();
                 const copyBtn = cleanCard.querySelector('.copy-btn');
                 if (copyBtn) copyBtn.remove();
+
+                // 强制使用不透明背景色，避免导出时发白
+                cleanCard.style.background = '#ffffff';
+
+                // 修复半透明背景色为不透明颜色
+                const staffRoles = cleanCard.querySelectorAll('.staff-role');
+                staffRoles.forEach(role => {
+                    if (role.classList.contains('director')) {
+                        role.style.background = '#e3f2fd';  // 替换 rgba(0, 113, 227, 0.1)
+                    } else if (role.classList.contains('photographer')) {
+                        role.style.background = '#f3e5f5';  // 替换 rgba(175, 82, 222, 0.1)
+                    } else if (role.classList.contains('production')) {
+                        role.style.background = '#e8f5e9';  // 替换 rgba(52, 199, 89, 0.1)
+                    } else if (role.classList.contains('rd')) {
+                        role.style.background = '#fff3e0';  // 替换 rgba(255, 149, 0, 0.1)
+                    } else if (role.classList.contains('operational')) {
+                        role.style.background = '#e3f2fd';  // 替换 rgba(90, 145, 255, 0.1)
+                    } else if (role.classList.contains('audio')) {
+                        role.style.background = '#fce4ec';  // 替换 rgba(255, 45, 85, 0.1)
+                    } else if (role.classList.contains('business')) {
+                        role.style.background = '#ede7f6';  // 替换 rgba(88, 86, 214, 0.1)
+                    } else if (role.classList.contains('start-time')) {
+                        role.style.background = '#f5f5f5';  // 替换 rgba(0, 0, 0, 0.06)
+                    }
+                });
+
+                // 修复位置标签背景
+                const locationTag = cleanCard.querySelector('.project-location');
+                if (locationTag) {
+                    locationTag.style.background = '#f5f5f5';  // 替换 rgba(0, 0, 0, 0.04)
+                }
+
                 if (cols > 10) {
                     cleanCard.style.fontSize = '11px';
                     cleanCard.style.padding = '6px';
@@ -3138,12 +3244,21 @@ function drawScheduleToCanvas() {
         useCORS: true,
         backgroundColor: '#f5f5f7',
         logging: false,
-        allowTaint: true
+        allowTaint: true,
+        foreignObjectRendering: false,
+        removeContainer: false
     }).then(canvas => {
         const exportCtx = exportCanvas.getContext('2d');
         exportCanvas.width = canvas.width;
         exportCanvas.height = canvas.height;
+
+        // 先填充背景色，确保没有透明区域
+        exportCtx.fillStyle = '#f5f5f7';
+        exportCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 再绘制canvas内容
         exportCtx.drawImage(canvas, 0, 0);
+
         document.body.removeChild(tempContainer);
         downloadImageBtn.disabled = false;
         openInNewTabBtn.disabled = false;

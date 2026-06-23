@@ -1,6 +1,13 @@
 server/node_modules/
+node_modules/
 server/.env
 .DS_Store
 server/coverage/
 backups/*
 !backups/.gitkeep
+data/
+*.db
+*.db-shm
+*.db-wal
+package-lock.json
+client/js/vendor/html-to-image-entry.js

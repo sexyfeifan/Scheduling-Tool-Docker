@@ -4,8 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>罐头场通告排期</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.loli.net/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="css/animal-island-forms.css">
+    <link rel="stylesheet" href="css/animal-island-components.css">
+    <link rel="stylesheet" href="css/animal-island-icons.css">
+    <link rel="manifest" href="manifest.json">
+    <script src="js/vendor/html2canvas.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -14,40 +22,50 @@
             <h1>罐头场通告排期</h1>
             <div class="toolbar">
                 <button id="prev-week" class="btn icon-btn" title="上一周">◀</button>
-                <button id="current-week" class="btn primary icon-btn" title="回到本周">本周</button>
+                <button id="this-week" class="btn icon-btn" title="回到本周">本周</button>
                 <button id="next-week" class="btn icon-btn" title="下一周">▶</button>
                 <span id="week-display" class="week-display"></span>
                 <span class="toolbar-divider"></span>
-                <button id="add-project" class="btn primary icon-btn" title="新增项目">➕ 新增</button>
-                <button id="undo-action" class="btn icon-btn" disabled title="撤销">↩</button>
+                <button id="view-day" class="btn icon-btn view-btn" title="单日视图">单</button>
+                <button id="view-week" class="btn icon-btn view-btn active" title="周视图">周</button>
+                <button id="view-month" class="btn icon-btn view-btn" title="月视图">月</button>
+                <button id="view-personnel" class="btn icon-btn view-btn" title="人员排期">人</button>
+                <button id="conflict-btn" class="btn icon-btn" title="冲突预警">预警</button>
                 <span class="toolbar-divider"></span>
-                <button id="export-image" class="btn secondary icon-btn" title="导出图片">🖼 导出</button>
+                <button id="add-project" class="btn primary icon-btn" title="新增项目">➕ 新增</button>
+                <button id="undo-action" class="btn icon-btn" disabled title="撤销" data-tooltip="撤销上一步操作">↩</button>
+                <span class="toolbar-divider"></span>
+                <button id="export-image" class="btn secondary icon-btn" title="导出图片" data-tooltip="将本周排期导出为精美图片">🖼 导出</button>
                 <button id="export-week-text" class="btn secondary icon-btn" title="导出本周通告">📋 通告</button>
                 <button id="paste-recognition" class="btn secondary icon-btn" title="粘贴识别">📌 粘贴</button>
                 <span class="toolbar-divider"></span>
                 <button id="heatmap-btn" class="btn icon-btn" title="工作量热力图">🔥 热力图</button>
                 <button id="webhook-btn" class="btn icon-btn" title="Webhook 推送">📤 推送</button>
-                <button id="settings" class="btn icon-btn" title="设置">⚙ 设置</button>
-                <button id="admin-btn" class="btn icon-btn" title="管理员设置">🔐 管理</button>
-            </div>
-            <div class="toolbar filters-toolbar">
-                <input id="search-projects" class="toolbar-input" type="search" placeholder="搜索项目 / 场地 / 人员">
-                <select id="filter-type" class="toolbar-select">
-                    <option value="">全部类型</option>
-                    <option value="平面">平面</option>
-                    <option value="视频">视频</option>
-                    <option value="直播">直播</option>
-                    <option value="试做">试做</option>
-                </select>
-                <button id="clear-filters" class="btn icon-btn">✕ 清除</button>
-                <span id="health-badge" class="health-badge">系统检查中</span>
+                <button id="admin-btn" class="btn icon-btn" title="管理">管理</button>
+                <span class="toolbar-divider"></span>
+                <div class="ac-datetime" id="ac-clock">
+                    <div class="ac-date">
+                        <span class="ac-weekday" id="ac-clock-weekday"></span>
+                        <span class="ac-monthday" id="ac-clock-day"></span>
+                    </div>
+                    <div class="ac-time">
+                        <span class="ac-clock-h" id="ac-clock-h"></span>
+                        <span class="ac-colon">:</span>
+                        <span class="ac-clock-m" id="ac-clock-m"></span>
+                        <span class="ac-colon ac-colon-sec">:</span>
+                        <span class="ac-clock-s" id="ac-clock-s"></span>
+                    </div>
+                </div>
             </div>
         </header>
 
-        <!-- 版本信息 (不显示在导出图片中) -->
-        <div class="version-info" id="version-info">
-            <span class="version-number">v2.57</span>
-            <span class="version-date">2026-05-10</span>
+        <!-- 健康状态 + 版本信息 -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px;margin-bottom:8px;">
+            <span id="health-badge" class="health-badge">系统检查中</span>
+            <div class="version-info" id="version-info">
+                <span class="version-number">v2.64</span>
+                <span class="version-date">build 2026-06-23</span>
+            </div>
         </div>
 
         <!-- 主要内容区域 -->
@@ -85,6 +103,50 @@
                 </div>
                 <div class="day-column" id="sunday">
                     <div class="empty-state">🈚️</div>
+                </div>
+            </div>
+
+            <!-- 单日视图 -->
+            <div id="day-view" class="view-panel" style="display:none;">
+                <div class="day-view-header">
+                    <button id="day-prev" class="btn icon-btn">◀</button>
+                    <span id="day-view-date" class="day-view-title"></span>
+                    <button id="day-next" class="btn icon-btn">▶</button>
+                    <button id="day-today" class="btn primary icon-btn">今天</button>
+                </div>
+                <div id="day-view-content" class="day-view-content"></div>
+            </div>
+
+            <!-- 月视图 -->
+            <div id="month-view" class="view-panel" style="display:none;">
+                <div class="month-view-header">
+                    <button id="month-prev" class="btn icon-btn">◀</button>
+                    <span id="month-view-title" class="month-view-title"></span>
+                    <button id="month-next" class="btn icon-btn">▶</button>
+                    <div class="month-toggle">
+                        <button id="month-show-project" class="btn small active">项目</button>
+                        <button id="month-show-person" class="btn small">人员</button>
+                    </div>
+                </div>
+                <div id="month-view-grid" class="month-view-grid"></div>
+            </div>
+
+            <!-- 人员排期矩阵 -->
+            <div id="personnel-view" class="view-panel" style="display:none;">
+                <div class="personnel-view-header">
+                    <button id="personnel-prev" class="btn icon-btn">◀</button>
+                    <span id="personnel-view-title" class="personnel-view-title"></span>
+                    <button id="personnel-next" class="btn icon-btn">▶</button>
+                </div>
+                <div id="personnel-view-table" class="personnel-view-table"></div>
+            </div>
+
+            <!-- 冲突预警弹窗 -->
+            <div id="conflict-modal" class="modal">
+                <div class="modal-content" style="max-width:600px;">
+                    <span class="close" id="close-conflict">&times;</span>
+                    <h2>冲突预警</h2>
+                    <div id="conflict-content"></div>
                 </div>
             </div>
         </main>
@@ -144,13 +206,17 @@
                     </div>
                     <div id="project-role-fields"></div>
                     <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="project-laodao" value="1"> 老刀出镜
+                        <label class="animal-switch" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" id="project-laodao" value="1" class="switch-input">
+                            <span class="switch"><span class="handle"></span></span>
+                            <span class="animal-switch-label">老刀出镜</span>
                         </label>
                     </div>
                     <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="project-advertiser" value="1"> 广告商单
+                        <label class="animal-switch" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" id="project-advertiser" value="1" class="switch-input">
+                            <span class="switch"><span class="handle"></span></span>
+                            <span class="animal-switch-label">广告商单</span>
                         </label>
                         <div id="advertiser-no-wrap" style="display:none;margin-top:6px;">
                             <input type="text" id="project-advertiser-no" placeholder="请输入项目号" style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
@@ -202,14 +268,19 @@
                 <span class="close" id="close-export">&times;</span>
                 <h2>导出图片</h2>
                 <div class="form-group" style="margin-bottom:12px;">
-                    <label>
-                        <input type="checkbox" id="export-cross-week"> 跨周数导出
+                    <label class="animal-switch" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" id="export-cross-week" class="switch-input">
+                        <span class="switch"><span class="handle"></span></span>
+                        <span class="animal-switch-label">跨周数导出</span>
                     </label>
-                    <div id="export-date-range" style="display:none;margin-top:8px;display:flex;gap:8px;align-items:center;">
-                        <label style="font-size:13px;white-space:nowrap;">起始日：</label>
-                        <input type="date" id="export-start-date" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
-                        <label style="font-size:13px;white-space:nowrap;">结束日：</label>
-                        <input type="date" id="export-end-date" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                    <div id="export-date-range" style="display:none;margin-top:8px;">
+                        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+                            <label style="font-size:13px;white-space:nowrap;">起始日：</label>
+                            <input type="date" id="export-start-date" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                            <label style="font-size:13px;white-space:nowrap;">结束日：</label>
+                            <input type="date" id="export-end-date" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                        </div>
+                        <button id="regenerate-export" class="btn primary" style="width:100%;">生成图片</button>
                     </div>
                 </div>
                 <div class="export-preview">
@@ -217,39 +288,13 @@
                 </div>
                 <div class="form-actions">
                     <button id="download-image" class="btn primary">下载图片</button>
+                    <button id="refresh-export" class="btn">刷新</button>
                     <button id="open-in-new-tab" class="btn">在新标签页打开</button>
                     <button id="cancel-export" class="btn">取消</button>
                 </div>
             </div>
         </div>
         
-        <!-- 设置模态框 -->
-        <div id="settings-modal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2>设置</h2>
-                <div class="settings-section">
-                    <h3>常用项管理</h3>
-                    <div id="role-settings-container"></div>
-                    <div class="form-actions" style="margin-top: 12px;">
-                        <button type="button" id="add-role-category" class="btn">+ 添加职能</button>
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <h3>项目模板</h3>
-                    <p style="color: var(--text-tertiary); font-size: 12px; margin-bottom: 16px;">可保存常用项目模板，在新增项目时一键套用。</p>
-                    <div id="template-list" class="template-list">
-                        <p class="no-template">暂无模板</p>
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <button id="save-settings" class="btn primary">保存设置</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- 管理员设置模态框 -->
     <div id="admin-modal" class="modal">
         <div class="modal-content admin-modal-content">
@@ -269,14 +314,60 @@
             <div id="admin-unlocked-content" style="display: none;">
                 <!-- 标签切换 -->
                 <div class="admin-tabs">
-                    <button class="admin-tab-btn active" data-tab="backup">数据备份与恢复</button>
+                    <button class="admin-tab-btn active" data-tab="settings">设置</button>
+                    <button class="admin-tab-btn" data-tab="backup">备份与恢复</button>
+                    <button class="admin-tab-btn" data-tab="access">访问控制</button>
                     <button class="admin-tab-btn" data-tab="history">操作记录</button>
-                    <button class="admin-tab-btn" data-tab="webhook">Webhook 推送</button>
+                    <button class="admin-tab-btn" data-tab="webhook">Webhook</button>
+                </div>
+
+                <!-- 设置标签页 -->
+                <div id="admin-tab-settings" class="admin-tab-panel">
+                    <div class="settings-section">
+                        <h3>常用项管理</h3>
+                        <div id="role-settings-container"></div>
+                        <div class="form-actions" style="margin-top: 12px;">
+                            <button type="button" id="add-role-category" class="btn">+ 添加职能</button>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>项目类型</h3>
+                        <p class="hint-text">管理项目编辑表单中的类型选项</p>
+                        <div id="project-types-container"></div>
+                        <div class="form-actions" style="margin-top: 12px;">
+                            <button type="button" id="add-project-type" class="btn">+ 添加类型</button>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>项目模板</h3>
+                        <p class="hint-text">可保存常用项目模板，在新增项目时一键套用</p>
+                        <div id="template-list" class="template-list">
+                            <p class="no-template">暂无模板</p>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>外部 API</h3>
+                        <p class="hint-text">开启后允许外部服务通过 API 获取排期数据</p>
+                        <div class="form-group">
+                            <label class="animal-switch" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                <input type="checkbox" id="external-api-enabled" class="switch-input">
+                                <span class="switch"><span class="handle"></span></span>
+                                <span class="animal-switch-label">启用外部 API</span>
+                            </label>
+                        </div>
+                        <div id="external-api-info" style="display:none;margin-top:8px;padding:10px 14px;background:rgba(25,200,185,0.06);border:1.5px solid #19c8b9;border-radius:12px;font-size:12px;color:#725d42;">
+                            <div style="font-weight:600;margin-bottom:6px;">接口地址：</div>
+                            <code style="display:block;padding:6px 10px;background:#2b2118;color:#e8d5bc;border-radius:8px;font-size:12px;word-break:break-all;margin-bottom:8px;">GET /api/external/schedules</code>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button id="save-settings" class="btn primary">保存设置</button>
+                    </div>
                 </div>
 
                 <!-- 备份与恢复标签页 -->
-                <div id="admin-tab-backup" class="admin-tab-panel">
-                    <p style="color: var(--text-tertiary); font-size: 12px; margin-bottom: 16px;">备份文件将保存到服务器 backups 文件夹中</p>
+                <div id="admin-tab-backup" class="admin-tab-panel" style="display: none;">
+                    <p class="hint-text">备份文件将保存到服务器 backups 文件夹中</p>
                     <div class="backup-section">
                         <div class="form-group">
                             <button id="backup-to-host" class="btn primary">📦 一键备份到宿主机</button>
@@ -305,8 +396,10 @@
                             <p>设置后，新增、编辑、删除、恢复等操作需要先输入编辑密码。</p>
                         </div>
                         <div class="form-group">
-                            <label>
-                                <input type="checkbox" id="share-enabled-setting"> 启用只读分享链接
+                            <label class="animal-switch" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                <input type="checkbox" id="share-enabled-setting" class="switch-input">
+                                <span class="switch"><span class="handle"></span></span>
+                                <span class="animal-switch-label">启用只读分享链接</span>
                             </label>
                         </div>
                         <div class="form-group">
@@ -357,7 +450,11 @@
                 <!-- Webhook 推送标签页 -->
                 <div id="admin-tab-webhook" class="admin-tab-panel" style="display: none;">
                     <div class="form-group">
-                        <label><input type="checkbox" id="webhook-enabled"> 启用 Webhook 推送</label>
+                        <label class="animal-switch" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" id="webhook-enabled" class="switch-input">
+                            <span class="switch"><span class="handle"></span></span>
+                            <span class="animal-switch-label">启用 Webhook 推送</span>
+                        </label>
                     </div>
                     <div class="form-group">
                         <label>平台类型:</label>
@@ -506,6 +603,15 @@
         </div>
     </div>
 
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').then(reg => {
+                console.log('[PWA] Service Worker registered:', reg.scope);
+            }).catch(err => console.warn('[PWA] SW registration failed:', err));
+        });
+    }
+    </script>
     <script type="module" src="js/main.js"></script>
 
     <!-- 导出本周通告模态框 -->
@@ -620,5 +726,6 @@
         });
     })();
     </script>
+    </div>
 </body>
 </html>
