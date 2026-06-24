@@ -22,16 +22,16 @@ export function createMonthViewModule({ api, onJumpToWeek }) {
   };
 
   const TYPE_COLORS = {
-    '平面': { bg: '#82d5bb', color: '#2a6b5a' },
-    '视频': { bg: '#f8a6b2', color: '#a85565' },
-    '直播': { bg: '#f7cd67', color: '#7a6528' },
-    '试做': { bg: '#b77dee', color: '#fff' },
+    '平面': { bg: '#10B981', color: '#fff' },
+    '视频': { bg: '#EC4899', color: '#fff' },
+    '直播': { bg: '#F59E0B', color: '#fff' },
+    '试做': { bg: '#8B5CF6', color: '#fff' },
   };
   const STATUS_COLORS = {
-    '待确认': '#f7cd67',
-    '已确认': '#82d5bb',
-    '已完成': '#889df0',
-    '取消': '#fc736d',
+    '待确认': '#F59E0B',
+    '已确认': '#10B981',
+    '已完成': '#3B82F6',
+    '取消': '#EF4444',
   };
 
   function init() {
@@ -126,7 +126,7 @@ export function createMonthViewModule({ api, onJumpToWeek }) {
           }
         } else {
         projects.slice(0, 6).forEach(proj => {
-          const tc = TYPE_COLORS[proj.type] || { bg: '#82d5bb', color: '#2a6b5a' };
+          const tc = TYPE_COLORS[proj.type] || { bg: '#10B981', color: '#fff' };
           const statusDot = STATUS_COLORS[proj.status] || STATUS_COLORS['待确认'];
           const persons = [proj.director, proj.photographer].filter(Boolean).join('/');
           html += `<div class="month-gantt-bar" style="background:${tc.bg};color:${tc.color}" title="${escapeAttr(proj.name)}">`;

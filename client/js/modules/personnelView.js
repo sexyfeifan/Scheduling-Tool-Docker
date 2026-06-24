@@ -177,7 +177,7 @@ export function createPersonnelViewModule({ api, onJumpToWeek }) {
 
         html += `<div class="personnel-cell ${isToday ? 'today' : ''} ${isWeekend ? 'weekend' : ''}" data-date="${date}">`;
         projects.forEach(proj => {
-          const tc = TYPE_COLORS[proj.type] || { bg: '#82d5bb', color: '#2a6b5a' };
+          const tc = TYPE_COLORS[proj.type] || { bg: '#10B981', color: '#fff' };
           html += `<div class="personnel-project-tag" style="background:${tc.bg};color:${tc.color}" title="${escapeAttr(proj.name)} · ${proj.startTime || ''} · ${proj.type || ''}">`;
           html += escapeHtml(proj.name);
           html += '</div>';
@@ -217,8 +217,8 @@ const STATUS_COLORS = {
 };
 
 const TYPE_COLORS = {
-  '平面': { bg: '#82d5bb', color: '#2a6b5a' },
-  '视频': { bg: '#f8a6b2', color: '#a85565' },
-  '直播': { bg: '#f7cd67', color: '#7a6528' },
-  '试做': { bg: '#b77dee', color: '#fff' }
+  '平面': { bg: '#10B981', color: '#fff' },
+  '视频': { bg: '#EC4899', color: '#fff' },
+  '直播': { bg: '#F59E0B', color: '#fff' },
+  '试做': { bg: '#8B5CF6', color: '#fff' }
 };

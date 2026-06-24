@@ -50,11 +50,12 @@
 }
 
 .project-card .project-title > span:first-child {
-    white-space: normal;
-    word-break: break-word;
+    white-space: nowrap;
+    overflow: visible;
     min-width: 0;
     flex: 1;
     line-height: 1.35;
+    font-size: clamp(10px, 1.8vw, 13px);
 }
 
 /* 删除按钮 */
@@ -168,22 +169,22 @@
 }
 
 .project-card .project-type.plane {
-    background: #82d5bb;
-    color: #2a6b5a;
+    background: #10B981;
+    color: #fff;
 }
 
 .project-card .project-type.video {
-    background: #f8a6b2;
-    color: #a85565;
+    background: #EC4899;
+    color: #fff;
 }
 
 .project-card .project-type.live {
-    background: #f7cd67;
-    color: #7a6528;
+    background: #F59E0B;
+    color: #fff;
 }
 
 .project-card .project-type.test {
-    background: #b77dee;
+    background: #8B5CF6;
     color: #fff;
 }
 
