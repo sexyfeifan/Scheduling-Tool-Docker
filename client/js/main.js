@@ -1147,7 +1147,7 @@ function setupEventListeners() {
         // Ctrl/Cmd + E 导出图片
         if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
             e.preventDefault();
-            showExportModal();
+            exportWeekViewAsImage();
         }
         
         // 左箭头 上周
@@ -1198,7 +1198,7 @@ function setupEventListeners() {
     
     // 导出图片按钮
     if (exportImageBtn) {
-        exportImageBtn.addEventListener('click', showExportModal);
+        exportImageBtn.addEventListener('click', exportWeekViewAsImage);
     }
 
     // 粘贴识别按钮
@@ -3658,6 +3658,53 @@ function exportViewAsImage(elementId, title) {
         showToast('图片已下载', 'success');
     }).catch(() => {
         showToast('图片生成失败', 'error');
+    });
+}
+
+function exportWeekViewAsImage() {
+    const container = document.querySelector('.schedule-container');
+    const weekHeader = document.querySelector('.week-header');
+    if (!container) return;
+
+    showToast('正在生成图片...', 'info');
+
+    const buttonsToHide = container.querySelectorAll('.delete-btn, .copy-btn');
+    buttonsToHide.forEach(btn => { btn.style.display = 'none'; });
+
+    const weekDisplayEl = document.getElementById('week-display');
+    const titleDiv = document.createElement('div');
+    titleDiv.style.cssText = 'text-align:center;padding:20px 0 12px;font-size:22px;font-weight:700;color:#794f27;font-family:Nunito,Noto Sans SC,sans-serif;';
+    titleDiv.textContent = '罐头场通告排期';
+    const weekDiv = document.createElement('div');
+    weekDiv.style.cssText = 'text-align:center;padding-bottom:16px;font-size:14px;color:#9f927d;font-family:Nunito,Noto Sans SC,sans-serif;';
+    weekDiv.textContent = weekDisplayEl ? weekDisplayEl.textContent : '';
+
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'background:#f8f8f0;padding:24px;border-radius:24px;position:absolute;left:-9999px;top:0;';
+    wrapper.appendChild(titleDiv);
+    wrapper.appendChild(weekDiv);
+    if (weekHeader) {
+        const headerClone = weekHeader.cloneNode(true);
+        headerClone.style.cssText = weekHeader.style.cssText;
+        wrapper.appendChild(headerClone);
+    }
+    const containerClone = container.cloneNode(true);
+    wrapper.appendChild(containerClone);
+    document.body.appendChild(wrapper);
+
+    html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: '#f8f8f0', logging: false }).then(canvas => {
+        const link = document.createElement('a');
+        const weekDates = getWeekDates(currentMonday);
+        const range = `${formatDate(weekDates[0])}_${formatDate(weekDates[6])}`;
+        link.download = `周通告排期_${range}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('图片已下载', 'success');
+    }).catch(() => {
+        showToast('图片生成失败', 'error');
+    }).finally(() => {
+        document.body.removeChild(wrapper);
+        buttonsToHide.forEach(btn => { btn.style.display = ''; });
     });
 }
 
