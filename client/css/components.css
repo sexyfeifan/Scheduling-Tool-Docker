@@ -539,11 +539,12 @@
     white-space: nowrap;
     border-right: 1px solid rgba(255,255,255,0.25);
     font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+    background: #19c8b9;
 }
 
 .personnel-header-cell:last-child { border-right: none; }
-.personnel-header-cell.weekend { background: rgba(0,0,0,0.08); }
-.personnel-header-cell.today { background: rgba(255,255,255,0.25); }
+.personnel-header-cell.weekend { background: #15a89a; }
+.personnel-header-cell.today { background: #0fb5a5; font-weight: 800; }
 
 .personnel-row {
     display: grid;
@@ -599,11 +600,13 @@
     padding: 4px 3px;
     border-right: 1px solid rgba(170,166,157,0.1);
     min-height: 36px;
+    min-width: 60px;
     display: flex;
     flex-direction: column;
     gap: 2px;
     cursor: pointer;
     transition: background 0.15s;
+    overflow: visible;
 }
 
 .personnel-cell:hover {
@@ -619,14 +622,12 @@
 }
 
 .personnel-project-tag {
-    font-size: 10px;
-    padding: 2px 5px;
-    border-radius: 4px;
-    background: rgba(25, 200, 185, 0.1);
-    color: #2a6b5a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 11px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.3;
     font-family: 'Nunito', 'Noto Sans SC', sans-serif;
     font-weight: 600;
 }

@@ -9,6 +9,17 @@ import { escapeHtml, escapeAttr, formatDate, getMonday } from './utils.js';
 export function createMonthViewModule({ api, onJumpToWeek }) {
   let currentDate = new Date();
   let cachedData = {};
+  let displayMode = 'project';
+
+  const ROLE_LABELS = {
+    director: '导演', photographer: '摄影', production: '制片',
+    rd: '研发', operational: '运营', audio: '录音', business: '商务'
+  };
+
+  const ROLE_COLORS = {
+    director: '#3B82F6', photographer: '#10B981', production: '#F59E0B',
+    rd: '#8B5CF6', operational: '#EC4899', audio: '#06B6D4', business: '#F97316'
+  };
 
   const TYPE_COLORS = {
     '平面': { bg: '#82d5bb', color: '#2a6b5a' },
@@ -94,6 +105,26 @@ export function createMonthViewModule({ api, onJumpToWeek }) {
 
       if (projects.length > 0) {
         html += '<div class="month-gantt-bars">';
+        if (displayMode === 'personnel') {
+          const personSet = new Set();
+          projects.forEach(proj => {
+            ['director','photographer','production','rd','operational','audio','business'].forEach(k => {
+              if (proj[k]) proj[k].split(/、|，|,|\//).forEach(name => personSet.add(`${name}|${k}`));
+            });
+          });
+          [...personSet].slice(0, 6).forEach(key => {
+            const [name, role] = key.split('|');
+            const c = ROLE_COLORS[role] || '#999';
+            const label = ROLE_LABELS[role] || role;
+            html += `<div class="month-gantt-bar" style="background:${c};color:#fff;" title="${escapeAttr(name)} (${label})">`;
+            html += `<span class="gantt-bar-name">${escapeHtml(name)}</span>`;
+            html += `<span style="font-size:9px;opacity:0.8;">${label}</span>`;
+            html += `</div>`;
+          });
+          if (personSet.size > 6) {
+            html += `<div class="month-gantt-more">+${personSet.size - 6} 人</div>`;
+          }
+        } else {
         projects.slice(0, 6).forEach(proj => {
           const tc = TYPE_COLORS[proj.type] || { bg: '#82d5bb', color: '#2a6b5a' };
           const statusDot = STATUS_COLORS[proj.status] || STATUS_COLORS['待确认'];
@@ -104,6 +135,7 @@ export function createMonthViewModule({ api, onJumpToWeek }) {
         });
         if (projects.length > 6) {
           html += `<div class="month-gantt-more">+${projects.length - 6} 个</div>`;
+        }
         }
         html += '</div>';
       }
@@ -122,5 +154,10 @@ export function createMonthViewModule({ api, onJumpToWeek }) {
     });
   }
 
-  return { init, render };
+  function setDisplayMode(mode) {
+    displayMode = mode;
+    render();
+  }
+
+  return { init, render, setDisplayMode };
 }

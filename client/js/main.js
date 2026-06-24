@@ -102,6 +102,8 @@ const closeExportBtn = document.getElementById('close-export');
 const exportCanvas = document.getElementById('export-canvas');
 const downloadImageBtn = document.getElementById('download-image');
 const openInNewTabBtn = document.getElementById('open-in-new-tab');
+let lastExportDataUrl = null;
+let lastExportFileName = '通告排期.png';
 const cancelExportBtn = document.getElementById('cancel-export');
 const backupPreviewModal = document.getElementById('backup-preview-modal');
 const backupPreviewBody = document.getElementById('backup-preview-body');
@@ -605,12 +607,12 @@ async function initApp() {
     if (monthShowProjectBtn) monthShowProjectBtn.addEventListener('click', () => {
         monthShowProjectBtn.classList.add('active');
         if (monthShowPersonBtn) monthShowPersonBtn.classList.remove('active');
-        switchView('month');
+        monthViewModule.setDisplayMode('project');
     });
     if (monthShowPersonBtn) monthShowPersonBtn.addEventListener('click', () => {
         monthShowPersonBtn.classList.add('active');
         if (monthShowProjectBtn) monthShowProjectBtn.classList.remove('active');
-        switchView('personnel');
+        monthViewModule.setDisplayMode('personnel');
     });
     
     // 初始化时钟显示
@@ -1017,6 +1019,11 @@ function createProjectCard(project, dateStr, projectIndex) {
     
     // 构建工作人员信息（动态）
     const cats = (roleCategories || []).filter(c => c.key !== 'location');
+    const ROLE_STAFF_COLORS = {
+        director: '#3B82F6', photographer: '#10B981', production: '#F59E0B',
+        rd: '#8B5CF6', operational: '#EC4899', audio: '#06B6D4', business: '#F97316'
+    };
+
     let staffInfo = '';
     const hasStartTime = project.startTime;
     const hasAnyRole = hasStartTime || cats.some(cat => {
@@ -1027,12 +1034,15 @@ function createProjectCard(project, dateStr, projectIndex) {
     if (hasAnyRole) {
         staffInfo = '<div class="staff-info">';
         if (hasStartTime) {
-            staffInfo += `<span class="staff-role start-time">⏰ ${escapeHtml(project.startTime)}</span>`;
+            staffInfo += `<div class="staff-row"><span class="staff-label">时间：</span><span class="staff-dot" style="background:#ffffff;border:1px solid #d4c4a8;"></span><span class="staff-name">${escapeHtml(project.startTime)}</span></div>`;
         }
         cats.forEach(cat => {
             const val = project[cat.key] || (project.customFields && project.customFields[cat.key]);
             if (val) {
-                staffInfo += `<span class="staff-role ${escapeHtml(cat.key)}">${escapeHtml(cat.label)}：${escapeHtml(val)}</span>`;
+                const c = ROLE_STAFF_COLORS[cat.key] || '#999';
+                const names = String(val).split(/、|，|,|\//);
+                let namesHtml = names.map(n => `<span class="staff-dot" style="background:${c};"></span><span class="staff-name">${escapeHtml(n.trim())}</span>`).join(' ');
+                staffInfo += `<div class="staff-row"><span class="staff-label">${escapeHtml(cat.label)}：</span>${namesHtml}</div>`;
             }
         });
         staffInfo += '</div>';
@@ -1482,9 +1492,7 @@ function setupEventListeners() {
     });
     
     if (downloadImageBtn) downloadImageBtn.addEventListener('click', downloadImage);
-
     if (openInNewTabBtn) openInNewTabBtn.addEventListener('click', openImageInNewTab);
-
     if (cancelExportBtn) cancelExportBtn.addEventListener('click', () => {
         exportModal.style.display = 'none';
     });
@@ -1494,12 +1502,7 @@ function setupEventListeners() {
         const dateInput = document.getElementById('export-date');
         if (dateInput && dateInput.value) drawScheduleToCanvas(dateInput.value);
     });
-    
-    if (downloadImageBtn) downloadImageBtn.addEventListener('click', downloadImage);
-    
-    // 添加在新标签页打开图片事件
-    if (openInNewTabBtn) openInNewTabBtn.addEventListener('click', openImageInNewTab);
-    
+
     if (cancelExportBtn) cancelExportBtn.addEventListener('click', () => {
         exportModal.style.display = 'none';
     });
@@ -3650,61 +3653,134 @@ function exportViewAsImage(elementId, title) {
     const el = document.getElementById(elementId);
     if (!el) return;
     showToast('正在生成图片...', 'info');
-    html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#f8f8f0', logging: false }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `${title}_${formatDate(new Date())}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        showToast('图片已下载', 'success');
+
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:absolute;top:-9999px;left:0;background:#f8f8f0;padding:24px 40px;';
+    const clone = el.cloneNode(true);
+    clone.style.width = 'max-content';
+    clone.style.minWidth = '100%';
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
+
+    const w = Math.max(wrapper.scrollWidth + 80, 1200);
+    html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: '#f8f8f0', logging: false, allowTaint: true, windowWidth: w + 100, width: w }).then(canvas => {
+        lastExportDataUrl = canvas.toDataURL('image/png');
+        lastExportFileName = `${title}_${formatDate(new Date())}.png`;
+
+        const previewEl = document.getElementById('export-canvas');
+        if (previewEl) {
+            previewEl.style.display = 'block';
+            const maxW = 600;
+            const ratio = maxW / canvas.width;
+            previewEl.width = Math.round(canvas.width * ratio);
+            previewEl.height = Math.round(canvas.height * ratio);
+            const ctx = previewEl.getContext('2d');
+            ctx.drawImage(canvas, 0, 0, previewEl.width, previewEl.height);
+        }
+
+        const downloadBtn = document.getElementById('download-image');
+        const openBtn = document.getElementById('open-in-new-tab');
+        if (downloadBtn) { downloadBtn.disabled = false; downloadBtn.textContent = '下载图片'; }
+        if (openBtn) { openBtn.disabled = false; openBtn.textContent = '在新标签页打开'; }
+
+        const exportModal = document.getElementById('export-modal');
+        if (exportModal) exportModal.style.display = 'block';
+        showToast('预览已生成', 'success');
     }).catch(() => {
         showToast('图片生成失败', 'error');
+    }).finally(() => {
+        if (wrapper.parentNode) document.body.removeChild(wrapper);
     });
 }
 
 function exportWeekViewAsImage() {
     const container = document.querySelector('.schedule-container');
     const weekHeader = document.querySelector('.week-header');
-    if (!container) return;
+    if (!container) { showToast('排期容器未找到', 'error'); return; }
 
-    showToast('正在生成图片...', 'info');
+    showToast('正在生成预览...', 'info');
 
-    const buttonsToHide = container.querySelectorAll('.delete-btn, .copy-btn');
-    buttonsToHide.forEach(btn => { btn.style.display = 'none'; });
-
-    const weekDisplayEl = document.getElementById('week-display');
-    const titleDiv = document.createElement('div');
-    titleDiv.style.cssText = 'text-align:center;padding:20px 0 12px;font-size:22px;font-weight:700;color:#794f27;font-family:Nunito,Noto Sans SC,sans-serif;';
-    titleDiv.textContent = '罐头场通告排期';
-    const weekDiv = document.createElement('div');
-    weekDiv.style.cssText = 'text-align:center;padding-bottom:16px;font-size:14px;color:#9f927d;font-family:Nunito,Noto Sans SC,sans-serif;';
-    weekDiv.textContent = weekDisplayEl ? weekDisplayEl.textContent : '';
+    const weekDates = getWeekDates(currentMonday);
+    const startM = weekDates[0].getMonth() + 1;
+    const startD = weekDates[0].getDate();
+    const endM = weekDates[6].getMonth() + 1;
+    const endD = weekDates[6].getDate();
+    const weekNum = getWeekNumber(weekDates[0]);
+    const rangeText = `${startM}月${startD}日 — ${endM}月${endD}日  第${weekNum}周`;
 
     const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'background:#f8f8f0;padding:24px;border-radius:24px;position:absolute;left:-9999px;top:0;';
+    wrapper.style.cssText = 'position:absolute;top:-9999px;left:0;background:#f8f8f0;padding:24px 28px;';
+
+    const titleDiv = document.createElement('div');
+    titleDiv.style.cssText = 'text-align:center;padding:12px 0 4px;font-size:24px;font-weight:700;color:#794f27;font-family:Nunito,Noto Sans SC,sans-serif;';
+    titleDiv.textContent = '罐头场通告排期';
     wrapper.appendChild(titleDiv);
-    wrapper.appendChild(weekDiv);
+
+    const rangeDiv = document.createElement('div');
+    rangeDiv.style.cssText = 'text-align:center;padding-bottom:16px;font-size:15px;color:#9f927d;font-family:Nunito,Noto Sans SC,sans-serif;font-weight:600;';
+    rangeDiv.textContent = rangeText;
+    wrapper.appendChild(rangeDiv);
+
     if (weekHeader) {
-        const headerClone = weekHeader.cloneNode(true);
-        headerClone.style.cssText = weekHeader.style.cssText;
-        wrapper.appendChild(headerClone);
+        const hClone = weekHeader.cloneNode(true);
+        const cs = window.getComputedStyle(weekHeader);
+        hClone.style.background = cs.background || '#19c8b9';
+        hClone.style.color = cs.color || '#fff';
+        hClone.style.display = cs.display || 'grid';
+        hClone.style.gridTemplateColumns = cs.gridTemplateColumns || '';
+        hClone.style.borderRadius = '12px 12px 0 0';
+        hClone.style.overflow = 'hidden';
+        hClone.querySelectorAll('button').forEach(btn => btn.remove());
+        wrapper.appendChild(hClone);
     }
-    const containerClone = container.cloneNode(true);
-    wrapper.appendChild(containerClone);
+
+    const cClone = container.cloneNode(true);
+    const cs = window.getComputedStyle(container);
+    cClone.style.display = cs.display || 'grid';
+    cClone.style.gridTemplateColumns = cs.gridTemplateColumns || '';
+    cClone.style.background = '#f8f8f0';
+    cClone.style.borderRadius = '0 0 12px 12px';
+
+    cClone.querySelectorAll('.delete-btn, .copy-btn, .add-btn, .notice-day-btn, .sort-day-btn').forEach(el => el.remove());
+    cClone.querySelectorAll('.day-column').forEach(col => {
+        col.classList.remove('today-highlight');
+        col.style.background = '#fff';
+    });
+    cClone.querySelectorAll('.project-card').forEach(card => {
+        card.style.removeProperty('animation');
+    });
+
+    wrapper.appendChild(cClone);
     document.body.appendChild(wrapper);
 
-    html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: '#f8f8f0', logging: false }).then(canvas => {
-        const link = document.createElement('a');
-        const weekDates = getWeekDates(currentMonday);
+    html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: '#f8f8f0', logging: false, allowTaint: true, windowWidth: 1400, width: wrapper.scrollWidth }).then(canvas => {
         const range = `${formatDate(weekDates[0])}_${formatDate(weekDates[6])}`;
-        link.download = `周通告排期_${range}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        showToast('图片已下载', 'success');
-    }).catch(() => {
-        showToast('图片生成失败', 'error');
+        lastExportFileName = `通告排期_${range}.png`;
+        lastExportDataUrl = canvas.toDataURL('image/png');
+
+        const previewEl = document.getElementById('export-canvas');
+        if (previewEl) {
+            previewEl.style.display = 'block';
+            const maxW = 600;
+            const ratio = maxW / canvas.width;
+            previewEl.width = Math.round(canvas.width * ratio);
+            previewEl.height = Math.round(canvas.height * ratio);
+            const ctx = previewEl.getContext('2d');
+            ctx.drawImage(canvas, 0, 0, previewEl.width, previewEl.height);
+        }
+
+        const downloadBtn = document.getElementById('download-image');
+        const openBtn = document.getElementById('open-in-new-tab');
+        if (downloadBtn) { downloadBtn.disabled = false; downloadBtn.textContent = '下载图片'; }
+        if (openBtn) { openBtn.disabled = false; openBtn.textContent = '在新标签页打开'; }
+
+        if (exportModal) exportModal.style.display = 'block';
+        showToast('预览已生成', 'success');
+    }).catch(err => {
+        console.error('导出图片失败:', err);
+        showToast('图片生成失败: ' + (err.message || '未知错误'), 'error');
     }).finally(() => {
-        document.body.removeChild(wrapper);
-        buttonsToHide.forEach(btn => { btn.style.display = ''; });
+        if (wrapper.parentNode) document.body.removeChild(wrapper);
     });
 }
 
@@ -3859,43 +3935,27 @@ function drawScheduleToCanvas() {
                 const cleanCard = projectCard.cloneNode(true);
 
                 // 移除删除和复制按钮
-                const deleteBtn = cleanCard.querySelector('.delete-btn');
-                if (deleteBtn) deleteBtn.remove();
-                const copyBtn = cleanCard.querySelector('.copy-btn');
-                if (copyBtn) copyBtn.remove();
+                cleanCard.querySelectorAll('.delete-btn, .copy-btn').forEach(el => el.remove());
 
-                // 强制使用不透明背景色，避免导出时发白
-                cleanCard.style.background = '#ffffff';
+                // 从原始卡片复制所有计算样式，确保导出样式与编辑页一致
+                const origCS = window.getComputedStyle(projectCard);
+                cleanCard.style.cssText = origCS.cssText;
+                cleanCard.style.width = '100%';
+                cleanCard.style.marginBottom = '8px';
 
-                // 项目类型颜色匹配编辑页
-                const typeTag = cleanCard.querySelector('.project-type');
-                if (typeTag) {
-                    const typeColorMap = {
-                        'plane': { bg: '#82d5bb', color: '#2a6b5a' },
-                        'video': { bg: '#f8a6b2', color: '#a85565' },
-                        'live': { bg: '#f7cd67', color: '#7a6528' },
-                        'test': { bg: '#b77dee', color: '#fff' }
-                    };
-                    for (const [cls, colors] of Object.entries(typeColorMap)) {
-                        if (typeTag.classList.contains(cls)) {
-                            typeTag.style.background = colors.bg;
-                            typeTag.style.color = colors.color;
-                        }
+                // 复制子元素样式
+                cleanCard.querySelectorAll('*').forEach((clone, idx) => {
+                    const orig = projectCard.querySelectorAll('*')[idx];
+                    if (orig) {
+                        try {
+                            const cs = window.getComputedStyle(orig);
+                            clone.style.cssText = cs.cssText;
+                        } catch(e) {}
                     }
-                }
-
-                // 修复半透明背景色为不透明颜色
-                const staffRoles = cleanCard.querySelectorAll('.staff-role');
-                staffRoles.forEach(role => {
-                    role.style.background = '#f0e8d8';
-                    role.style.color = '#794f27';
                 });
 
-                // 修复位置标签背景
-                const locationTag = cleanCard.querySelector('.project-location');
-                if (locationTag) {
-                    locationTag.style.background = '#f5f5f5';  // 替换 rgba(0, 0, 0, 0.04)
-                }
+                // 移除动画
+                cleanCard.style.removeProperty('animation');
 
                 if (cols > 10) {
                     cleanCard.style.fontSize = '11px';
@@ -3944,6 +4004,23 @@ function drawScheduleToCanvas() {
         // 再绘制canvas内容
         exportCtx.drawImage(canvas, 0, 0);
 
+        // 存储高清dataUrl供下载和新标签页使用
+        lastExportDataUrl = canvas.toDataURL('image/png');
+        const s = formatDate(startDate);
+        const e = formatDate(endDate);
+        lastExportFileName = `通告排期_${s}_${e}.png`;
+
+        // 更新预览canvas
+        const previewEl = document.getElementById('export-canvas');
+        if (previewEl) {
+            const maxW = 600;
+            const ratio = maxW / canvas.width;
+            previewEl.width = Math.round(canvas.width * ratio);
+            previewEl.height = Math.round(canvas.height * ratio);
+            const ctx = previewEl.getContext('2d');
+            ctx.drawImage(canvas, 0, 0, previewEl.width, previewEl.height);
+        }
+
         document.body.removeChild(tempContainer);
         downloadImageBtn.disabled = false;
         openInNewTabBtn.disabled = false;
@@ -3962,11 +4039,12 @@ function drawScheduleToCanvas() {
 
 // 下载图片
 function downloadImage() {
-    const canvas = exportCanvas;
+    if (!lastExportDataUrl) { showToast('请先生成预览', 'warning'); return; }
     const link = document.createElement('a');
-    link.download = '罐头场通告排期.png';
-    link.href = canvas.toDataURL('image/png');
+    link.download = lastExportFileName;
+    link.href = lastExportDataUrl;
     link.click();
+    showToast('图片已下载', 'success');
 }
 
 // 移动端保存图片到相册
@@ -3974,20 +4052,14 @@ function downloadImage() {
 
 // 在新标签页打开图片
 function openImageInNewTab() {
-    const canvas = exportCanvas;
+    if (!lastExportDataUrl) { showToast('请先生成预览', 'warning'); return; }
     try {
-        // 将canvas转换为数据URL并在新标签页打开
-        const dataURL = canvas.toDataURL('image/png');
-        const newWindow = window.open();
-        if (!newWindow) {
-            showToast('浏览器拦截了弹出窗口，请允许弹窗后重试，或使用下载功能', 'warning');
-            return;
-        }
-        newWindow.document.write(`<img src="${dataURL}" alt="罐头场通告排期" style="width:100%;height:auto;" />`);
-        newWindow.document.close();
-    } catch (error) {
-        console.error('在新标签页打开图片时出错:', error);
-        showToast('无法在新标签页打开图片，请尝试下载图片', 'warning');
+        const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${lastExportFileName}</title><style>*{margin:0;padding:0}body{background:#f5f5f5;display:flex;justify-content:center}img{max-width:100%;height:auto}</style></head><body><img src="${lastExportDataUrl}"></body></html>`;
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+    } catch (e) {
+        showToast('无法打开新标签页', 'error');
     }
 }
 

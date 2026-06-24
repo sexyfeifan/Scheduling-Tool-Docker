@@ -4,7 +4,7 @@
  * 显示设置中所有人员（含无排期的），按 roleCategories 顺序排列
  */
 
-import { escapeHtml, escapeAttr, formatDate, getMonday } from './utils.js';
+import { escapeHtml, escapeAttr, formatDate } from './utils.js';
 
 const ROLE_COLORS = {
   director: '#3B82F6',
@@ -20,46 +20,33 @@ const ROLE_COLORS = {
 export function createPersonnelViewModule({ api, onJumpToWeek }) {
   let currentDate = new Date();
   let cachedData = {};
-  let viewMode = 'week';
 
   function init() {
     const prevBtn = document.getElementById('personnel-prev');
     const nextBtn = document.getElementById('personnel-next');
-    if (prevBtn) prevBtn.addEventListener('click', () => { shiftDate(-1); render(); });
-    if (nextBtn) nextBtn.addEventListener('click', () => { shiftDate(1); render(); });
+    if (prevBtn) prevBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); render(); });
+    if (nextBtn) nextBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); render(); });
     const toggleScheduled = document.getElementById('personnel-scheduled-only');
     if (toggleScheduled) toggleScheduled.addEventListener('change', () => render());
-  }
-
-  function shiftDate(direction) {
-    if (viewMode === 'week') {
-      currentDate.setDate(currentDate.getDate() + direction * 7);
-    } else {
-      currentDate.setMonth(currentDate.getMonth() + direction);
-    }
   }
 
   async function render() {
     const container = document.getElementById('personnel-view-table');
     if (!container) return;
 
-    const startDate = getMonday(new Date(currentDate));
-    const days = viewMode === 'week' ? 7 : 35;
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const lastDay = new Date(year, month + 1, 0).getDate();
     const dates = [];
-    for (let i = 0; i < days; i++) {
-      const d = new Date(startDate);
-      d.setDate(d.getDate() + i);
-      dates.push(formatDate(d));
+    for (let d = 1; d <= lastDay; d++) {
+      dates.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
     }
+
     const endDate = dates[dates.length - 1];
 
     const title = document.getElementById('personnel-view-title');
     if (title) {
-      if (viewMode === 'week') {
-        title.textContent = `${dates[0]} ~ ${dates[6]}`;
-      } else {
-        title.textContent = `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月 人员排期`;
-      }
+      title.textContent = `${year}年${month + 1}月 人员排期`;
     }
 
     let settings = null;
@@ -145,8 +132,16 @@ export function createPersonnelViewModule({ api, onJumpToWeek }) {
 
     let html = '<div class="personnel-matrix">';
 
+    // 计算最长项目名，确定统一列宽
+    let maxNameLen = 4; // 最少4个字符宽
+    dates.forEach(date => {
+      (cachedData[date] || []).forEach(proj => {
+        if (proj.name && proj.name.length > maxNameLen) maxNameLen = proj.name.length;
+      });
+    });
     const nameColWidth = '140px';
-    const gridCols = `${nameColWidth} repeat(${dates.length}, 1fr)`;
+    const dayColWidth = Math.max(80, maxNameLen * 14 + 16) + 'px';
+    const gridCols = `${nameColWidth} repeat(${dates.length}, ${dayColWidth})`;
 
     html += `<div class="personnel-header" style="grid-template-columns:${gridCols}">`;
     html += '<div class="personnel-header-cell personnel-name-col">人员</div>';
