@@ -1,0 +1,12 @@
+**/node_modules
+**/.git
+**/data
+**/backups
+**/.env
+**/*.md
+**/.prettierrc
+**/.prettierignore
+**/.eslintrc*
+**/eslint.config.*
+**/scripts
+**/.github

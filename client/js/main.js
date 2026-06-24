@@ -602,8 +602,8 @@ async function initApp() {
     // 初始化 SVG 图标系统
     initSVGIcons();
 
-    // 初始化动森风格下拉选择器
-    initAnimalSelects();
+    // 初始化动森风格下拉选择器（仅对可见的主页面 select 生效，不触碰隐藏的 modal）
+    initAnimalSelects(document.querySelector('.main-content'));
     
     // 加载版本信息
     loadVersionInfo();
