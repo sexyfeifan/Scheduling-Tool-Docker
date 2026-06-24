@@ -24,15 +24,9 @@ function createConflictRouter({ store }) {
 
       filtered.forEach(item => {
         (item.projects || []).forEach(proj => {
-          const roles = [
-            { key: 'director', label: '导演' },
-            { key: 'photographer', label: '摄影师' },
-            { key: 'production', label: '制片' },
-            { key: 'rd', label: '研发' },
-            { key: 'operational', label: '运营' },
-            { key: 'audio', label: '录音' },
-            { key: 'business', label: '商务' }
-          ];
+          const settings = store.readSettings();
+          const roleCategories = settings.roleCategories || [];
+          const roles = roleCategories.filter(c => c.key !== 'location').map(c => ({ key: c.key, label: c.label }));
 
           roles.forEach(r => {
             const name = proj[r.key];

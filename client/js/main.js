@@ -2,17 +2,20 @@ import { createApiClient } from './modules/api.js';
 import { getMonday, formatDate, formatMonthDay, getWeekDates, getWeekNumber } from './modules/date.js';
 import { createDefaultFilters, matchesProjectFilters } from './modules/filters.js';
 import { createUndoManager } from './modules/undo.js';
-import { initViewSwitcher, switchView, getCurrentView } from './modules/viewSwitcher.js';
+import { initViewSwitcher, switchView } from './modules/viewSwitcher.js';
 import { icons } from './modules/animal-icons.js';
 import { createMonthViewModule } from './modules/monthView.js';
 import { createPersonnelViewModule } from './modules/personnelView.js';
-import { initAnimalSelects, updateAnimalSelect } from './modules/animal-select.js';
+import { initAnimalSelects } from './modules/animal-select.js';
 
 // XSS 安全：转义 HTML 特殊字符
 function escapeHtml(str) {
     const s = String(str == null ? '' : str);
     const map = { '&': '\u0026amp;', '<': '\u0026lt;', '>': '\u0026gt;', '"': '\u0026quot;', "'": '\u0026#39;' };
-    return s.replace(/[&<>"']/g, (ch) => map[ch]);
+    return s.replace(/[&<>"']/g, c => map[c]);
+}
+function escapeAttr(str) {
+    return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 // 当前周的周一
@@ -595,6 +598,20 @@ async function initApp() {
     if (monthExportBtn) monthExportBtn.addEventListener('click', () => exportViewAsImage('month-view-grid', '月视图排期'));
     const personnelExportBtn = document.getElementById('personnel-export');
     if (personnelExportBtn) personnelExportBtn.addEventListener('click', () => exportViewAsImage('personnel-view-table', '人员排期'));
+
+    // 月视图项目/人员切换
+    const monthShowProjectBtn = document.getElementById('month-show-project');
+    const monthShowPersonBtn = document.getElementById('month-show-person');
+    if (monthShowProjectBtn) monthShowProjectBtn.addEventListener('click', () => {
+        monthShowProjectBtn.classList.add('active');
+        if (monthShowPersonBtn) monthShowPersonBtn.classList.remove('active');
+        switchView('month');
+    });
+    if (monthShowPersonBtn) monthShowPersonBtn.addEventListener('click', () => {
+        monthShowPersonBtn.classList.add('active');
+        if (monthShowProjectBtn) monthShowProjectBtn.classList.remove('active');
+        switchView('personnel');
+    });
     
     // 初始化时钟显示
     initClock();
@@ -1101,10 +1118,10 @@ function setupEventListeners() {
     document.addEventListener('keydown', (e) => {
         // ESC 关闭模态框
         if (e.key === 'Escape') {
-            projectModal.style.display = 'none';
-            settingsModal.style.display = 'none';
-            exportModal.style.display = 'none';
-            datePickerModal.style.display = 'none';
+            if (projectModal) projectModal.style.display = 'none';
+            if (settingsModal) settingsModal.style.display = 'none';
+            if (exportModal) exportModal.style.display = 'none';
+            if (datePickerModal) datePickerModal.style.display = 'none';
             const adminModal = document.getElementById('admin-modal');
             if (adminModal) adminModal.style.display = 'none';
             const heatmapModal = document.getElementById('heatmap-modal');
@@ -1465,6 +1482,20 @@ function setupEventListeners() {
     });
     
     if (downloadImageBtn) downloadImageBtn.addEventListener('click', downloadImage);
+
+    if (openInNewTabBtn) openInNewTabBtn.addEventListener('click', openImageInNewTab);
+
+    if (cancelExportBtn) cancelExportBtn.addEventListener('click', () => {
+        exportModal.style.display = 'none';
+    });
+
+    const refreshExportBtn = document.getElementById('refresh-export');
+    if (refreshExportBtn) refreshExportBtn.addEventListener('click', () => {
+        const dateInput = document.getElementById('export-date');
+        if (dateInput && dateInput.value) drawScheduleToCanvas(dateInput.value);
+    });
+    
+    if (downloadImageBtn) downloadImageBtn.addEventListener('click', downloadImage);
     
     // 添加在新标签页打开图片事件
     if (openInNewTabBtn) openInNewTabBtn.addEventListener('click', openImageInNewTab);
@@ -1485,7 +1516,7 @@ function setupEventListeners() {
         if (e.target === projectModal) {
             projectModal.style.display = 'none';
         }
-        if (e.target === settingsModal) {
+        if (settingsModal && e.target === settingsModal) {
             settingsModal.style.display = 'none';
         }
         if (e.target === exportModal) {
@@ -1778,7 +1809,7 @@ async function saveProject() {
 
 // 显示设置模态框
 function showSettingsModal() {
-    settingsModal.style.display = 'block';
+    if (settingsModal) settingsModal.style.display = 'block';
     renderTemplateList();
 }
 
@@ -2347,7 +2378,7 @@ function renderHeatmapChart(range) {
 // 渲染排行榜和每日项目数（按时间范围切换）
 function renderHeatmapStats(range) {
     const { startDate, endDate } = getHeatmapDateRange(range);
-    const roles = ['director', 'photographer', 'production', 'operational', 'rd', 'audio'];
+    const roles = roleCategories.filter(c => c.key !== 'location').map(c => c.key);
     const personCount = {};
     const dayCount = {};
 
@@ -2916,7 +2947,7 @@ async function saveSettings() {
         updateProjectFormOptions();
 
         showToast('设置已保存', 'success');
-        settingsModal.style.display = 'none';
+        if (settingsModal) settingsModal.style.display = 'none';
     } catch (error) {
         console.error('保存设置时出错:', error);
         showToast('保存设置时出错，请重试', 'error');
@@ -4191,9 +4222,11 @@ function showCopyModal(dateStr, projectIndex) {
 // ── 操作记录 ──
 async function loadHistoryRecords() {
     const tbody = document.getElementById('history-tbody');
+    if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary)">加载中...</td></tr>';
 
-    const dateFilter = document.getElementById('history-date-filter').value;
+    const dateFilterEl = document.getElementById('history-date-filter');
+    const dateFilter = dateFilterEl ? dateFilterEl.value : '';
     const params = { limit: 200 };
     if (dateFilter) params.date = dateFilter;
 

@@ -17,8 +17,9 @@ export function matchesProjectFilters(project, filters) {
 
     if (filters.search) {
         const parts = [project.name, project.location];
-        const roleKeys = ['director', 'photographer', 'production', 'rd', 'operational', 'audio', 'business'];
-        roleKeys.forEach(k => { if (project[k]) parts.push(project[k]); });
+        Object.keys(project).forEach(k => {
+            if (k !== 'name' && k !== 'location' && k !== 'customFields' && k !== 'id' && project[k]) parts.push(project[k]);
+        });
         if (project.customFields) {
             for (const v of Object.values(project.customFields)) { if (v) parts.push(v); }
         }
@@ -33,8 +34,9 @@ export function matchesProjectFilters(project, filters) {
 
     if (filters.person) {
         const parts = [];
-        const roleKeys = ['director', 'photographer', 'production', 'rd', 'operational', 'audio', 'business'];
-        roleKeys.forEach(k => { if (project[k]) parts.push(project[k]); });
+        Object.keys(project).forEach(k => {
+            if (k !== 'name' && k !== 'location' && k !== 'customFields' && k !== 'id' && project[k]) parts.push(project[k]);
+        });
         if (project.customFields) {
             for (const v of Object.values(project.customFields)) { if (v) parts.push(v); }
         }
