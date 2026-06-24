@@ -26,7 +26,7 @@
                 <button id="next-week" class="btn icon-btn" title="下一周">▶</button>
                 <span id="week-display" class="week-display"></span>
                 <span class="toolbar-divider"></span>
-                <button id="view-day" class="btn icon-btn view-btn" title="单日视图">单</button>
+                <button id="view-day" class="btn icon-btn view-btn" title="日视图">日</button>
                 <button id="view-week" class="btn icon-btn view-btn active" title="周视图">周</button>
                 <button id="view-month" class="btn icon-btn view-btn" title="月视图">月</button>
                 <button id="view-personnel" class="btn icon-btn view-btn" title="人员排期">人</button>
@@ -123,6 +123,7 @@
                     <button id="month-prev" class="btn icon-btn">◀</button>
                     <span id="month-view-title" class="month-view-title"></span>
                     <button id="month-next" class="btn icon-btn">▶</button>
+                    <button id="month-export" class="btn secondary icon-btn" title="导出月视图图片" style="margin-left:4px;">📸</button>
                     <div class="month-toggle">
                         <button id="month-show-project" class="btn small active">项目</button>
                         <button id="month-show-person" class="btn small">人员</button>
@@ -137,6 +138,14 @@
                     <button id="personnel-prev" class="btn icon-btn">◀</button>
                     <span id="personnel-view-title" class="personnel-view-title"></span>
                     <button id="personnel-next" class="btn icon-btn">▶</button>
+                    <button id="personnel-export" class="btn secondary icon-btn" title="导出人员视图图片" style="margin-left:4px;">📸</button>
+                    <div class="personnel-toggle" style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                        <label class="toggle-switch" title="只显示有排期的人员">
+                            <input type="checkbox" id="personnel-scheduled-only">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size:12px;color:#794f27;font-weight:600;white-space:nowrap;">仅显示有排期</span>
+                    </div>
                 </div>
                 <div id="personnel-view-table" class="personnel-view-table"></div>
             </div>
@@ -319,6 +328,7 @@
                     <button class="admin-tab-btn" data-tab="access">访问控制</button>
                     <button class="admin-tab-btn" data-tab="history">操作记录</button>
                     <button class="admin-tab-btn" data-tab="webhook">Webhook</button>
+                    <button class="admin-tab-btn" data-tab="data">数据管理</button>
                 </div>
 
                 <!-- 设置标签页 -->
@@ -350,7 +360,7 @@
                         <p class="hint-text">开启后允许外部服务通过 API 获取排期数据</p>
                         <div class="form-group">
                             <label class="animal-switch" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-                                <input type="checkbox" id="external-api-enabled" class="switch-input">
+                                <input type="checkbox" id="external-api-enabled" class="switch-input" checked>
                                 <span class="switch"><span class="handle"></span></span>
                                 <span class="animal-switch-label">启用外部 API</span>
                             </label>
@@ -388,13 +398,89 @@
                         </div>
                     </div>
                     <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0;">
+                    <div class="form-group">
+                        <button id="export-data" class="btn">💾 下载备份文件</button>
+                        <p>下载 JSON 格式的备份文件到本地</p>
+                    </div>
+                    <div class="form-group">
+                        <input type="file" id="import-file" accept=".json" style="display: none;">
+                        <button id="import-data" class="btn">📤 导入备份文件</button>
+                        <p>从本地选择备份文件恢复数据</p>
+                    </div>
+                </div>
+
+                <!-- 数据管理标签页 -->
+                <div id="admin-tab-data" class="admin-tab-panel" style="display: none;">
+                    <div class="data-mgmt-tabs">
+                        <button class="data-mgmt-tab active" data-sub="rename">姓名更替</button>
+                        <button class="data-mgmt-tab" data-sub="transfer">任务交接</button>
+                    </div>
+
+                    <div id="data-sub-rename" class="data-sub-panel">
+                        <p class="hint-text">将历史排期数据中某个人员的姓名全局替换为新姓名，适用于录入错误的修正。支持并列人名自动拆分（如"张三、李四"）。</p>
+                        <div class="data-mgmt-row">
+                            <div class="data-mgmt-col">
+                                <label>原姓名:</label>
+                                <div id="rename-source-list" class="person-card-list"></div>
+                                <select id="rename-source-select" style="margin-top:8px;">
+                                    <option value="">-- 从列表选择 --</option>
+                                </select>
+                                <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+                                    <span style="font-size:12px;color:#9f927d;">或手动输入:</span>
+                                    <input type="text" id="rename-source-custom" placeholder="输入原姓名（可不在列表中）" style="flex:1;">
+                                </div>
+                            </div>
+                            <div class="data-mgmt-arrow">→</div>
+                            <div class="data-mgmt-col">
+                                <label>新姓名:</label>
+                                <input type="text" id="rename-target-input" placeholder="输入新姓名">
+                            </div>
+                        </div>
+                        <div class="form-actions" style="margin-top:16px;">
+                            <button id="rename-execute-btn" class="btn primary">执行更替</button>
+                        </div>
+                        <div id="rename-preview" class="data-preview"></div>
+                    </div>
+
+                    <div id="data-sub-transfer" class="data-sub-panel" style="display:none;">
+                        <p class="hint-text">将离职人员的所有历史排期任务转移给另一个人，全量数据变更。</p>
+                        <div class="data-mgmt-row">
+                            <div class="data-mgmt-col">
+                                <label>离职人员:</label>
+                                <div id="transfer-source-list" class="person-card-list"></div>
+                                <select id="transfer-source-select" style="margin-top:8px;">
+                                    <option value="">-- 选择离职人员 --</option>
+                                </select>
+                            </div>
+                            <div class="data-mgmt-arrow">→</div>
+                            <div class="data-mgmt-col">
+                                <label>交接人员:</label>
+                                <div id="transfer-target-list" class="person-card-list"></div>
+                                <select id="transfer-target-select" style="margin-top:8px;">
+                                    <option value="">-- 选择交接人员 --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-actions" style="margin-top:16px;">
+                            <button id="transfer-execute-btn" class="btn primary">执行交接</button>
+                        </div>
+                        <div id="transfer-preview" class="data-preview"></div>
+                    </div>
+                </div>
+
+                <!-- 访问控制标签页 -->
+                <div id="admin-tab-access" class="admin-tab-panel" style="display: none;">
                     <div class="access-section">
-                        <h4>访问控制与分享</h4>
+                        <h4>编辑权限</h4>
                         <div class="form-group">
                             <label for="edit-password-setting">编辑密码:</label>
                             <input type="password" id="edit-password-setting" placeholder="留空表示关闭编辑密码">
                             <p>设置后，新增、编辑、删除、恢复等操作需要先输入编辑密码。</p>
                         </div>
+                    </div>
+                    <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0;">
+                    <div class="access-section">
+                        <h4>只读分享</h4>
                         <div class="form-group">
                             <label class="animal-switch" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                                 <input type="checkbox" id="share-enabled-setting" class="switch-input">
@@ -408,20 +494,10 @@
                             <p>分享地址会生成为 `/share/你的分享标识`。</p>
                         </div>
                         <div class="form-group">
-                            <button id="save-access-settings" class="btn">保存访问设置</button>
+                            <button id="save-access-settings" class="btn primary">保存访问设置</button>
                             <button id="copy-share-link" class="btn" type="button">复制分享链接</button>
                             <p id="share-link-display" class="share-link-display">分享链接尚未启用</p>
                         </div>
-                    </div>
-                    <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0;">
-                    <div class="form-group">
-                        <button id="export-data" class="btn">💾 下载备份文件</button>
-                        <p>下载 JSON 格式的备份文件到本地</p>
-                    </div>
-                    <div class="form-group">
-                        <input type="file" id="import-file" accept=".json" style="display: none;">
-                        <button id="import-data" class="btn">📤 导入备份文件</button>
-                        <p>从本地选择备份文件恢复数据</p>
                     </div>
                 </div>
 

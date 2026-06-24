@@ -82,6 +82,13 @@ export function createApiClient({
             const query = new URLSearchParams(params).toString();
             return request(`/schedules${query ? `?${query}` : ''}`);
         },
+        fetchSchedules: (startDate, endDate) => {
+            const params = new URLSearchParams();
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+            const query = params.toString();
+            return request(`/schedules${query ? `?${query}` : ''}`);
+        },
         saveSchedule: (payload) => request('/schedules', {
             method: 'POST',
             body: JSON.stringify(payload)
@@ -139,6 +146,24 @@ export function createApiClient({
         pushDailyNotice: (date) => request('/webhook/push/daily', { method: 'POST', admin: true, body: JSON.stringify({ date }) }),
         pushWeeklyNotice: (startDate, endDate) => request('/webhook/push/weekly', { method: 'POST', admin: true, body: JSON.stringify({ startDate, endDate }) }),
         getWebhookTemplates: () => request('/webhook/templates', { admin: true }),
+        webhookPreview: async ({ type, date }) => {
+            if (type === 'daily') {
+                const schedules = await request('/schedules');
+                const daySchedule = (Array.isArray(schedules) ? schedules : []).find(s => s.date === date);
+                if (!daySchedule || !daySchedule.projects || daySchedule.projects.length === 0) {
+                    return { preview: `${date} 没有排期项目` };
+                }
+                const lines = daySchedule.projects.map((p, i) => `${i + 1}. ${p.name} | ${p.location || '-'} | ${p.director || '-'} | ${p.startTime || '-'}`);
+                return { preview: `📋 ${date} 通告\n\n${lines.join('\n')}` };
+            }
+            return { preview: '周通告预览请使用推送功能' };
+        },
+        webhookPush: async ({ type, date }) => {
+            if (type === 'daily') {
+                return request('/webhook/push/daily', { method: 'POST', admin: true, body: JSON.stringify({ date }) });
+            }
+            return { message: '请选择日通告或周通告' };
+        },
         fetchBackupPayload: async (backupPath) => {
             const adminPassword = getAdminPassword ? getAdminPassword() : '';
             const response = await fetch(backupPath, {
@@ -153,6 +178,7 @@ export function createApiClient({
                 throw new Error('备份文件格式错误：无法解析 JSON');
             }
         },
+        getConflicts: (start, end) => request(`/schedules/conflicts?start=${start}&end=${end}`),
         get: (path) => request(path),
         post: (path, body) => request(path, { method: 'POST', body: JSON.stringify(body) }),
         getBlob: async (path) => {

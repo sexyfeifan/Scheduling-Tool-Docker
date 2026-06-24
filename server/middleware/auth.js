@@ -3,7 +3,7 @@
  * 从 app.js 抽取，集中管理密码验证逻辑
  */
 
-const { verifyPassword } = require('../utils/normalize');
+const { verifyPassword, timingSafeEqual } = require('../utils/normalize');
 
 /**
  * 创建管理员密码验证中间件
@@ -12,7 +12,7 @@ const { verifyPassword } = require('../utils/normalize');
 function createRequireAdminPassword(backupPassword) {
   return function requireAdminPassword(req, res, next) {
     const headerPassword = req.headers['x-admin-password'];
-    if (String(headerPassword || '') !== String(backupPassword)) {
+    if (!timingSafeEqual(String(headerPassword || ''), String(backupPassword))) {
       return res.status(401).json({ message: '管理员密码无效' });
     }
     next();

@@ -8,7 +8,7 @@
  * 备份相关已拆分到 modal-backup.js
  */
 
-import { getWeekDates, formatDate } from './date.js';
+import { getWeekDates, formatDate, getMonday } from './date.js';
 
 export function createModalModule(ctx) {
     const {
@@ -510,10 +510,16 @@ export function createModalModule(ctx) {
                 pushBtn.disabled = true;
                 pushBtn.textContent = '推送中...';
 
-                const response = await apiClient.webhookPush({
-                    type: selectedPushType,
-                    date: date
-                });
+                let response;
+                if (selectedPushType === 'daily') {
+                    response = await apiClient.pushDailyNotice(date);
+                } else {
+                    const weekDates = getWeekDates(getMonday(new Date(date)));
+                    response = await apiClient.pushWeeklyNotice(
+                        formatDate(weekDates[0]),
+                        formatDate(weekDates[6])
+                    );
+                }
 
                 showToast(response.message || '推送成功', 'success');
                 document.body.removeChild(modal);

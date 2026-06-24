@@ -333,9 +333,17 @@ function wrapStructuredData(data) {
 }
 
 function timingSafeEqual(a, b) {
-  const bufA = Buffer.from(String(a));
-  const bufB = Buffer.from(String(b));
-  if (bufA.length !== bufB.length) return false;
+  const bufA = Buffer.from(String(a), 'utf8');
+  const bufB = Buffer.from(String(b), 'utf8');
+  if (bufA.length !== bufB.length) {
+    // Pad the shorter buffer to avoid length leakage
+    const maxLen = Math.max(bufA.length, bufB.length);
+    const paddedA = Buffer.alloc(maxLen, 0);
+    const paddedB = Buffer.alloc(maxLen, 0);
+    bufA.copy(paddedA);
+    bufB.copy(paddedB);
+    return crypto.timingSafeEqual(paddedA, paddedB);
+  }
   return crypto.timingSafeEqual(bufA, bufB);
 }
 

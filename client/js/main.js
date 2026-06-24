@@ -2,6 +2,11 @@ import { createApiClient } from './modules/api.js';
 import { getMonday, formatDate, formatMonthDay, getWeekDates, getWeekNumber } from './modules/date.js';
 import { createDefaultFilters, matchesProjectFilters } from './modules/filters.js';
 import { createUndoManager } from './modules/undo.js';
+import { initViewSwitcher, switchView, getCurrentView } from './modules/viewSwitcher.js';
+import { icons } from './modules/animal-icons.js';
+import { createMonthViewModule } from './modules/monthView.js';
+import { createPersonnelViewModule } from './modules/personnelView.js';
+import { initAnimalSelects, updateAnimalSelect } from './modules/animal-select.js';
 
 // XSS 安全：转义 HTML 特殊字符
 function escapeHtml(str) {
@@ -62,6 +67,8 @@ const projectRoleFieldsDiv = document.getElementById('project-role-fields');
 // 设置元素
 const roleSettingsContainer = document.getElementById('role-settings-container');
 const addRoleCategoryBtn = document.getElementById('add-role-category');
+const projectTypesContainer = document.getElementById('project-types-container');
+const addProjectTypeBtn = document.getElementById('add-project-type');
 const templateList = document.getElementById('template-list');
 
 // 数据导出导入元素
@@ -541,6 +548,63 @@ async function initApp() {
     setupMobileDateSwitch(); // 移动端日期切换功能
     updateUndoButton();
     
+    // 初始化月视图模块
+    const monthViewModule = createMonthViewModule({
+        api: apiClient,
+        onJumpToWeek: (dateStr) => {
+            const date = new Date(dateStr);
+            currentMonday = getMonday(date);
+            updateWeekDisplay();
+            renderSchedule();
+            switchView('week');
+        }
+    });
+    monthViewModule.init();
+    
+    // 初始化人员视图模块
+    const personnelViewModule = createPersonnelViewModule({
+        api: apiClient,
+        onJumpToWeek: (dateStr) => {
+            const date = new Date(dateStr);
+            currentMonday = getMonday(date);
+            updateWeekDisplay();
+            renderSchedule();
+            switchView('week');
+        }
+    });
+    personnelViewModule.init();
+    
+    // 初始化视图切换器（传入渲染回调）
+    initViewSwitcher({
+        month: () => monthViewModule.render(),
+        personnel: () => personnelViewModule.render(),
+        day: () => renderDayView(new Date())
+    });
+    
+    // 单日视图导航按钮
+    let dayViewDate = new Date();
+    const dayPrevBtn = document.getElementById('day-prev');
+    const dayNextBtn = document.getElementById('day-next');
+    const dayTodayBtn = document.getElementById('day-today');
+    if (dayPrevBtn) dayPrevBtn.addEventListener('click', () => { dayViewDate.setDate(dayViewDate.getDate() - 1); renderDayView(dayViewDate); });
+    if (dayNextBtn) dayNextBtn.addEventListener('click', () => { dayViewDate.setDate(dayViewDate.getDate() + 1); renderDayView(dayViewDate); });
+    if (dayTodayBtn) dayTodayBtn.addEventListener('click', () => { dayViewDate = new Date(); renderDayView(dayViewDate); });
+
+    // 月视图导出按钮
+    const monthExportBtn = document.getElementById('month-export');
+    if (monthExportBtn) monthExportBtn.addEventListener('click', () => exportViewAsImage('month-view-grid', '月视图排期'));
+    const personnelExportBtn = document.getElementById('personnel-export');
+    if (personnelExportBtn) personnelExportBtn.addEventListener('click', () => exportViewAsImage('personnel-view-table', '人员排期'));
+    
+    // 初始化时钟显示
+    initClock();
+    
+    // 初始化 SVG 图标系统
+    initSVGIcons();
+
+    // 初始化动森风格下拉选择器
+    initAnimalSelects();
+    
     // 加载版本信息
     loadVersionInfo();
     loadHealthStatus();
@@ -549,6 +613,9 @@ async function initApp() {
     await loadScheduleData();
     await loadSettings();
     await loadTemplateData();
+    
+    // 设置加载后重新渲染，确保 roleCategories 已填充
+    renderSchedule();
     
     // 移动端默认显示今日日期
     if (isMobile) {
@@ -567,10 +634,78 @@ async function initApp() {
     setInterval(loadHealthStatus, 30000);
 }
 
+// 初始化时钟显示
+function initClock() {
+    const weekdayElement = document.getElementById('ac-clock-weekday');
+    const dayElement = document.getElementById('ac-clock-day');
+    const hourElement = document.getElementById('ac-clock-h');
+    const minuteElement = document.getElementById('ac-clock-m');
+    const secondElement = document.getElementById('ac-clock-s');
+    
+    if (!weekdayElement || !dayElement || !hourElement || !minuteElement || !secondElement) {
+        return;
+    }
+    
+    function updateClock() {
+        const now = new Date();
+        const weekdays = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+        const weekday = weekdays[now.getDay()];
+        const month = now.getMonth() + 1;
+        const day = now.getDate();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        
+        weekdayElement.textContent = weekday;
+        dayElement.textContent = `${month}月${day}日`;
+        hourElement.textContent = hours;
+        minuteElement.textContent = minutes;
+        secondElement.textContent = seconds;
+    }
+    
+    // 立即更新一次
+    updateClock();
+    
+    // 每秒更新一次
+    setInterval(updateClock, 1000);
+}
+
+// 初始化 SVG 图标系统
+function initSVGIcons() {
+    const iconMap = {
+        'prev-week': { icon: 'prev', text: '' },
+        'next-week': { icon: 'next', text: '' },
+        'this-week': { icon: 'today', text: '本周' },
+        'add-project': { icon: 'add', text: ' 新增' },
+        'undo-action': { icon: 'undo', text: '' },
+        'export-image': { icon: 'export', text: ' 导出' },
+        'export-week-text': { icon: 'notice', text: ' 通告' },
+        'paste-recognition': { icon: 'paste', text: ' 粘贴' },
+        'heatmap-btn': { icon: 'heatmap', text: ' 热力图' },
+        'webhook-btn': { icon: 'webhook', text: ' 推送' },
+        'admin-btn': { icon: 'admin', text: ' 管理' },
+        'conflict-btn': { icon: 'conflict', text: ' 预警' }
+    };
+    
+    for (const [btnId, { icon, text }] of Object.entries(iconMap)) {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'icon';
+            iconSpan.innerHTML = icons[icon] || '';
+            btn.textContent = text;
+            btn.insertBefore(iconSpan, btn.firstChild);
+        }
+    }
+}
+
 // 加载版本信息
 async function loadVersionInfo() {
     try {
-        const versionData = await versionAPI.getVersion();
+        const [versionData, healthData] = await Promise.all([
+            versionAPI.getVersion(),
+            versionAPI.getHealth()
+        ]);
         const versionInfo = document.getElementById('version-info');
         if (versionInfo) {
             const versionNumber = versionInfo.querySelector('.version-number');
@@ -579,7 +714,9 @@ async function loadVersionInfo() {
                 versionNumber.textContent = 'v' + versionData.version;
             }
             if (versionDate) {
-                versionDate.textContent = `${versionData.createDate} · build ${versionData.buildDate}`;
+                const buildTime = versionData.buildDate || '';
+                const startDate = healthData.startedAt ? new Date(healthData.startedAt).toLocaleString('zh-CN', { hour12: false }) : '';
+                versionDate.textContent = `build ${buildTime} · 启动 ${startDate}`;
             }
         }
     } catch (error) {
@@ -735,6 +872,34 @@ function updateWeekDisplay() {
     weekDisplay.textContent = `${startDate} - ${endDate}`;
 }
 
+// 渲染单日视图
+function renderDayView(date) {
+    const dateStr = formatDate(date);
+    const titleEl = document.getElementById('day-view-date');
+    const contentEl = document.getElementById('day-view-content');
+    if (!contentEl) return;
+
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    if (titleEl) titleEl.textContent = `${month}月${day}日 ${weekdays[date.getDay()]}`;
+
+    contentEl.innerHTML = '';
+    const dayProjects = scheduleData[dateStr] || [];
+    if (dayProjects.length === 0) {
+        contentEl.innerHTML = '<div style="text-align:center;padding:40px;color:#c4b89e;font-size:18px;">🈚️ 当日无排期</div>';
+        return;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;flex-direction:column;gap:10px;';
+    dayProjects.forEach((project, index) => {
+        const card = createProjectCard(project, dateStr, index);
+        wrapper.appendChild(card);
+    });
+    contentEl.appendChild(wrapper);
+}
+
 // 渲染排期表
 function renderSchedule() {
     const weekDates = getWeekDates(currentMonday);
@@ -821,6 +986,8 @@ function createProjectCard(project, dateStr, projectIndex) {
     card.draggable = true;
     card.dataset.date = dateStr;
     card.dataset.index = projectIndex;
+    card.dataset.status = project.status || '待确认';
+    if (project.type) card.dataset.type = project.type;
     
     const typeClassMap = {
         '平面': 'plane',
@@ -916,6 +1083,20 @@ function createProjectCard(project, dateStr, projectIndex) {
 
 // 设置事件监听器
 function setupEventListeners() {
+    // 视图切换按钮 — 由 initViewSwitcher 统一绑定
+    
+    // 冲突预警按钮
+    const conflictBtn = document.getElementById('conflict-btn');
+    if (conflictBtn) {
+        conflictBtn.addEventListener('click', () => showConflictModal());
+    }
+    
+    // Webhook 推送按钮
+    const webhookBtn = document.getElementById('webhook-btn');
+    if (webhookBtn) {
+        webhookBtn.addEventListener('click', () => showWebhookPushModal());
+    }
+    
     // 键盘快捷键支持
     document.addEventListener('keydown', (e) => {
         // ESC 关闭模态框
@@ -928,6 +1109,8 @@ function setupEventListeners() {
             if (adminModal) adminModal.style.display = 'none';
             const heatmapModal = document.getElementById('heatmap-modal');
             if (heatmapModal) heatmapModal.style.display = 'none';
+            const conflictModal = document.getElementById('conflict-modal');
+            if (conflictModal) conflictModal.style.display = 'none';
         }
         
         // Ctrl/Cmd + S 保存项目
@@ -1094,7 +1277,7 @@ function setupEventListeners() {
     }
     
     // 保存设置按钮
-    saveSettingsBtn.addEventListener('click', saveSettings);
+    if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveSettings);
 
     // 添加职能按钮
     if (addRoleCategoryBtn) {
@@ -1108,6 +1291,17 @@ function setupEventListeners() {
             window.__currentSettings = settings;
             roleCategories = cats;
             renderRoleSettings(settings);
+            initAnimalSelects(document.getElementById('admin-modal'));
+        });
+    }
+
+    if (addProjectTypeBtn) {
+        addProjectTypeBtn.addEventListener('click', () => {
+            const types = getProjectTypes();
+            const newType = `新类型${types.length + 1}`;
+            types.push(newType);
+            updateProjectTypeSelect(types);
+            renderProjectTypes();
         });
     }
 
@@ -1185,19 +1379,19 @@ function setupEventListeners() {
     }
     
     // 数据导出按钮
-    exportDataBtn.addEventListener('click', exportAllData);
+    if (exportDataBtn) exportDataBtn.addEventListener('click', exportAllData);
     
     // 数据导入按钮
-    importDataBtn.addEventListener('click', () => {
+    if (importDataBtn) importDataBtn.addEventListener('click', () => {
         importFileInput.click();
     });
     
     // 文件选择事件
-    importFileInput.addEventListener('change', handleImportFile);
+    if (importFileInput) importFileInput.addEventListener('change', handleImportFile);
 
-    closeBackupPreviewBtn.addEventListener('click', closeBackupPreviewModal);
-    cancelBackupRestoreBtn.addEventListener('click', closeBackupPreviewModal);
-    confirmBackupRestoreBtn.addEventListener('click', async () => {
+    if (closeBackupPreviewBtn) closeBackupPreviewBtn.addEventListener('click', closeBackupPreviewModal);
+    if (cancelBackupRestoreBtn) cancelBackupRestoreBtn.addEventListener('click', closeBackupPreviewModal);
+    if (confirmBackupRestoreBtn) confirmBackupRestoreBtn.addEventListener('click', async () => {
         if (!pendingRestorePath) {
             return;
         }
@@ -1220,15 +1414,15 @@ function setupEventListeners() {
     
     // 添加新选项按钮
     // 日期选择功能
-    selectDateBtn.addEventListener('click', showDatePicker);
-    projectDateInput.addEventListener('click', showDatePicker);
+    if (selectDateBtn) selectDateBtn.addEventListener('click', showDatePicker);
+    if (projectDateInput) projectDateInput.addEventListener('click', showDatePicker);
     
     // 日期选择器事件
-    closeDatePickerBtn.addEventListener('click', () => {
+    if (closeDatePickerBtn) closeDatePickerBtn.addEventListener('click', () => {
         datePickerModal.style.display = 'none';
     });
     
-    prevMonthBtn.addEventListener('click', () => {
+    if (prevMonthBtn) prevMonthBtn.addEventListener('click', () => {
         currentMonth--;
         if (currentMonth < 0) {
             currentMonth = 11;
@@ -1237,7 +1431,7 @@ function setupEventListeners() {
         renderCalendar();
     });
     
-    nextMonthBtn.addEventListener('click', () => {
+    if (nextMonthBtn) nextMonthBtn.addEventListener('click', () => {
         currentMonth++;
         if (currentMonth > 11) {
             currentMonth = 0;
@@ -1246,41 +1440,41 @@ function setupEventListeners() {
         renderCalendar();
     });
     
-    confirmDateBtn.addEventListener('click', confirmDateSelection);
+    if (confirmDateBtn) confirmDateBtn.addEventListener('click', confirmDateSelection);
     
-    cancelDateBtn.addEventListener('click', () => {
+    if (cancelDateBtn) cancelDateBtn.addEventListener('click', () => {
         datePickerModal.style.display = 'none';
     });
     
     // 点击模态框外部关闭日期选择器
-    datePickerModal.addEventListener('click', (e) => {
+    if (datePickerModal) datePickerModal.addEventListener('click', (e) => {
         if (e.target === datePickerModal) {
             datePickerModal.style.display = 'none';
         }
     });
     
     // 表单提交
-    projectForm.addEventListener('submit', (e) => {
+    if (projectForm) projectForm.addEventListener('submit', (e) => {
         e.preventDefault();
         saveProject();
     });
     
     // 图片导出模态框事件
-    closeExportBtn.addEventListener('click', () => {
+    if (closeExportBtn) closeExportBtn.addEventListener('click', () => {
         exportModal.style.display = 'none';
     });
     
-    downloadImageBtn.addEventListener('click', downloadImage);
+    if (downloadImageBtn) downloadImageBtn.addEventListener('click', downloadImage);
     
     // 添加在新标签页打开图片事件
-    openInNewTabBtn.addEventListener('click', openImageInNewTab);
+    if (openInNewTabBtn) openInNewTabBtn.addEventListener('click', openImageInNewTab);
     
-    cancelExportBtn.addEventListener('click', () => {
+    if (cancelExportBtn) cancelExportBtn.addEventListener('click', () => {
         exportModal.style.display = 'none';
     });
     
     // 点击模态框外部关闭图片导出模态框
-    exportModal.addEventListener('click', (e) => {
+    if (exportModal) exportModal.addEventListener('click', (e) => {
         if (e.target === exportModal) {
             exportModal.style.display = 'none';
         }
@@ -1307,6 +1501,10 @@ function setupEventListeners() {
         const heatmapModal = document.getElementById('heatmap-modal');
         if (heatmapModal && e.target === heatmapModal) {
             heatmapModal.style.display = 'none';
+        }
+        const conflictModal = document.getElementById('conflict-modal');
+        if (conflictModal && e.target === conflictModal) {
+            conflictModal.style.display = 'none';
         }
     });
 }
@@ -1760,9 +1958,11 @@ function setupBackupEvents() {
 }
 
 // ── 管理员设置 Modal ──
-function showAdminModal() {
+async function showAdminModal() {
     const modal = document.getElementById('admin-modal');
     if (!modal) return;
+
+    modal.style.display = 'block';
 
     const passwordSection = document.getElementById('admin-password-section');
     const unlockedContent = document.getElementById('admin-unlocked-content');
@@ -1774,11 +1974,16 @@ function showAdminModal() {
     if (adminPassword) {
         passwordSection.style.display = 'none';
         unlockedContent.style.display = 'flex';
+        const settings = window.__currentSettings || await settingAPI.getSettings();
+        renderRoleSettings(settings);
+        updateProjectFormOptions();
         setupBackupEvents();
         loadBackupList();
         loadAccessSettings();
         loadHistoryRecords();
         loadWebhookSettings();
+        await loadDataManagement();
+        initAnimalSelects(document.getElementById('admin-modal'));
     } else {
         passwordSection.style.display = 'block';
         unlockedContent.style.display = 'none';
@@ -1804,12 +2009,20 @@ function showAdminModal() {
                     adminPassword = pwd;
                     passwordSection.style.display = 'none';
                     unlockedContent.style.display = 'flex';
+                    const settings = await settingAPI.getSettings();
+                    window.__currentSettings = settings;
+                    roleCategories = settings.roleCategories || [];
+                    renderRoleSettings(settings);
+                    renderProjectTypes();
+                    updateProjectFormOptions();
                     setupBackupEvents();
                     loadBackupList();
                     loadAccessSettings();
                     loadHistoryRecords();
                     loadWebhookSettings();
                     showToast('解锁成功', 'success');
+                    await loadDataManagement();
+                    initAnimalSelects(document.getElementById('admin-modal'));
                 } else {
                     showToast('密码错误', 'error');
                 }
@@ -1858,6 +2071,108 @@ function showAdminModal() {
     }
 
     modal.style.display = 'block';
+}
+
+// ── 冲突预警 Modal ──
+async function showConflictModal() {
+    const modal = document.getElementById('conflict-modal');
+    const content = document.getElementById('conflict-content');
+    if (!modal || !content) return;
+
+    // 绑定关闭按钮
+    const closeBtn = document.getElementById('close-conflict');
+    if (closeBtn && !closeBtn.dataset.bound) {
+        closeBtn.dataset.bound = '1';
+        closeBtn.addEventListener('click', () => { modal.style.display = 'none'; });
+    }
+
+    const weekDates = getWeekDates(currentMonday);
+    const start = formatDate(weekDates[0]);
+    const end = formatDate(weekDates[6]);
+
+    content.innerHTML = '<p style="text-align:center;color:#999;">正在检测冲突...</p>';
+    modal.style.display = 'block';
+
+    try {
+        const result = await apiClient.getConflicts(start, end);
+        const conflicts = result.conflicts || [];
+
+        if (conflicts.length === 0) {
+            content.innerHTML = '<div style="text-align:center;padding:24px;"><span style="font-size:48px;">✅</span><p style="margin-top:12px;color:#6fba2c;font-weight:700;">本周无人员冲突</p></div>';
+            return;
+        }
+
+        let html = `<p style="margin-bottom:12px;color:#e05a5a;font-weight:700;">发现 ${conflicts.length} 个冲突：</p>`;
+        conflicts.forEach((c, ci) => {
+            const severityColor = c.severity === 'high' ? '#e05a5a' : '#dba90e';
+            html += `<div class="conflict-item-card" data-date="${c.date}" style="border:1.5px solid ${severityColor}40;border-radius:14px;padding:12px;margin-bottom:10px;background:${severityColor}08;cursor:pointer;transition:all 0.2s;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div style="flex:1;" class="conflict-jump" data-date="${c.date}">
+                        <div style="font-weight:700;color:${severityColor};">${escapeHtml(c.person)}（${escapeHtml(c.role)}）— ${c.date}</div>
+                        <div style="font-size:12px;color:#666;margin-top:4px;">同时参与 ${c.count} 个项目</div>
+                    </div>
+                </div>
+                <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;">`;
+            c.projects.forEach((projName, pi) => {
+                html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,0.6);border-radius:8px;font-size:12px;">
+                    <span class="conflict-jump" data-date="${c.date}" style="cursor:pointer;flex:1;color:#794f27;font-weight:600;">${escapeHtml(projName)}</span>
+                    <button class="conflict-delete-btn" data-date="${c.date}" data-project="${escapeAttr(projName)}" style="background:none;border:none;color:#e05a5a;cursor:pointer;font-size:16px;padding:2px 6px;border-radius:6px;" title="删除此项目">×</button>
+                </div>`;
+            });
+            html += '</div></div>';
+        });
+        content.innerHTML = html;
+
+        content.querySelectorAll('.conflict-jump').forEach(el => {
+            el.addEventListener('click', () => {
+                const date = el.dataset.date;
+                if (date) {
+                    const d = new Date(date);
+                    currentMonday = getMonday(d);
+                    updateWeekDisplay();
+                    renderSchedule();
+                    switchView('week');
+                    modal.style.display = 'none';
+                    setTimeout(() => {
+                        const dayId = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'][d.getDay() === 0 ? 6 : d.getDay() - 1];
+                        const col = document.getElementById(dayId);
+                        if (col) col.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
+                }
+            });
+        });
+
+        content.querySelectorAll('.conflict-delete-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const date = btn.dataset.date;
+                const projName = btn.dataset.project;
+                if (!date || !projName) return;
+                if (!confirm(`确定删除 ${date} 的项目「${projName}」？`)) return;
+                try {
+                    const schedules = scheduleData[date] || [];
+                    const idx = schedules.findIndex(p => p.name === projName);
+                    if (idx !== -1) {
+                        schedules.splice(idx, 1);
+                        if (schedules.length === 0) {
+                            await scheduleAPI.deleteSchedule(date);
+                            delete scheduleData[date];
+                        } else {
+                            await scheduleAPI.saveSchedule({ date, projects: schedules });
+                            scheduleData[date] = schedules;
+                        }
+                        renderSchedule();
+                        showToast(`已删除「${projName}」`, 'success');
+                        showConflictModal();
+                    }
+                } catch (err) {
+                    showToast('删除失败: ' + err.message, 'error');
+                }
+            });
+        });
+    } catch (error) {
+        content.innerHTML = `<p style="color:#e05a5a;">检测失败: ${error.message}</p>`;
+    }
 }
 
 // ── 热力图 Modal ──
@@ -2094,6 +2409,220 @@ let webhookPushMode = null; // 'daily' or 'weekly'
 let webhookSelectedDate = null;
 let webhookSelectedRange = null;
 let webhookTemplatePresets = null; // 预设模板缓存
+
+// ── 数据管理 ──
+let _dataMgmtBound = false;
+async function loadDataManagement() {
+    const ROLE_COLORS = { director: '#3B82F6', photographer: '#10B981', production: '#F59E0B', rd: '#8B5CF6', operational: '#EC4899', audio: '#06B6D4', business: '#F97316', location: '#794f27' };
+
+    let settings;
+    try {
+        settings = await settingAPI.getSettings();
+        window.__currentSettings = settings;
+        roleCategories = settings.roleCategories || [];
+    } catch (e) {
+        settings = window.__currentSettings || {};
+    }
+    const cats = settings.roleCategories || [];
+
+    function getAllPersons() {
+        const persons = [];
+        const seen = new Set();
+        cats.forEach(cat => {
+            if (cat.key === 'location') return;
+            const optsKey = cat.optionsKey || `common${cat.key.charAt(0).toUpperCase() + cat.key.slice(1)}s`;
+            const customOpts = (settings.customRoleOptions || {})[cat.key] || [];
+            const names = customOpts.length ? customOpts : (settings[optsKey] || []);
+            names.forEach(name => {
+                const k = `${name}|${cat.key}`;
+                if (!seen.has(k)) {
+                    seen.add(k);
+                    persons.push({ name, roleKey: cat.key, roleLabel: cat.label, color: ROLE_COLORS[cat.key] || '#999' });
+                }
+            });
+        });
+        return persons;
+    }
+
+    function renderPersonCards(containerId, selectId) {
+        const container = document.getElementById(containerId);
+        const select = document.getElementById(selectId);
+        if (!container || !select) return;
+        const persons = getAllPersons();
+        container.innerHTML = '';
+        const opts = ['<option value="">-- 选择人员 --</option>'];
+        persons.forEach(p => {
+            const card = document.createElement('span');
+            card.className = 'person-card-item';
+            card.dataset.value = `${p.name}|${p.roleKey}`;
+            card.innerHTML = `<span class="person-card-dot" style="background:${p.color}"></span>${p.name}<span style="font-size:10px;color:#9f927d;">${p.roleLabel}</span>`;
+            card.addEventListener('click', () => {
+                container.querySelectorAll('.person-card-item').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                select.value = card.dataset.value;
+            });
+            container.appendChild(card);
+            opts.push(`<option value="${p.name}|${p.roleKey}">${p.name} (${p.roleLabel})</option>`);
+        });
+        select.innerHTML = opts.join('');
+    }
+
+    renderPersonCards('rename-source-list', 'rename-source-select');
+    renderPersonCards('transfer-source-list', 'transfer-source-select');
+    renderPersonCards('transfer-target-list', 'transfer-target-select');
+
+    if (!_dataMgmtBound) {
+        _dataMgmtBound = true;
+
+        document.querySelectorAll('.data-mgmt-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.data-mgmt-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.data-sub-panel').forEach(p => p.style.display = 'none');
+                tab.classList.add('active');
+                const panel = document.getElementById(`data-sub-${tab.dataset.sub}`);
+                if (panel) panel.style.display = 'block';
+            });
+        });
+
+        document.getElementById('rename-execute-btn')?.addEventListener('click', async () => {
+            const sourceVal = document.getElementById('rename-source-select').value;
+            const sourceCustom = document.getElementById('rename-source-custom')?.value.trim() || '';
+            const newName = document.getElementById('rename-target-input').value.trim();
+
+            let oldName, roleKey, roleLabel;
+            if (sourceCustom) {
+                oldName = sourceCustom;
+                roleKey = '';
+                roleLabel = '全部角色';
+            } else if (sourceVal) {
+                [oldName, roleKey] = sourceVal.split('|');
+                roleLabel = cats.find(c => c.key === roleKey)?.label || roleKey;
+            } else {
+                showToast('请选择或输入要替换的人员', 'warning');
+                return;
+            }
+            if (!newName) { showToast('请输入新姓名', 'warning'); return; }
+            if (oldName === newName) { showToast('新旧姓名相同', 'warning'); return; }
+
+            const targetRoles = roleKey ? [roleKey] : cats.filter(c => c.key !== 'location').map(c => c.key);
+
+            if (!confirm(`确认将「${oldName}」${roleKey ? '（' + roleLabel + '）' : '（全部角色）'}替换为「${newName}」？\n\n此操作将修改所有历史排期数据和常用项设置，支持并列人名自动拆分。`)) return;
+
+            try {
+                const allSchedules = await scheduleAPI.getSchedules();
+                let changeCount = 0;
+                const SEPARATORS = ['、', '/', '，', ',', '；', ';'];
+
+                function replaceInField(value, old, replacement) {
+                    if (!value || typeof value !== 'string') return { changed: false, result: value };
+                    const trimmed = value.trim();
+                    if (trimmed === old) return { changed: true, result: replacement };
+                    for (const sep of SEPARATORS) {
+                        if (trimmed.includes(sep)) {
+                            const parts = trimmed.split(sep).map(s => s.trim());
+                            const idx = parts.indexOf(old);
+                            if (idx !== -1) {
+                                parts[idx] = replacement;
+                                return { changed: true, result: parts.join(sep) };
+                            }
+                        }
+                    }
+                    return { changed: false, result: value };
+                }
+
+                for (const [date, projects] of Object.entries(allSchedules)) {
+                    let changed = false;
+                    projects.forEach(proj => {
+                        targetRoles.forEach(rk => {
+                            const res = replaceInField(proj[rk], oldName, newName);
+                            if (res.changed) {
+                                proj[rk] = res.result;
+                                changed = true;
+                                changeCount++;
+                            }
+                        });
+                    });
+                    if (changed) {
+                        await scheduleAPI.saveSchedule({ date, projects });
+                    }
+                }
+
+                const freshSettings = await settingAPI.getSettings();
+                for (const rk of targetRoles) {
+                    const cat = cats.find(c => c.key === rk);
+                    if (!cat) continue;
+                    const optsKey = cat.optionsKey || `common${rk.charAt(0).toUpperCase() + rk.slice(1)}s`;
+                    const customOpts = (freshSettings.customRoleOptions || {})[rk] || [];
+                    const arr = customOpts.length ? customOpts : (freshSettings[optsKey] || []);
+                    const idx = arr.indexOf(oldName);
+                    if (idx !== -1) {
+                        arr[idx] = newName;
+                        if (customOpts.length) {
+                            await settingAPI.saveSettings({ customRoleOptions: { ...freshSettings.customRoleOptions, [rk]: arr } });
+                        } else {
+                            await settingAPI.saveSettings({ [optsKey]: arr });
+                        }
+                    }
+                }
+
+                showToast(`完成！共替换 ${changeCount} 条记录`, 'success');
+                scheduleData = await scheduleAPI.getSchedules();
+                renderSchedule();
+                loadDataManagement();
+                const preview = document.getElementById('rename-preview');
+                if (preview) {
+                    preview.className = 'data-preview show';
+                    preview.innerHTML = `<span style="color:#6fba2c;font-weight:700;">✓ 已将「${oldName}」（${roleLabel}）替换为「${newName}」，共 ${changeCount} 条记录（含并列人名自动拆分）</span>`;
+                }
+            } catch (err) {
+                showToast('操作失败: ' + err.message, 'error');
+            }
+        });
+
+        document.getElementById('transfer-execute-btn')?.addEventListener('click', async () => {
+            const sourceVal = document.getElementById('transfer-source-select').value;
+            const targetVal = document.getElementById('transfer-target-select').value;
+            if (!sourceVal) { showToast('请选择离职人员', 'warning'); return; }
+            if (!targetVal) { showToast('请选择交接人员', 'warning'); return; }
+            if (sourceVal === targetVal) { showToast('不能交接给自己', 'warning'); return; }
+
+            const [srcName, srcRole] = sourceVal.split('|');
+            const [tgtName, tgtRole] = targetVal.split('|');
+            const srcLabel = cats.find(c => c.key === srcRole)?.label || srcRole;
+            const tgtLabel = cats.find(c => c.key === tgtRole)?.label || tgtRole;
+
+            if (!confirm(`确认将「${srcName}」（${srcLabel}）的所有任务交接给「${tgtName}」（${tgtLabel}）？\n\n此操作将修改所有历史排期数据。`)) return;
+
+            try {
+                const allSchedules = await scheduleAPI.getSchedules();
+                let changeCount = 0;
+                for (const [date, projects] of Object.entries(allSchedules)) {
+                    let changed = false;
+                    projects.forEach(proj => {
+                        if (proj[srcRole] === srcName) {
+                            proj[srcRole] = tgtName;
+                            changed = true;
+                            changeCount++;
+                        }
+                    });
+                    if (changed) {
+                        await scheduleAPI.saveSchedule({ date, projects });
+                    }
+                }
+                showToast(`完成！共交接 ${changeCount} 条记录`, 'success');
+                scheduleData = await scheduleAPI.getSchedules();
+                renderSchedule();
+                const preview = document.getElementById('transfer-preview');
+                if (preview) {
+                    preview.className = 'data-preview show';
+                    preview.innerHTML = `<span style="color:#6fba2c;font-weight:700;">✓ 已将「${srcName}」（${srcLabel}）的 ${changeCount} 条任务交接给「${tgtName}」（${tgtLabel}）</span>`;
+                }
+            } catch (err) {
+                showToast('操作失败: ' + err.message, 'error');
+            }
+        });
+    }
+}
 
 function loadWebhookSettings() {
     const settings = window.__currentSettings || {};
@@ -2517,6 +3046,67 @@ function renderRoleSettings(settings) {
 }
 
 // 渲染项目表单中的动态职能字段
+function getProjectTypes() {
+    const select = document.getElementById('project-type');
+    if (!select) return [];
+    const types = [];
+    select.querySelectorAll('option').forEach(opt => {
+        if (opt.value) types.push(opt.value);
+    });
+    return types;
+}
+
+function renderProjectTypes() {
+    if (!projectTypesContainer) return;
+    const types = getProjectTypes();
+    projectTypesContainer.innerHTML = '';
+    types.forEach((type, index) => {
+        const item = document.createElement('div');
+        item.className = 'role-category-item';
+        item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:6px;';
+        item.innerHTML = `
+            <input type="text" class="role-label-input" data-index="${index}" value="${escapeHtml(type)}" style="flex:1;padding:6px 10px;border:2px solid rgba(170,166,157,0.3);border-radius:16px;font-size:14px;font-weight:600;font-family:'Nunito','Noto Sans SC',sans-serif;color:#794f27;">
+            <button type="button" class="role-category-remove" data-index="${index}" title="删除" style="background:none;border:none;color:#e05a5a;font-size:18px;cursor:pointer;padding:4px 8px;">×</button>
+        `;
+        projectTypesContainer.appendChild(item);
+    });
+
+    projectTypesContainer.querySelectorAll('.role-label-input').forEach(input => {
+        input.addEventListener('change', () => {
+            const idx = parseInt(input.dataset.index, 10);
+            const oldTypes = getProjectTypes();
+            const newTypes = [...oldTypes];
+            newTypes[idx] = input.value;
+            updateProjectTypeSelect(newTypes);
+        });
+    });
+
+    projectTypesContainer.querySelectorAll('.role-category-remove').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.index, 10);
+            const oldTypes = getProjectTypes();
+            const newTypes = oldTypes.filter((_, i) => i !== idx);
+            updateProjectTypeSelect(newTypes);
+            renderProjectTypes();
+            showToast('已删除项目类型', 'success');
+        });
+    });
+}
+
+function updateProjectTypeSelect(types) {
+    const select = document.getElementById('project-type');
+    if (!select) return;
+    const current = select.value;
+    select.innerHTML = '<option value="">请选择</option>';
+    types.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        select.appendChild(opt);
+    });
+    if (types.includes(current)) select.value = current;
+}
+
 function renderProjectRoleFields(settings, projectData) {
     if (!projectRoleFieldsDiv) return;
     projectRoleFieldsDiv.innerHTML = '';
@@ -3025,6 +3615,21 @@ async function handleDrop(e) {
     return false;
 }
 
+function exportViewAsImage(elementId, title) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    showToast('正在生成图片...', 'info');
+    html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#f8f8f0', logging: false }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `${title}_${formatDate(new Date())}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('图片已下载', 'success');
+    }).catch(() => {
+        showToast('图片生成失败', 'error');
+    });
+}
+
 // 显示导出模态框
 function showExportModal() {
     // 设置默认日期
@@ -3138,7 +3743,7 @@ function drawScheduleToCanvas() {
     const weekHeader = document.createElement('div');
     weekHeader.style.display = 'grid';
     weekHeader.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-    weekHeader.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    weekHeader.style.background = '#19c8b9';
     weekHeader.style.color = 'white';
 
     for (let i = 0; i < totalDays; i++) {
@@ -3184,26 +3789,28 @@ function drawScheduleToCanvas() {
                 // 强制使用不透明背景色，避免导出时发白
                 cleanCard.style.background = '#ffffff';
 
+                // 项目类型颜色匹配编辑页
+                const typeTag = cleanCard.querySelector('.project-type');
+                if (typeTag) {
+                    const typeColorMap = {
+                        'plane': { bg: '#82d5bb', color: '#2a6b5a' },
+                        'video': { bg: '#f8a6b2', color: '#a85565' },
+                        'live': { bg: '#f7cd67', color: '#7a6528' },
+                        'test': { bg: '#b77dee', color: '#fff' }
+                    };
+                    for (const [cls, colors] of Object.entries(typeColorMap)) {
+                        if (typeTag.classList.contains(cls)) {
+                            typeTag.style.background = colors.bg;
+                            typeTag.style.color = colors.color;
+                        }
+                    }
+                }
+
                 // 修复半透明背景色为不透明颜色
                 const staffRoles = cleanCard.querySelectorAll('.staff-role');
                 staffRoles.forEach(role => {
-                    if (role.classList.contains('director')) {
-                        role.style.background = '#e3f2fd';  // 替换 rgba(0, 113, 227, 0.1)
-                    } else if (role.classList.contains('photographer')) {
-                        role.style.background = '#f3e5f5';  // 替换 rgba(175, 82, 222, 0.1)
-                    } else if (role.classList.contains('production')) {
-                        role.style.background = '#e8f5e9';  // 替换 rgba(52, 199, 89, 0.1)
-                    } else if (role.classList.contains('rd')) {
-                        role.style.background = '#fff3e0';  // 替换 rgba(255, 149, 0, 0.1)
-                    } else if (role.classList.contains('operational')) {
-                        role.style.background = '#e3f2fd';  // 替换 rgba(90, 145, 255, 0.1)
-                    } else if (role.classList.contains('audio')) {
-                        role.style.background = '#fce4ec';  // 替换 rgba(255, 45, 85, 0.1)
-                    } else if (role.classList.contains('business')) {
-                        role.style.background = '#ede7f6';  // 替换 rgba(88, 86, 214, 0.1)
-                    } else if (role.classList.contains('start-time')) {
-                        role.style.background = '#f5f5f5';  // 替换 rgba(0, 0, 0, 0.06)
-                    }
+                    role.style.background = '#f0e8d8';
+                    role.style.color = '#794f27';
                 });
 
                 // 修复位置标签背景
@@ -3819,6 +4426,10 @@ function showNoticeModal(dateStr) {
             const canvas = await captureNotice();
             const dataUrl = canvas.toDataURL('image/png');
             const win = window.open('', '_blank');
+            if (!win) {
+                showToast('浏览器拦截了弹出窗口，请允许弹窗后重试', 'warning');
+                return;
+            }
             win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>通告单 ${dateLabel}</title><style>body{margin:0;display:flex;justify-content:center;background:#f0f0f0;}img{max-width:100%;}</style></head><body><img src="${dataUrl}"></body></html>`);
             win.document.close();
         } catch (err) {

@@ -218,25 +218,111 @@ body {
 }
 
 /* ── 输入框样式 ── */
-input, select, textarea {
-    font-family: var(--animal-font);
-    border: 2px solid var(--animal-border);
-    border-radius: var(--animal-radius-sm);
+input, textarea {
+    font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+    border: 2px solid #d4c4a8;
+    border-radius: 16px;
     padding: 10px 14px;
     background: white;
-    color: var(--animal-text);
-    transition: all var(--animal-motion-fast) var(--animal-motion-ease);
+    color: #794f27;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     font-size: 14px;
 }
 
-input:focus, select:focus, textarea:focus {
+input:focus, textarea:focus {
     outline: none;
-    border-color: var(--animal-primary);
-    box-shadow: 0 0 0 3px var(--animal-primary-bg);
+    border-color: #19c8b9;
+    box-shadow: 0 0 0 3px rgba(25, 200, 185, 0.15);
 }
 
 input::placeholder, textarea::placeholder {
-    color: var(--animal-text-disabled);
+    color: #c4b89e;
+}
+
+/* ── 日期选择器统一样式 ── */
+input[type="date"] {
+    cursor: pointer;
+    position: relative;
+    border: 2px solid #d4c4a8;
+    border-radius: 16px;
+    padding: 10px 14px;
+    background: white;
+    color: #794f27;
+    font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+    font-size: 14px;
+    min-width: 160px;
+}
+
+input[type="date"]:hover {
+    border-color: #19c8b9;
+    box-shadow: 0 2px 4px rgba(61, 52, 40, 0.06);
+}
+
+input[type="date"]:focus {
+    outline: none;
+    border-color: #19c8b9;
+    box-shadow: 0 0 0 3px rgba(25, 200, 185, 0.15);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+/* ── Animal Island 风格 Select ── */
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    max-width: 100%;
+    height: var(--animal-height-base, 40px);
+    padding: 0 36px 0 var(--animal-spacing-lg, 16px);
+    font-family: var(--animal-font-family, 'Nunito', 'Noto Sans SC', sans-serif);
+    font-size: var(--animal-font-size-base, 14px);
+    font-weight: 600;
+    color: var(--animal-text-color, #794f27);
+    background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239f927d' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") right 10px center / 18px 18px no-repeat;
+    border: var(--animal-border-width, 2px) solid var(--animal-border-color, #aaa69d);
+    border-radius: var(--animal-border-radius-base, 18px);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    box-shadow: var(--animal-shadow-sm, 0 2px 4px rgba(61, 52, 40, 0.06));
+}
+
+select:hover {
+    border-color: var(--animal-border-color-hover, #827157);
+    box-shadow: var(--animal-shadow-base, 0 3px 10px rgba(61, 52, 40, 0.1));
+    transform: translateY(-1px);
+}
+
+select:focus {
+    border-color: var(--animal-primary-color, #19c8b9);
+    box-shadow: 0 0 0 3px var(--animal-primary-color-bg, rgba(25, 200, 185, 0.15));
+    transform: none;
+}
+
+select:active {
+    transform: translateY(0);
+    box-shadow: var(--animal-shadow-sm, 0 2px 4px rgba(61, 52, 40, 0.06));
+}
+
+select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--animal-bg-color-disabled, #f0ece2);
+}
+
+select option {
+    background: white;
+    color: var(--animal-text-color, #794f27);
+    padding: 8px 12px;
+    border-radius: 8px;
 }
 
 /* ── 模态框样式 ── */

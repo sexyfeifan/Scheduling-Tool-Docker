@@ -5,13 +5,14 @@
 
 const express = require('express');
 const logger = require('../logger');
+const { isValidDateString, generateId } = require('../utils/normalize');
 
 function createBatchRouter({ requireEditAccess, sendUpdateToClients, store }) {
   const router = express.Router();
 
   router.post('/', requireEditAccess, (req, res) => {
     try {
-      const { action, projectIds, params } = req.body;
+      const { action, projectIds, params } = req.body || {};
 
       if (!action || !Array.isArray(projectIds) || projectIds.length === 0) {
         return res.status(400).json({ message: '缺少必要参数: action, projectIds' });
@@ -31,8 +32,8 @@ function createBatchRouter({ requireEditAccess, sendUpdateToClients, store }) {
         }
         case 'move': {
           const targetDate = params && params.targetDate;
-          if (!targetDate) {
-            return res.status(400).json({ message: '移动操作需要 targetDate 参数' });
+          if (!targetDate || !isValidDateString(targetDate)) {
+            return res.status(400).json({ message: '移动操作需要有效的 targetDate 参数 (YYYY-MM-DD)' });
           }
           const movedProjects = [];
           allSchedules.forEach(item => {
@@ -43,7 +44,7 @@ function createBatchRouter({ requireEditAccess, sendUpdateToClients, store }) {
           // 添加到目标日期
           let targetItem = allSchedules.find(s => s.date === targetDate);
           if (!targetItem) {
-            targetItem = { id: `sch_${Date.now()}`, date: targetDate, projects: [] };
+            targetItem = { id: generateId('sch'), date: targetDate, projects: [] };
             allSchedules.push(targetItem);
           }
           targetItem.projects.push(...movedProjects);

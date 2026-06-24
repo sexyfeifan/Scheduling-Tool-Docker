@@ -1,40 +1,34 @@
 /**
  * 人员排期视图模块
  * 以人员为行、日期为列的矩阵，显示每个人的排期
+ * 显示设置中所有人员（含无排期的），按 roleCategories 顺序排列
  */
 
 import { escapeHtml, escapeAttr, formatDate, getMonday } from './utils.js';
 
-/**
- * 创建人员排期视图模块
- */
+const ROLE_COLORS = {
+  director: '#3B82F6',
+  photographer: '#10B981',
+  production: '#F59E0B',
+  rd: '#8B5CF6',
+  operational: '#EC4899',
+  audio: '#06B6D4',
+  business: '#F97316',
+  location: '#794f27'
+};
+
 export function createPersonnelViewModule({ api, onJumpToWeek }) {
   let currentDate = new Date();
   let cachedData = {};
-  let viewMode = 'week'; // 'week' | 'month'
-  const ROLES = [
-    { key: 'director', label: '导演', color: '#3B82F6' },
-    { key: 'photographer', label: '摄影师', color: '#10B981' },
-    { key: 'production', label: '制片', color: '#F59E0B' },
-    { key: 'rd', label: '研发', color: '#8B5CF6' },
-    { key: 'operational', label: '运营', color: '#EC4899' },
-    { key: 'audio', label: '录音', color: '#06B6D4' },
-    { key: 'business', label: '商务', color: '#F97316' }
-  ];
+  let viewMode = 'week';
 
   function init() {
     const prevBtn = document.getElementById('personnel-prev');
     const nextBtn = document.getElementById('personnel-next');
-    const todayBtn = document.getElementById('personnel-today');
-    const toggleBtn = document.getElementById('personnel-toggle');
     if (prevBtn) prevBtn.addEventListener('click', () => { shiftDate(-1); render(); });
     if (nextBtn) nextBtn.addEventListener('click', () => { shiftDate(1); render(); });
-    if (todayBtn) todayBtn.addEventListener('click', () => { currentDate = new Date(); render(); });
-    if (toggleBtn) toggleBtn.addEventListener('click', () => {
-      viewMode = viewMode === 'week' ? 'month' : 'week';
-      toggleBtn.textContent = viewMode === 'week' ? '📅 切月视图' : '📅 切周视图';
-      render();
-    });
+    const toggleScheduled = document.getElementById('personnel-scheduled-only');
+    if (toggleScheduled) toggleScheduled.addEventListener('change', () => render());
   }
 
   function shiftDate(direction) {
@@ -46,7 +40,7 @@ export function createPersonnelViewModule({ api, onJumpToWeek }) {
   }
 
   async function render() {
-    const container = document.getElementById('personnel-grid');
+    const container = document.getElementById('personnel-view-table');
     if (!container) return;
 
     const startDate = getMonday(new Date(currentDate));
@@ -57,11 +51,9 @@ export function createPersonnelViewModule({ api, onJumpToWeek }) {
       d.setDate(d.getDate() + i);
       dates.push(formatDate(d));
     }
-
     const endDate = dates[dates.length - 1];
 
-    // 更新标题
-    const title = document.getElementById('personnel-display');
+    const title = document.getElementById('personnel-view-title');
     if (title) {
       if (viewMode === 'week') {
         title.textContent = `${dates[0]} ~ ${dates[6]}`;
@@ -70,76 +62,131 @@ export function createPersonnelViewModule({ api, onJumpToWeek }) {
       }
     }
 
-    // 获取数据
+    let settings = null;
+    try {
+      settings = await api.getSettings();
+    } catch (e) {
+      console.error('[personnel] 获取设置失败:', e);
+    }
+
     try {
       const response = await api.fetchSchedules(dates[0], endDate);
       cachedData = {};
-      if (Array.isArray(response)) {
-        response.forEach(item => { cachedData[item.date] = item.projects || []; });
+      if (response && typeof response === 'object') {
+        if (Array.isArray(response)) {
+          response.forEach(item => { cachedData[item.date] = item.projects || []; });
+        } else {
+          Object.keys(response).forEach(date => {
+            cachedData[date] = Array.isArray(response[date]) ? response[date] : [];
+          });
+        }
       }
     } catch (e) {
       console.error('[personnel] 获取数据失败:', e);
     }
 
-    // 收集所有出现的人员
-    const personMap = new Map(); // name -> { role, count }
-    dates.forEach(date => {
-      (cachedData[date] || []).forEach(proj => {
-        ROLES.forEach(r => {
-          const name = proj[r.key];
-          if (name) {
-            const key = `${name}|${r.key}`;
-            if (!personMap.has(key)) {
-              personMap.set(key, { name, role: r.key, roleLabel: r.label, color: r.color, count: 0 });
-            }
-            personMap.get(key).count++;
+    const roleCategories = (settings && settings.roleCategories) || [];
+    const customRoleOptions = (settings && settings.customRoleOptions) || {};
+
+    const persons = [];
+    const seen = new Set();
+
+    roleCategories.forEach(cat => {
+      if (cat.key === 'location') return;
+      const optionsKey = cat.optionsKey || `common${cat.key.charAt(0).toUpperCase() + cat.key.slice(1)}s`;
+      let names = customRoleOptions[cat.key] || settings?.[optionsKey] || [];
+      if (!Array.isArray(names)) names = [];
+
+      if (names.length === 0) {
+        const discoveredNames = new Set();
+        dates.forEach(date => {
+          (cachedData[date] || []).forEach(proj => {
+            const val = proj[cat.key];
+            if (val && !seen.has(`${val}|${cat.key}`)) discoveredNames.add(val);
+          });
+        });
+        discoveredNames.forEach(name => {
+          const k = `${name}|${cat.key}`;
+          if (!seen.has(k)) {
+            seen.add(k);
+            persons.push({ name, roleKey: cat.key, roleLabel: cat.label, color: ROLE_COLORS[cat.key] || '#999' });
           }
         });
-      });
+      } else {
+        names.forEach(name => {
+          const k = `${name}|${cat.key}`;
+          if (!seen.has(k)) {
+            seen.add(k);
+            persons.push({ name, roleKey: cat.key, roleLabel: cat.label, color: ROLE_COLORS[cat.key] || '#999' });
+          }
+        });
+      }
     });
 
-    const persons = Array.from(personMap.values()).sort((a, b) => b.count - a.count);
+    const scheduledOnly = document.getElementById('personnel-scheduled-only');
+    const filterScheduled = scheduledOnly && scheduledOnly.checked;
+
+    if (filterScheduled) {
+      const filtered = persons.filter(person => {
+        return dates.some(date => {
+          return (cachedData[date] || []).some(proj => proj[person.roleKey] === person.name);
+        });
+      });
+      persons.length = 0;
+      filtered.forEach(p => persons.push(p));
+    }
 
     if (persons.length === 0) {
-      container.innerHTML = '<p style="color:#999;padding:24px;text-align:center">当前时间范围内没有排期数据</p>';
+      container.innerHTML = filterScheduled
+        ? '<p style="color:#999;padding:24px;text-align:center">当前时间范围内没有排期人员</p>'
+        : '<p style="color:#999;padding:24px;text-align:center">请在设置中配置人员列表</p>';
       return;
     }
 
-    // 构建矩阵表格
     let html = '<div class="personnel-matrix">';
 
-    // 表头：日期
-    html += '<div class="personnel-header">';
+    const nameColWidth = '140px';
+    const gridCols = `${nameColWidth} repeat(${dates.length}, 1fr)`;
+
+    html += `<div class="personnel-header" style="grid-template-columns:${gridCols}">`;
     html += '<div class="personnel-header-cell personnel-name-col">人员</div>';
     dates.forEach(date => {
       const d = new Date(date);
       const isWeekend = d.getDay() === 0 || d.getDay() === 6;
       const isToday = date === formatDate(new Date());
-      const dayLabel = `${d.getMonth() + 1}/${d.getDate()}\n${'日一二三四五六'[d.getDay()]}`;
+      const dayLabel = `${d.getMonth() + 1}/${d.getDate()} ${'日一二三四五六'[d.getDay()]}`;
       html += `<div class="personnel-header-cell ${isWeekend ? 'weekend' : ''} ${isToday ? 'today' : ''}" title="${date}">${dayLabel}</div>`;
     });
     html += '</div>';
 
-    // 每个人员一行
     persons.forEach(person => {
-      html += '<div class="personnel-row">';
-      html += `<div class="personnel-name-cell"><span class="person-role-dot" style="background:${person.color}"></span>${escapeHtml(person.name)}<span class="person-role-label">${person.roleLabel}</span></div>`;
+      let scheduleCount = 0;
+      dates.forEach(date => {
+        (cachedData[date] || []).forEach(proj => {
+          if (proj[person.roleKey] === person.name) scheduleCount++;
+        });
+      });
+
+      html += `<div class="personnel-row" style="grid-template-columns:${gridCols}">`;
+      html += `<div class="personnel-name-cell"><span class="person-role-dot" style="background:${person.color}"></span>${escapeHtml(person.name)}<span class="person-role-label">${escapeHtml(person.roleLabel)}</span>`;
+      if (scheduleCount > 0) {
+        html += `<span class="person-schedule-count">${scheduleCount}</span>`;
+      }
+      html += '</div>';
 
       dates.forEach(date => {
-        const projects = (cachedData[date] || []).filter(p => p[person.role] === person.name);
+        const projects = (cachedData[date] || []).filter(p => p[person.roleKey] === person.name);
         const isToday = date === formatDate(new Date());
         const d = new Date(date);
         const isWeekend = d.getDay() === 0 || d.getDay() === 6;
 
         html += `<div class="personnel-cell ${isToday ? 'today' : ''} ${isWeekend ? 'weekend' : ''}" data-date="${date}">`;
-        if (projects.length > 0) {
-          projects.forEach(proj => {
-            const statusColor = STATUS_COLORS[proj.status] || '#94A3B8';
-            html += `<div class="personnel-project-tag" style="border-left:3px solid ${statusColor}" title="${escapeAttr(proj.name)} · ${proj.startTime || ''} · ${proj.status || '待确认'}">`;
-            html += escapeHtml(proj.name);
-            html += `</div>`;
-          });
-        }
+        projects.forEach(proj => {
+          const tc = TYPE_COLORS[proj.type] || { bg: '#82d5bb', color: '#2a6b5a' };
+          html += `<div class="personnel-project-tag" style="background:${tc.bg};color:${tc.color}" title="${escapeAttr(proj.name)} · ${proj.startTime || ''} · ${proj.type || ''}">`;
+          html += escapeHtml(proj.name);
+          html += '</div>';
+        });
         html += '</div>';
       });
 
@@ -148,17 +195,15 @@ export function createPersonnelViewModule({ api, onJumpToWeek }) {
 
     html += '</div>';
 
-    // 统计摘要
+    const totalSlots = dates.reduce((sum, d) => sum + (cachedData[d] || []).length, 0);
     html += '<div class="personnel-summary">';
     html += `<span>共 ${persons.length} 人</span>`;
     html += `<span>${dates.length} 天</span>`;
-    const totalSlots = dates.reduce((sum, d) => sum + (cachedData[d] || []).length, 0);
     html += `<span>${totalSlots} 个排期</span>`;
     html += '</div>';
 
     container.innerHTML = html;
 
-    // 绑定点击跳转
     container.querySelectorAll('.personnel-cell').forEach(cell => {
       cell.addEventListener('click', () => {
         if (onJumpToWeek) onJumpToWeek(cell.dataset.date);
@@ -169,11 +214,16 @@ export function createPersonnelViewModule({ api, onJumpToWeek }) {
   return { init, render };
 }
 
-// ── 工具函数 ──
-
 const STATUS_COLORS = {
   '待确认': '#94A3B8',
   '已确认': '#3B82F6',
   '已完成': '#10B981',
   '取消': '#EF4444'
+};
+
+const TYPE_COLORS = {
+  '平面': { bg: '#82d5bb', color: '#2a6b5a' },
+  '视频': { bg: '#f8a6b2', color: '#a85565' },
+  '直播': { bg: '#f7cd67', color: '#7a6528' },
+  '试做': { bg: '#b77dee', color: '#fff' }
 };

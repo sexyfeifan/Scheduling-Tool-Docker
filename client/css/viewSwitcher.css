@@ -497,35 +497,36 @@
   }
 }
 
-/* ── 月视图甘特图样式 ── */
-.month-gantt { padding: 12px; }
+/* ── 月视图日历样式 ── */
+.month-gantt { padding: 16px; overflow-x: auto; }
 .month-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  margin-bottom: 8px;
+  gap: 6px;
+  margin-bottom: 10px;
 }
 .month-header-cell {
   text-align: center;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: #794f27;
-  padding: 8px 0;
+  padding: 10px 0;
   font-family: 'Nunito', 'Noto Sans SC', sans-serif;
 }
 .month-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: 6px;
 }
 .month-cell {
-  min-height: 80px;
+  min-height: 130px;
   border: 2px solid rgba(170, 166, 157, 0.2);
   border-radius: 16px;
-  padding: 6px;
+  padding: 8px;
   cursor: pointer;
   transition: all 0.15s;
   background: white;
+  overflow: hidden;
 }
 .month-cell:hover { border-color: #19c8b9; box-shadow: 0 0 0 3px rgba(25, 200, 185, 0.1); }
 .month-cell.today { border-color: #19c8b9; background: rgba(25, 200, 185, 0.08); }
@@ -535,11 +536,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
-.month-day-number { font-size: 13px; font-weight: 600; color: #794f27; font-family: 'Nunito', 'Noto Sans SC', sans-serif; }
+.month-day-number { font-size: 15px; font-weight: 700; color: #794f27; font-family: 'Nunito', 'Noto Sans SC', sans-serif; }
 .month-project-count {
-  font-size: 10px;
+  font-size: 11px;
   background: #19c8b9;
   color: #fff;
   border-radius: 50px;
@@ -547,16 +548,26 @@
   font-weight: 700;
   font-family: 'Nunito', 'Noto Sans SC', sans-serif;
 }
-.month-gantt-bars { display: flex; flex-direction: column; gap: 2px; }
+.month-gantt-bars { display: flex; flex-direction: column; gap: 4px; }
 .month-gantt-bar {
-  height: 18px;
-  border-radius: 6px;
-  padding: 0 6px;
+  height: 24px;
+  border-radius: 12px;
+  padding: 0 10px;
   overflow: hidden;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
-.gantt-bar-name { font-size: 10px; color: #fff; line-height: 18px; font-family: 'Nunito', 'Noto Sans SC', sans-serif; font-weight: 600; }
-.month-gantt-more { font-size: 10px; color: #9f927d; padding: 0 6px; font-family: 'Nunito', 'Noto Sans SC', sans-serif; }
+.gantt-bar-name {
+  font-size: 11px;
+  color: #fff;
+  font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.month-gantt-more { font-size: 11px; color: #9f927d; padding: 2px 6px; font-family: 'Nunito', 'Noto Sans SC', sans-serif; }
 .month-legend {
   display: flex;
   gap: 16px;

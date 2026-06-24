@@ -1,5 +1,20 @@
 # Changelog
 
+## v2.65.0 (2026-06-23)
+
+### 🐛 Bug 修复
+- **批量操作崩溃修复**: `batch.js` 添加 `req.body` 空值保护，防止 `TypeError` 崩溃
+- **批量移动日期验证**: `targetDate` 现在使用 `isValidDateString()` 验证，防止注入无效日期
+- **Webhook 异步错误处理**: 所有 webhook 路由的 `store.readSettings()` 调用移入 try-catch，防止未处理的 Promise 拒绝导致进程崩溃
+- **前端 DOM 空值保护**: 所有 `getElementById().addEventListener()` 调用添加 null 检查，防止缺失元素导致应用启动崩溃
+- **弹窗阻止检测**: `window.open()` 添加 null 检查，弹窗被阻止时显示友好提示
+- **Webhook API 方法补全**: `api.js` 添加 `webhookPreview` 和 `webhookPush` 方法，修复 webhook 推送按钮无响应问题
+
+### 🔒 安全增强
+- **时序攻击防护**: 管理员密码验证改用 `timingSafeEqual()`，防止时序侧信道攻击
+- **长度泄露修复**: `timingSafeEqual()` 在长度不等时使用填充比较，不再泄露密码长度信息
+- **ID 生成统一**: 批量操作的 ID 生成改用 `generateId()` (含 `crypto.randomBytes`)，避免 `Date.now()` 碰撞
+
 ## v2.60.0 (2026-06-20)
 
 ### 🎨 视图增强

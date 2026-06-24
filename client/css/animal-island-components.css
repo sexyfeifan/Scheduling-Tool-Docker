@@ -100,9 +100,20 @@
 }
 
 .switch-checked {
-    background: #86d67a;
-    border-color: #6fba2c;
-    box-shadow: inset 0 2px 4px rgba(90, 158, 30, 0.2);
+    background: #f5c31c;
+    border-color: #dba90e;
+    box-shadow: inset 0 2px 4px rgba(219, 169, 14, 0.2);
+}
+
+.switch-input:checked + .switch {
+    background: #f5c31c;
+    border-color: #dba90e;
+    box-shadow: inset 0 2px 4px rgba(219, 169, 14, 0.2);
+}
+
+.switch-input:checked + .switch .handle {
+    left: calc(100% - 24px);
+    border-color: #dba90e;
 }
 
 .switch-disabled {
@@ -143,7 +154,7 @@
 
 .switch-checked .handle {
     left: calc(100% - 24px);
-    border-color: #6fba2c;
+    border-color: #dba90e;
 }
 
 .inner {
