@@ -79,15 +79,17 @@
 /* 位置标签 */
 .project-card .project-location {
     font-size: 12px;
-    color: #9f927d;
+    color: #794f27;
     margin: 8px 0;
-    padding: 6px 10px;
+    padding: 6px 12px;
     border-radius: 16px;
-    background: rgb(239, 235, 216);
+    background: #f0e8d8;
+    border: 1px solid #d4c4a8;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+    font-weight: 600;
 }
 
 /* 人员信息 */
@@ -118,10 +120,12 @@
 
 .staff-dot {
     display: inline-block;
-    width: 6px;
-    height: 6px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     flex-shrink: 0;
+    min-width: 7px;
+    min-height: 7px;
 }
 
 .staff-name {
@@ -152,14 +156,25 @@
 .project-card .project-type {
     display: inline-flex;
     align-items: center;
-    padding: 4px 12px;
+    gap: 4px;
+    padding: 3px 10px;
     border-radius: 50px;
     font-size: 11px;
     font-weight: 700;
     color: white;
     margin-top: 10px;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
     font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+    line-height: 1.4;
+}
+
+.project-type-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.6);
+    flex-shrink: 0;
 }
 
 .project-card .project-type.plane {

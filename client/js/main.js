@@ -1071,7 +1071,7 @@ function createProjectCard(project, dateStr, projectIndex) {
         ${staffInfo}
         <div class="project-location">📍 ${escapeHtml(project.location)}</div>
         <div>
-            <span class="project-type ${typeClass}">${escapeHtml(project.type)}</span>
+            <span class="project-type ${typeClass}"><span class="project-type-dot"></span>${escapeHtml(project.type)}</span>
         </div>
         <div class="card-actions">
             <button class="copy-btn" data-date="${escapeHtml(dateStr)}" data-index="${projectIndex}">📋 复制</button>
@@ -3694,111 +3694,7 @@ function exportViewAsImage(elementId, title) {
 }
 
 function exportWeekViewAsImage() {
-    const container = document.querySelector('.schedule-container');
-    const weekHeader = document.querySelector('.week-header');
-    if (!container) { showToast('排期容器未找到', 'error'); return; }
-
-    showToast('正在生成预览...', 'info');
-
-    const weekDates = getWeekDates(currentMonday);
-    const startM = weekDates[0].getMonth() + 1;
-    const startD = weekDates[0].getDate();
-    const endM = weekDates[6].getMonth() + 1;
-    const endD = weekDates[6].getDate();
-    const weekNum = getWeekNumber(weekDates[0]);
-    const rangeText = `${startM}月${startD}日 — ${endM}月${endD}日  第${weekNum}周`;
-
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'position:absolute;top:-9999px;left:0;background:#f8f8f0;padding:24px 28px;';
-
-    const titleDiv = document.createElement('div');
-    titleDiv.style.cssText = 'text-align:center;padding:12px 0 4px;font-size:24px;font-weight:700;color:#794f27;font-family:Nunito,Noto Sans SC,sans-serif;';
-    titleDiv.textContent = '罐头场通告排期';
-    wrapper.appendChild(titleDiv);
-
-    const rangeDiv = document.createElement('div');
-    rangeDiv.style.cssText = 'text-align:center;padding-bottom:16px;font-size:15px;color:#9f927d;font-family:Nunito,Noto Sans SC,sans-serif;font-weight:600;';
-    rangeDiv.textContent = rangeText;
-    wrapper.appendChild(rangeDiv);
-
-    if (weekHeader) {
-        const hClone = weekHeader.cloneNode(true);
-        const cs = window.getComputedStyle(weekHeader);
-        hClone.style.background = cs.background || '#19c8b9';
-        hClone.style.color = cs.color || '#fff';
-        hClone.style.display = cs.display || 'grid';
-        hClone.style.gridTemplateColumns = cs.gridTemplateColumns || '';
-        hClone.style.borderRadius = '12px 12px 0 0';
-        hClone.style.overflow = 'hidden';
-        hClone.querySelectorAll('button').forEach(btn => btn.remove());
-        wrapper.appendChild(hClone);
-    }
-
-    const cClone = container.cloneNode(true);
-    const cs = window.getComputedStyle(container);
-    cClone.style.display = cs.display || 'grid';
-    cClone.style.gridTemplateColumns = cs.gridTemplateColumns || '';
-    cClone.style.background = '#f8f8f0';
-    cClone.style.borderRadius = '0 0 12px 12px';
-
-    cClone.querySelectorAll('.delete-btn, .copy-btn, .add-btn, .notice-day-btn, .sort-day-btn').forEach(el => el.remove());
-    cClone.querySelectorAll('.day-column').forEach(col => {
-        col.classList.remove('today-highlight');
-        col.style.background = '#fff';
-    });
-
-    // 从原始卡片复制计算样式到克隆体，解决 html2canvas 看不到 CSS 规则的问题
-    const origCards = container.querySelectorAll('.project-card');
-    const clonedCards = cClone.querySelectorAll('.project-card');
-    clonedCards.forEach((card, idx) => {
-        const orig = origCards[idx];
-        if (!orig) return;
-        const origCS = window.getComputedStyle(orig);
-        card.style.cssText = origCS.cssText;
-        card.style.width = '100%';
-        card.style.marginBottom = '8px';
-        card.style.removeProperty('animation');
-        // 复制子元素样式
-        card.querySelectorAll('*').forEach((clone, ci) => {
-            const origChild = orig.querySelectorAll('*')[ci];
-            if (origChild) {
-                try { clone.style.cssText = window.getComputedStyle(origChild).cssText; } catch(e) {}
-            }
-        });
-    });
-
-    wrapper.appendChild(cClone);
-    document.body.appendChild(wrapper);
-
-    html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: '#f8f8f0', logging: false, allowTaint: true, windowWidth: 1400, width: wrapper.scrollWidth }).then(canvas => {
-        const range = `${formatDate(weekDates[0])}_${formatDate(weekDates[6])}`;
-        lastExportFileName = `通告排期_${range}.png`;
-        lastExportDataUrl = canvas.toDataURL('image/png');
-
-        const previewEl = document.getElementById('export-canvas');
-        if (previewEl) {
-            previewEl.style.display = 'block';
-            const maxW = 600;
-            const ratio = maxW / canvas.width;
-            previewEl.width = Math.round(canvas.width * ratio);
-            previewEl.height = Math.round(canvas.height * ratio);
-            const ctx = previewEl.getContext('2d');
-            ctx.drawImage(canvas, 0, 0, previewEl.width, previewEl.height);
-        }
-
-        const downloadBtn = document.getElementById('download-image');
-        const openBtn = document.getElementById('open-in-new-tab');
-        if (downloadBtn) { downloadBtn.disabled = false; downloadBtn.textContent = '下载图片'; }
-        if (openBtn) { openBtn.disabled = false; openBtn.textContent = '在新标签页打开'; }
-
-        if (exportModal) exportModal.style.display = 'block';
-        showToast('预览已生成', 'success');
-    }).catch(err => {
-        console.error('导出图片失败:', err);
-        showToast('图片生成失败: ' + (err.message || '未知错误'), 'error');
-    }).finally(() => {
-        if (wrapper.parentNode) document.body.removeChild(wrapper);
-    });
+    showExportModal();
 }
 
 // 显示导出模态框
@@ -3969,6 +3865,24 @@ function drawScheduleToCanvas() {
                             clone.style.cssText = cs.cssText;
                         } catch(e) {}
                     }
+                });
+
+                // 确保彩色圆点有明确的 inline 尺寸（html2canvas 对 CSS 类的尺寸不可靠）
+                cleanCard.querySelectorAll('.staff-dot').forEach(dot => {
+                    dot.style.width = '7px';
+                    dot.style.height = '7px';
+                    dot.style.minWidth = '7px';
+                    dot.style.minHeight = '7px';
+                    dot.style.borderRadius = '50%';
+                    dot.style.display = 'inline-block';
+                });
+                cleanCard.querySelectorAll('.project-type-dot').forEach(dot => {
+                    dot.style.width = '6px';
+                    dot.style.height = '6px';
+                    dot.style.borderRadius = '50%';
+                    dot.style.display = 'inline-block';
+                    dot.style.background = 'rgba(255,255,255,0.6)';
+                    dot.style.flexShrink = '0';
                 });
 
                 // 移除动画
