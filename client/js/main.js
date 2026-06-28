@@ -3746,8 +3746,25 @@ function exportWeekViewAsImage() {
         col.classList.remove('today-highlight');
         col.style.background = '#fff';
     });
-    cClone.querySelectorAll('.project-card').forEach(card => {
+
+    // 从原始卡片复制计算样式到克隆体，解决 html2canvas 看不到 CSS 规则的问题
+    const origCards = container.querySelectorAll('.project-card');
+    const clonedCards = cClone.querySelectorAll('.project-card');
+    clonedCards.forEach((card, idx) => {
+        const orig = origCards[idx];
+        if (!orig) return;
+        const origCS = window.getComputedStyle(orig);
+        card.style.cssText = origCS.cssText;
+        card.style.width = '100%';
+        card.style.marginBottom = '8px';
         card.style.removeProperty('animation');
+        // 复制子元素样式
+        card.querySelectorAll('*').forEach((clone, ci) => {
+            const origChild = orig.querySelectorAll('*')[ci];
+            if (origChild) {
+                try { clone.style.cssText = window.getComputedStyle(origChild).cssText; } catch(e) {}
+            }
+        });
     });
 
     wrapper.appendChild(cClone);
