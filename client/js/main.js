@@ -1034,14 +1034,14 @@ function createProjectCard(project, dateStr, projectIndex) {
     if (hasAnyRole) {
         staffInfo = '<div class="staff-info">';
         if (hasStartTime) {
-            staffInfo += `<div class="staff-row"><span class="staff-label">时间：</span><span class="staff-dot" style="background:#ffffff;border:1px solid #d4c4a8;">\u200B</span><span class="staff-name">${escapeHtml(project.startTime)}</span></div>`;
+            staffInfo += `<div class="staff-row"><span class="staff-label">时间：</span><span style="display:inline-block;width:7px;height:7px;min-width:7px;border-radius:50%;background:#ffffff;border:1px solid #d4c4a8;vertical-align:middle;">&nbsp;</span><span class="staff-name">${escapeHtml(project.startTime)}</span></div>`;
         }
         cats.forEach(cat => {
             const val = project[cat.key] || (project.customFields && project.customFields[cat.key]);
             if (val) {
                 const c = ROLE_STAFF_COLORS[cat.key] || '#999';
                 const names = String(val).split(/、|，|,|\//);
-                let namesHtml = names.map(n => `<span class="staff-dot" style="background:${c};">\u200B</span><span class="staff-name">${escapeHtml(n.trim())}</span>`).join(' ');
+                let namesHtml = names.map(n => `<span style="display:inline-block;width:7px;height:7px;min-width:7px;border-radius:50%;background:${c};vertical-align:middle;">&nbsp;</span><span class="staff-name">${escapeHtml(n.trim())}</span>`).join(' ');
                 staffInfo += `<div class="staff-row"><span class="staff-label">${escapeHtml(cat.label)}：</span>${namesHtml}</div>`;
             }
         });
