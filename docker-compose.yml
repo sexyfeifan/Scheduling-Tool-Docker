@@ -1,6 +1,6 @@
 services:
   scheduling-tool:
-    image: sexyfeifan/scheduling-tool:2.76
+    image: sexyfeifan/scheduling-tool:2.77
     container_name: scheduling-tool
     ports:
       - "3000:3000"
