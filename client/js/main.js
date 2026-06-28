@@ -3847,8 +3847,9 @@ function drawScheduleToCanvas() {
                 const projectCard = createProjectCard(project, dateStr, projectIndex);
                 const cleanCard = projectCard.cloneNode(true);
 
-                // 移除删除和复制按钮
+                // 从两边同时移除按钮，保证后续 querySelectorAll('*') 索引一致
                 cleanCard.querySelectorAll('.delete-btn, .copy-btn').forEach(el => el.remove());
+                projectCard.querySelectorAll('.delete-btn, .copy-btn').forEach(el => el.remove());
 
                 // 从原始卡片复制所有计算样式，确保导出样式与编辑页一致
                 const origCS = window.getComputedStyle(projectCard);
