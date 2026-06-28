@@ -1071,7 +1071,7 @@ function createProjectCard(project, dateStr, projectIndex) {
         ${staffInfo}
         <div class="project-location">📍 ${escapeHtml(project.location)}</div>
         <div>
-            <span class="project-type ${typeClass}"><span class="project-type-dot">\u200B</span>${escapeHtml(project.type)}</span>
+            <span class="project-type ${typeClass}"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6);flex-shrink:0;vertical-align:middle;">&nbsp;</span>${escapeHtml(project.type)}</span>
         </div>
         <div class="card-actions">
             <button class="copy-btn" data-date="${escapeHtml(dateStr)}" data-index="${projectIndex}">📋 复制</button>
