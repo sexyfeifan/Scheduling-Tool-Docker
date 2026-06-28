@@ -100,6 +100,27 @@
     gap: 2px;
 }
 
+.staff-names-grid {
+    display: inline-grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 12px;
+    align-items: baseline;
+    vertical-align: top;
+}
+
+.staff-names-grid .staff-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    min-width: 7px;
+    border-radius: 50%;
+    vertical-align: middle;
+}
+
+.staff-names-grid .staff-name {
+    color: #794f27;
+}
+
 .staff-row {
     display: flex;
     align-items: baseline;
@@ -109,7 +130,7 @@
     font-family: 'Nunito', 'Noto Sans SC', sans-serif;
     font-weight: 600;
     color: #794f27;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .staff-label {

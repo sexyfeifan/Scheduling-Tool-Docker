@@ -1040,13 +1040,9 @@ function createProjectCard(project, dateStr, projectIndex) {
             const val = project[cat.key] || (project.customFields && project.customFields[cat.key]);
             if (val) {
                 const c = ROLE_STAFF_COLORS[cat.key] || '#999';
-                const names = String(val).split(/、|，|,|\//);
-                const nameItems = names.map(n => `<span style="display:inline-block;width:7px;height:7px;min-width:7px;border-radius:50%;background:${c};vertical-align:middle;">&nbsp;</span><span class="staff-name">${escapeHtml(n.trim())}</span>`);
-                let nameGroups = [];
-                for (let i = 0; i < nameItems.length; i += 2) {
-                    nameGroups.push(nameItems.slice(i, i + 2).join(' '));
-                }
-                staffInfo += `<div class="staff-row"><span class="staff-label">${escapeHtml(cat.label)}：</span>${nameGroups.join('<br>')}</div>`;
+                const names = String(val).split(/、|，|,|\//).map(n => n.trim()).filter(Boolean);
+                const nameCells = names.map(n => `<span class="staff-dot" style="display:inline-block;width:7px;height:7px;min-width:7px;border-radius:50%;background:${c};vertical-align:middle;">&nbsp;</span><span class="staff-name">${escapeHtml(n)}</span>`);
+                staffInfo += `<div class="staff-row"><span class="staff-label">${escapeHtml(cat.label)}：</span><span class="staff-names-grid">${nameCells.join('')}</span></div>`;
             }
         });
         staffInfo += '</div>';
