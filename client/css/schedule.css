@@ -130,7 +130,7 @@
 
 .staff-row {
     display: flex;
-    align-items: baseline;
+    align-items: flex-start;
     gap: 4px;
     font-size: 12px;
     line-height: 1.8;
