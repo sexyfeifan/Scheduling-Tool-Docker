@@ -1,7 +1,5 @@
 # 罐头场通告排期 — Docker 版本
 
-> **作者**: 我是性感的非凡 | **邮箱**: zhoufeifan@gmail.com
-
 > 当前版本：**v2.85** | Docker Hub: `sexyfeifan/scheduling-tool:2.85`
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/sexyfeifan/scheduling-tool)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
