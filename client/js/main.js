@@ -3856,10 +3856,12 @@ function drawScheduleToCanvas() {
                 cleanCard.style.width = '100%';
                 cleanCard.style.marginBottom = '8px';
 
-                // 复制子元素样式
+                // 复制子元素样式（跳过圆点元素，避免 getComputedStyle 覆盖 inline 尺寸）
                 cleanCard.querySelectorAll('*').forEach((clone, idx) => {
                     const orig = projectCard.querySelectorAll('*')[idx];
                     if (orig) {
+                        const origStyle = orig.getAttribute('style') || '';
+                        if (origStyle.includes('border-radius:50%') || origStyle.includes('border-radius: 50%')) return;
                         try {
                             const cs = window.getComputedStyle(orig);
                             clone.style.cssText = cs.cssText;
@@ -3867,23 +3869,8 @@ function drawScheduleToCanvas() {
                     }
                 });
 
-                // 确保彩色圆点有明确的 inline 尺寸（html2canvas 对 CSS 类的尺寸不可靠）
-                cleanCard.querySelectorAll('.staff-dot').forEach(dot => {
-                    dot.style.width = '7px';
-                    dot.style.height = '7px';
-                    dot.style.minWidth = '7px';
-                    dot.style.minHeight = '7px';
-                    dot.style.borderRadius = '50%';
-                    dot.style.display = 'inline-block';
-                });
-                cleanCard.querySelectorAll('.project-type-dot').forEach(dot => {
-                    dot.style.width = '6px';
-                    dot.style.height = '6px';
-                    dot.style.borderRadius = '50%';
-                    dot.style.display = 'inline-block';
-                    dot.style.background = 'rgba(255,255,255,0.6)';
-                    dot.style.flexShrink = '0';
-                });
+                // 圆点 inline style 已在 createProjectCard 中设置，且 getComputedStyle 循环已跳过
+                // 无需额外处理
 
                 // 移除动画
                 cleanCard.style.removeProperty('animation');
