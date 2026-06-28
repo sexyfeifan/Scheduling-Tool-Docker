@@ -2,7 +2,7 @@
 
 > **作者**: 我是性感的非凡 | **邮箱**: zhoufeifan@gmail.com
 
-> 当前版本：**v2.65** | Docker Hub: `sexyfeifan/scheduling-tool:2.65`
+> 当前版本：**v2.85** | Docker Hub: `sexyfeifan/scheduling-tool:2.85`
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/sexyfeifan/scheduling-tool)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
 [![Docker Image Size](https://img.shields.io/docker/image-size/sexyfeifan/scheduling-tool/latest)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
@@ -19,26 +19,29 @@
 ### 核心排期
 
 - 周视图排期管理（主视图，拖拽调整日期）
-- 单日视图（左右切换日期）
-- 月视图甘特图（项目/人员模式切换）
-- 人员排期矩阵（按部门分组，逗号分隔名字自动拆分）
+- 日视图（查看单日排期，左右切换日期）
+- 月视图日历（项目/人员模式切换，显示每日排期名称）
+- 人员排期矩阵（按自然月显示，按部门分组，角色颜色标记）
 - 项目添加 / 编辑 / 删除 / 复制
-- 卡片按项目类型配色（平面=青 / 视频=粉 / 直播=黄 / 试做=紫）
-- 动森风格花纹底纹（pattern-default）
+- 卡片按项目类型鲜艳配色（平面=绿 / 视频=粉 / 直播=琥珀 / 试做=紫）
+- 项目名单行不换行（响应式字号缩放）
+- 人员姓名每行至多 2 人自动换行对齐
 
 ### 效率工具
 
 - 快速创建（一行输入自动解析项目字段）
 - 批量操作（删除 / 移动 / 状态更新）
-- 键盘快捷键（`Ctrl+K` 搜索 / `Ctrl+N` 新增 / `Ctrl+Z` 撤销）
+- 键盘快捷键（`Ctrl+K` 搜索 / `Ctrl+N` 新增 / `Ctrl+Z` 撤销 / `Ctrl+E` 导出）
 - 移动手势（左滑下一周 / 右滑上一周 / 长按新建）
 - 撤销 / 重做（支持多步）
 - 粘贴识别（从剪贴板解析排期文本）
-- 冲突预警（检测同一人同天多项目，支持跳转 / 删除）
+- 冲突预警（检测同一人同天多项目，支持跳转删除）
 
 ### 导出与集成
 
-- 图片导出（html2canvas，支持跨周数导出）
+- 周视图图片导出（html2canvas，预览 + 下载 + 新标签页打开）
+- 跨周数导出（选择起止日期，完整渲染多周排期）
+- 月视图 / 人员视图图片导出
 - 本周通告文字导出
 - JSON / CSV 数据导出
 - iCal 日历订阅（Apple / Google / Outlook）
@@ -54,13 +57,14 @@
 - 动态职能管理（单选 / 多选 radio 切换）
 - 项目类型管理
 - 项目模板
+- 数据管理（姓名更替 / 任务交接，支持并列人名自动拆分）
 
 ### UI 组件（Animal Island 风格）
 
-- Switch 开关（动森规范 52×28px）
-- Select 自定义下拉（黄色下拉 + pill 圆角）
+- Switch 开关（动森规范 52×28px，黄色开启态）
+- Select 自定义下拉（黄色下拉面板 + SVG chevron + pill 圆角）
 - Radio 单选框（正圆 16px + 薄荷绿选中）
-- Card 卡片（pattern-default 花纹 + 类型配色）
+- Card 卡片（纯色背景 + 类型鲜艳配色 + 人员彩色圆点）
 - Modal 弹窗（奶油底 + zoom-in 动画）
 - Toast 提示（花纹底 + 类型边框色）
 - HUD 时钟（周几 + 日期 + 时:分:秒，冒号闪烁）
@@ -87,7 +91,7 @@ mkdir -p scheduling-tool && cd scheduling-tool
 cat > docker-compose.yml << 'EOF'
 services:
   scheduling-tool:
-    image: sexyfeifan/scheduling-tool:2.63
+    image: sexyfeifan/scheduling-tool:2.85
     container_name: scheduling-tool
     ports:
       - "3000:3000"
@@ -144,7 +148,7 @@ docker buildx create --name multiarch-builder --use
 # 构建并推送多架构镜像
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -t sexyfeifan/scheduling-tool:2.63 \
+  -t sexyfeifan/scheduling-tool:2.85 \
   -t sexyfeifan/scheduling-tool:latest \
   --push .
 ```
@@ -259,6 +263,43 @@ docker buildx build \
 ---
 
 ## 更新日志
+
+### v2.85 (2026-06-28) - 里程碑版本
+
+**🎨 UI/UX**:
+- 项目类型鲜艳配色（平面绿 / 视频粉 / 直播琥珀 / 试做紫 + 白字）
+- 人员姓名每行至多 2 人自动换行对齐
+- 导出图片彩色圆点彻底修复（inline style + &nbsp;）
+- 动森风格 Select/Switch/下拉选择器
+- 拍摄地样式美化
+- 全局 Select 选择器 Animal Island UI 风格
+
+**📊 视图系统**:
+- 日视图（查看单日排期，左右切换日期）
+- 月视图日历（项目/人员模式切换，显示每日排期名称）
+- 人员排期矩阵（按自然月显示，按月切换）
+- 视图切换按钮（单/周/月/人）全部生效
+
+**📤 导出功能**:
+- 周视图图片导出（html2canvas，预览 + 下载 + 新标签页）
+- 跨周数导出（选择起止日期，卡片样式与编辑页一致）
+- 月视图 / 人员视图图片导出
+- 导出图片颜色与编辑页完全一致
+
+**🛡️ 管理功能**:
+- 管理员密码登录修复
+- 数据管理（姓名更替 / 任务交接，支持并列人名拆分）
+- 访问控制独立 Tab
+- 项目类型管理
+- 预警弹窗跳转 + 删除
+
+**🐛 稳定性**:
+- settingsModal null 崩溃修复
+- escapeAttr 函数补全
+- 角色硬编码改动态 roleCategories
+- loadHistoryRecords null 检查
+- 78 个重复备份文件清理
+- 版本号统一 2.85
 
 ### v2.63 (2026-06-23) - 稳定性与安全性重大更新
 
