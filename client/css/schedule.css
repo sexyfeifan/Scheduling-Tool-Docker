@@ -101,11 +101,19 @@
 }
 
 .staff-names-grid {
-    display: inline-grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0 12px;
-    align-items: baseline;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 2px 14px;
+    align-items: center;
     vertical-align: top;
+    line-height: 1.6;
+}
+
+.staff-names-grid .staff-pair {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
 }
 
 .staff-names-grid .staff-dot {
@@ -114,7 +122,6 @@
     height: 7px;
     min-width: 7px;
     border-radius: 50%;
-    vertical-align: middle;
 }
 
 .staff-names-grid .staff-name {
@@ -130,7 +137,7 @@
     font-family: 'Nunito', 'Noto Sans SC', sans-serif;
     font-weight: 600;
     color: #794f27;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
 }
 
 .staff-label {
