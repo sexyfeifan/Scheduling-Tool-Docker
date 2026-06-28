@@ -1041,8 +1041,12 @@ function createProjectCard(project, dateStr, projectIndex) {
             if (val) {
                 const c = ROLE_STAFF_COLORS[cat.key] || '#999';
                 const names = String(val).split(/、|，|,|\//);
-                let namesHtml = names.map(n => `<span style="display:inline-block;width:7px;height:7px;min-width:7px;border-radius:50%;background:${c};vertical-align:middle;">&nbsp;</span><span class="staff-name">${escapeHtml(n.trim())}</span>`).join(' ');
-                staffInfo += `<div class="staff-row"><span class="staff-label">${escapeHtml(cat.label)}：</span>${namesHtml}</div>`;
+                const nameItems = names.map(n => `<span style="display:inline-block;width:7px;height:7px;min-width:7px;border-radius:50%;background:${c};vertical-align:middle;">&nbsp;</span><span class="staff-name">${escapeHtml(n.trim())}</span>`);
+                let nameGroups = [];
+                for (let i = 0; i < nameItems.length; i += 2) {
+                    nameGroups.push(nameItems.slice(i, i + 2).join(' '));
+                }
+                staffInfo += `<div class="staff-row"><span class="staff-label">${escapeHtml(cat.label)}：</span>${nameGroups.join('<br>')}</div>`;
             }
         });
         staffInfo += '</div>';

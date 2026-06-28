@@ -102,15 +102,14 @@
 
 .staff-row {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     gap: 4px;
     font-size: 12px;
     line-height: 1.8;
     font-family: 'Nunito', 'Noto Sans SC', sans-serif;
     font-weight: 600;
     color: #794f27;
-    flex-wrap: nowrap;
-    white-space: nowrap;
+    flex-wrap: wrap;
 }
 
 .staff-label {
