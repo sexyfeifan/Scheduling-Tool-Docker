@@ -1034,15 +1034,32 @@ function createProjectCard(project, dateStr, projectIndex) {
     if (hasAnyRole) {
         staffInfo = '<div class="staff-info">';
         if (hasStartTime) {
-            staffInfo += `<div class="staff-row"><span class="staff-label">时间：</span><span style="display:inline-block;width:7px;height:7px;min-width:7px;border-radius:50%;background:#ffffff;border:1px solid #d4c4a8;vertical-align:middle;">&nbsp;</span><span class="staff-name">${escapeHtml(project.startTime)}</span></div>`;
+            staffInfo += `<div class="staff-row"><span class="staff-label">时间：</span><span style="display:inline-flex;align-items:center;gap:2px;"><span style="display:inline-block;width:5px;height:5px;min-width:5px;border-radius:50%;background:#ffffff;border:1px solid #d4c4a8;flex-shrink:0;">&nbsp;</span><span class="staff-name">${escapeHtml(project.startTime)}</span></span></div>`;
         }
         cats.forEach(cat => {
             const val = project[cat.key] || (project.customFields && project.customFields[cat.key]);
             if (val) {
                 const c = ROLE_STAFF_COLORS[cat.key] || '#999';
                 const names = String(val).split(/、|，|,|\//).map(n => n.trim()).filter(Boolean);
-                const pairs = names.map(n => `<span class="staff-pair"><span class="staff-dot" style="display:inline-block;width:7px;height:7px;min-width:7px;border-radius:50%;background:${c}">&nbsp;</span><span class="staff-name">${escapeHtml(n)}</span></span>`);
-                staffInfo += `<div class="staff-row"><span class="staff-label">${escapeHtml(cat.label)}：</span><span class="staff-names-grid">${pairs.join('')}</span></div>`;
+                const makeDot = () => `<span class="staff-dot" style="display:inline-block;width:7px;height:7px;min-width:7px;border-radius:50%;background:${c}">&nbsp;</span>`;
+                const makePair = (n) => `<span class="staff-pair">${makeDot()}<span class="staff-name">${escapeHtml(n)}</span></span>`;
+                if (names.length <= 2) {
+                    const pairs = names.map(n => makePair(n));
+                    staffInfo += `<div class="staff-row"><span class="staff-label">${escapeHtml(cat.label)}：</span><span class="staff-names-grid">${pairs.join('')}</span></div>`;
+                } else {
+                    const chunks = [];
+                    for (let i = 0; i < names.length; i += 2) {
+                        chunks.push(names.slice(i, i + 2));
+                    }
+                    chunks.forEach((chunk, ci) => {
+                        const pairs = chunk.map(n => makePair(n)).join('');
+                        if (ci === 0) {
+                            staffInfo += `<div class="staff-row"><span class="staff-label">${escapeHtml(cat.label)}：</span><span class="staff-names-grid">${pairs}</span></div>`;
+                        } else {
+                            staffInfo += `<div class="staff-row staff-row-continuation"><span class="staff-label" aria-hidden="true">${escapeHtml(cat.label)}：</span><span class="staff-names-grid">${pairs}</span></div>`;
+                        }
+                    });
+                }
             }
         });
         staffInfo += '</div>';

@@ -1,6 +1,6 @@
 # 罐头场通告排期 — Docker 版本
 
-> 当前版本：**v2.85** | Docker Hub: `sexyfeifan/scheduling-tool:2.85`
+> 当前版本：**v2.89** | Docker Hub: `sexyfeifan/scheduling-tool:2.89`
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/sexyfeifan/scheduling-tool)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
 [![Docker Image Size](https://img.shields.io/docker/image-size/sexyfeifan/scheduling-tool/latest)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
@@ -89,7 +89,7 @@ mkdir -p scheduling-tool && cd scheduling-tool
 cat > docker-compose.yml << 'EOF'
 services:
   scheduling-tool:
-    image: sexyfeifan/scheduling-tool:2.85
+    image: sexyfeifan/scheduling-tool:2.89
     container_name: scheduling-tool
     ports:
       - "3000:3000"
@@ -146,7 +146,7 @@ docker buildx create --name multiarch-builder --use
 # 构建并推送多架构镜像
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -t sexyfeifan/scheduling-tool:2.85 \
+  -t sexyfeifan/scheduling-tool:2.89 \
   -t sexyfeifan/scheduling-tool:latest \
   --push .
 ```
@@ -262,11 +262,12 @@ docker buildx build \
 
 ## 更新日志
 
-### v2.85 (2026-06-28) - 里程碑版本
+### v2.89 (2026-06-29) - 里程碑版本
 
 **🎨 UI/UX**:
 - 项目类型鲜艳配色（平面绿 / 视频粉 / 直播琥珀 / 试做紫 + 白字）
-- 人员姓名每行至多 2 人自动换行对齐
+- 人员姓名每行至多 2 人自动换行对齐（3 人以上按每行 2 人分组，圆点上下对齐）
+- 开始时间白点与时间文字垂直居中对齐
 - 导出图片彩色圆点彻底修复（inline style + &nbsp;）
 - 动森风格 Select/Switch/下拉选择器
 - 拍摄地样式美化
@@ -297,7 +298,7 @@ docker buildx build \
 - 角色硬编码改动态 roleCategories
 - loadHistoryRecords null 检查
 - 78 个重复备份文件清理
-- 版本号统一 2.85
+- 版本号统一 2.89
 
 ### v2.63 (2026-06-23) - 稳定性与安全性重大更新
 

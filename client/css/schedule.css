@@ -145,6 +145,10 @@
     flex-shrink: 0;
 }
 
+.staff-row-continuation .staff-label {
+    visibility: hidden;
+}
+
 .staff-dot {
     display: inline-block;
     width: 7px;
