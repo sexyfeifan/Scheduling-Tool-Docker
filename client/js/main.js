@@ -3834,8 +3834,25 @@ function showExportModal() {
     drawScheduleToCanvas();
 }
 
+// 烘焙计算样式到 inline style — 确保 html2canvas 正确读取 CSS 类定义的颜色
+function bakeComputedStyles(container) {
+    const bakeProps = ['background-color','background','color','border-color','border','font-weight','font-style','text-decoration','opacity'];
+    container.querySelectorAll('*').forEach(el => {
+        try {
+            const cs = window.getComputedStyle(el);
+            const origStyle = el.getAttribute('style') || '';
+            bakeProps.forEach(p => {
+                const val = cs.getPropertyValue(p);
+                if (val && val !== 'initial' && val !== '' && !origStyle.includes(p)) {
+                    el.style.setProperty(p, val);
+                }
+            });
+        } catch(e) {}
+    });
+}
+
 // 在canvas上绘制排期表（支持跨周导出）
-function drawScheduleToCanvas() {
+async function drawScheduleToCanvas() {
     // 确定日期范围
     let startDate, endDate;
     const isCrossWeek = exportCrossWeekCheckbox && exportCrossWeekCheckbox.checked;
@@ -3965,28 +3982,17 @@ function drawScheduleToCanvas() {
         if (projects.length > 0) {
             projects.forEach((project, projectIndex) => {
                 const projectCard = createProjectCard(project, dateStr, projectIndex);
-                const cleanCard = projectCard.cloneNode(true);
-
-                // 从两边同时移除按钮，保证后续 querySelectorAll('*') 索引一致
-                cleanCard.querySelectorAll('.delete-btn, .copy-btn').forEach(el => el.remove());
-                projectCard.querySelectorAll('.delete-btn, .copy-btn').forEach(el => el.remove());
-
-                // 从原始卡片复制卡片级别计算样式
-                const origCS = window.getComputedStyle(projectCard);
-                const cardKeepProps = ['background','background-color','border','border-radius','padding','box-shadow','font-family','font-size','color','line-height','letter-spacing','display','flex-direction','gap','position','overflow'];
-                cardKeepProps.forEach(p => {
-                    try { cleanCard.style.setProperty(p, origCS.getPropertyValue(p)); } catch(e) {}
-                });
-                cleanCard.style.width = '100%';
-                cleanCard.style.marginBottom = '8px';
-                cleanCard.style.removeProperty('animation');
-                cleanCard.style.removeProperty('transition');
-
+                // 移除操作按钮
+                projectCard.querySelectorAll('.delete-btn, .copy-btn, .card-actions').forEach(el => el.remove());
+                projectCard.style.width = '100%';
+                projectCard.style.marginBottom = '8px';
+                projectCard.style.removeProperty('animation');
+                projectCard.style.removeProperty('transition');
                 if (cols > 10) {
-                    cleanCard.style.fontSize = '11px';
-                    cleanCard.style.padding = '6px';
+                    projectCard.style.fontSize = '11px';
+                    projectCard.style.padding = '6px';
                 }
-                dayColumn.appendChild(cleanCard);
+                dayColumn.appendChild(projectCard);
             });
         } else {
             const emptyState = document.createElement('div');
@@ -4008,6 +4014,13 @@ function drawScheduleToCanvas() {
     tempContainer.appendChild(header);
     tempContainer.appendChild(mainContent);
     document.body.appendChild(tempContainer);
+
+    // 等待浏览器完成离屏元素的 CSS 样式计算（两帧 + 字体加载）
+    await document.fonts.ready;
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+    // 将所有元素的计算样式烘焙为 inline style，确保 html2canvas 正确读取颜色
+    bakeComputedStyles(tempContainer);
 
     html2canvas(tempContainer, {
         scale: 2,
