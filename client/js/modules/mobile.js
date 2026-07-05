@@ -78,36 +78,9 @@ export function createMobileModule(ctx) {
         });
     }
 
-    // 移动端左右滑动切周
+    // 移动端左右滑动切周 — 已移至 mobileGestures.js 统一管理，避免重复绑定
     function setupSwipeGesture() {
-        let touchStartX = 0;
-        const minSwipeDistance = 80;
-
-        document.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-        }, { passive: true });
-
-        document.addEventListener('touchend', (e) => {
-            const touchEndX = e.changedTouches[0].screenX;
-            const distance = touchStartX - touchEndX;
-
-            if (Math.abs(distance) < minSwipeDistance) return;
-            if (window.innerWidth > 768) return;
-
-            const monday = getCurrentMonday();
-            if (distance > 0) {
-                // 左滑 → 下一周
-                monday.setDate(monday.getDate() + 7);
-            } else {
-                // 右滑 → 上一周
-                monday.setDate(monday.getDate() - 7);
-            }
-            // 触发现有按钮事件来刷新视图
-            const btn = distance > 0
-                ? document.getElementById('next-week')
-                : document.getElementById('prev-week');
-            if (btn) btn.click();
-        }, { passive: true });
+        // no-op: swipe gestures handled by mobileGestures.js
     }
 
     return { showTodayOnMobile, switchToDayOnMobile, setupMobileDateSwitch, setupSwipeGesture };

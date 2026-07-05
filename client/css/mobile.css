@@ -118,11 +118,14 @@
         font-size: 14px;
     }
     
-    /* 增大触摸区域 */
+    /* 增大触摸区域 ≥ 44px */
     .project-card .delete-btn {
-        width: 28px;
-        height: 28px;
-        font-size: 16px;
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .project-card .project-location {
@@ -140,15 +143,25 @@
     }
     
     .copy-btn {
-        padding: 8px 12px;
-        font-size: 11px;
+        padding: 12px 16px;
+        font-size: 13px;
+        min-height: 44px;
     }
     
-    /* 快速添加按钮 */
+    /* 快速添加按钮 - 触摸设备始终可见 */
     .day-column .add-btn {
-        width: 28px;
-        height: 28px;
-        font-size: 18px;
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.6;
+    }
+    
+    .day-column .add-btn:active {
+        opacity: 1;
+        transform: scale(0.95);
     }
     
     /* 空状态 */
@@ -213,7 +226,7 @@
     }
     
     .day {
-        height: 40px;
+        height: 44px;
         font-size: 14px;
     }
     
@@ -238,8 +251,16 @@
     /* 禁用 hover 效果 - 触摸优化 */
     .project-card:hover,
     .btn:hover,
-    .day-column:hover {
+    .day-column:hover,
+    .copy-btn:hover,
+    .copy-date-option:hover,
+    .month-cell:hover,
+    .day:hover,
+    .month-day-cell:hover {
         transform: none;
+        background: inherit;
+        border-color: inherit;
+        box-shadow: none;
     }
     
     /* 激活态效果 */
@@ -250,6 +271,78 @@
     .btn:active {
         transform: scale(0.96);
         opacity: 0.9;
+    }
+
+    /* 弹窗关闭按钮 ≥ 44px */
+    .modal-content .close {
+        width: 44px;
+        height: 44px;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* 按钮通用最小高度 */
+    .btn {
+        min-height: 44px;
+    }
+
+    .btn.icon-btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    /* 管理页 Tab 横向滚动 */
+    .admin-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        flex-wrap: nowrap;
+        scrollbar-width: none;
+    }
+
+    .admin-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .admin-tab-btn {
+        min-height: 44px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* 复选框增大 */
+    input[type="checkbox"] {
+        width: 28px;
+        height: 28px;
+    }
+
+    /* Tag 按钮增大 */
+    .tag-btn {
+        min-height: 44px;
+        padding: 10px 16px;
+    }
+
+    /* 热力图 Tab 增大 */
+    .heatmap-tab-btn {
+        min-height: 44px;
+        padding: 10px 16px;
+    }
+
+    /* 防止弹窗背后页面滚动 */
+    .modal {
+        overscroll-behavior: contain;
+    }
+
+    /* 修复 background-attachment 卡顿 */
+    body {
+        background-attachment: scroll;
+    }
+
+    /* version-info 避开 safe area */
+    .version-info {
+        top: max(16px, env(safe-area-inset-top));
+        left: max(16px, env(safe-area-inset-left));
     }
 
     /* ── Animal Island 组件移动端适配 ── */
@@ -551,9 +644,9 @@
     }
     
     .project-card .delete-btn {
-        width: 20px;
-        height: 20px;
-        font-size: 14px;
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
     }
     
     .project-card .project-location {
@@ -567,8 +660,9 @@
     }
     
     .copy-btn {
-        padding: 5px 8px;
-        font-size: 10px;
+        padding: 8px 12px;
+        font-size: 11px;
+        min-height: 36px;
     }
 }
 

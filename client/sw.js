@@ -3,7 +3,7 @@
  * 缓存静态资源，支持离线访问
  */
 
-const CACHE_NAME = 'scheduling-tool-v2.61';
+const CACHE_NAME = 'scheduling-tool-v2.92';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

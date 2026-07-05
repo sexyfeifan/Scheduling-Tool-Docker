@@ -1,6 +1,6 @@
 # 罐头场通告排期 — Docker 版本
 
-> 当前版本：**v2.91** | Docker Hub: `sexyfeifan/scheduling-tool:2.91`
+> 当前版本：**v2.92** | Docker Hub: `sexyfeifan/scheduling-tool:2.92`
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/sexyfeifan/scheduling-tool)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
 [![Docker Image Size](https://img.shields.io/docker/image-size/sexyfeifan/scheduling-tool/latest)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
@@ -89,7 +89,7 @@ mkdir -p scheduling-tool && cd scheduling-tool
 cat > docker-compose.yml << 'EOF'
 services:
   scheduling-tool:
-    image: sexyfeifan/scheduling-tool:2.91
+    image: sexyfeifan/scheduling-tool:2.92
     container_name: scheduling-tool
     ports:
       - "3000:3000"
@@ -146,7 +146,7 @@ docker buildx create --name multiarch-builder --use
 # 构建并推送多架构镜像
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -t sexyfeifan/scheduling-tool:2.91 \
+  -t sexyfeifan/scheduling-tool:2.92 \
   -t sexyfeifan/scheduling-tool:latest \
   --push .
 ```
@@ -261,6 +261,33 @@ docker buildx build \
 ---
 
 ## 更新日志
+
+### v2.92 (2026-07-05) - 移动端全面优化
+
+**📱 触摸体验**:
+- 所有交互元素触摸区域 ≥ 44×44px（删除按钮、添加按钮、关闭按钮、日历、复选框、Tab、复制按钮）
+- 添加按钮在触摸设备上始终可见（不再依赖 hover）
+- 弹窗关闭按钮增大至 44px
+- 管理页 Tab 支持横向滚动
+- 横屏模式删除按钮从 20px 增大至 36px
+
+**📤 导出修复（移动端）**:
+- iOS Safari 下载图片兼容（检测 iOS 设备，弹出新窗口显示图片+长按保存引导）
+- 新标签页打开降级处理（window.open 被拦截时自动 fallback 到 location.href）
+- blob URL 内存泄漏修复（60s 后自动 revokeObjectURL）
+
+**🎨 样式修复**:
+- viewport-fit=cover 启用刘海屏 safe-area-inset
+- 5 个遗漏的 hover 效果在移动端禁用（copy-btn、copy-date-option、month-cell、day、month-day-cell）
+- background-attachment: fixed → scroll 消除 iOS 滚动卡顿
+- 弹窗 overscroll-behavior: contain 防止背景滚动
+- version-info 避开 safe area
+
+**🏗️ PWA**:
+- iOS PWA 元标签（apple-mobile-web-app-capable、status-bar-style）
+- theme-color meta 标签
+- Service Worker 缓存版本更新至 v2.92
+- 手势去重（mobile.js 滑动移至 mobileGestures.js 统一管理）
 
 ### v2.91 (2026-07-05) - 导出图片圆点彻底修复
 

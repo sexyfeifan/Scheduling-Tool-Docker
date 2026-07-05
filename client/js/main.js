@@ -3959,18 +3959,26 @@ function drawScheduleToCanvas() {
     });
 }
 
-// 下载图片
+// 下载图片（兼容 iOS Safari）
 function downloadImage() {
     if (!lastExportDataUrl) { showToast('请先生成预览', 'warning'); return; }
-    const link = document.createElement('a');
-    link.download = lastExportFileName;
-    link.href = lastExportDataUrl;
-    link.click();
-    showToast('图片已下载', 'success');
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (isIOS) {
+        const w = window.open('');
+        if (w) {
+            w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${lastExportFileName}</title><style>*{margin:0;padding:0}body{background:#f5f5f5;display:flex;flex-direction:column;align-items:center;padding:20px}img{max-width:100%;height:auto}p{margin-top:16px;font-size:14px;color:#666;text-align:center}</style></head><body><img src="${lastExportDataUrl}"><p>长按图片 → 保存到照片</p></body></html>`);
+            w.document.close();
+        } else {
+            showToast('请允许弹窗以查看图片，然后长按保存', 'warning');
+        }
+    } else {
+        const link = document.createElement('a');
+        link.download = lastExportFileName;
+        link.href = lastExportDataUrl;
+        link.click();
+        showToast('图片已下载', 'success');
+    }
 }
-
-// 移动端保存图片到相册
-// 已移除此功能
 
 // 在新标签页打开图片
 function openImageInNewTab() {
@@ -3979,9 +3987,20 @@ function openImageInNewTab() {
         const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${lastExportFileName}</title><style>*{margin:0;padding:0}body{background:#f5f5f5;display:flex;justify-content:center}img{max-width:100%;height:auto}</style></head><body><img src="${lastExportDataUrl}"></body></html>`;
         const blob = new Blob([html], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
+        const opened = window.open(url, '_blank');
+        if (!opened) {
+            location.href = url;
+        }
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (e) {
-        showToast('无法打开新标签页', 'error');
+        try {
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${lastExportFileName}</title><style>*{margin:0;padding:0}body{background:#f5f5f5;display:flex;justify-content:center}img{max-width:100%;height:auto}</style></head><body><img src="${lastExportDataUrl}"></body></html>`;
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            location.href = url;
+        } catch (e2) {
+            showToast('无法打开新标签页', 'error');
+        }
     }
 }
 

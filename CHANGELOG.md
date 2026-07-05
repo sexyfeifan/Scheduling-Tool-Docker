@@ -1,5 +1,32 @@
 # Changelog
 
+## v2.92.0 (2026-07-05) - 移动端全面优化
+
+### 📱 触摸体验
+- **触摸区域**: 删除按钮 44px、添加按钮 44px、关闭按钮 44px、日历 44px、复选框 28px、Tab 44px、复制按钮 min-height 44px
+- **添加按钮可见**: 触摸设备上 `.add-btn` 始终显示（opacity 0.6），不再依赖 hover
+- **横屏模式**: 删除按钮从 20px 增大至 36px
+- **管理页 Tab**: 横向滚动 + flex-wrap: nowrap
+- **按钮通用**: `.btn` min-height 44px、`.btn.icon-btn` min-width 44px
+
+### 📤 导出修复（移动端）
+- **iOS 下载**: 检测 iOS 设备，弹出新窗口显示图片 + "长按图片→保存到照片"引导
+- **新标签页降级**: `window.open` 被拦截时 fallback 到 `location.href`
+- **内存泄漏**: blob URL 60s 后自动 `revokeObjectURL`
+
+### 🎨 样式修复
+- **viewport-fit=cover**: 启用刘海屏 `env(safe-area-inset-*)`
+- **hover 禁用**: 新增 5 个遗漏的 hover 效果（copy-btn、copy-date-option、month-cell、day、month-day-cell）
+- **background-attachment**: `fixed` → `scroll` 消除 iOS 滚动卡顿
+- **overscroll-behavior**: 弹窗添加 `contain` 防止背景滚动
+- **version-info**: 避开 safe area 定位
+
+### 🏗️ PWA
+- **iOS 元标签**: apple-mobile-web-app-capable + status-bar-style
+- **theme-color**: `<meta name="theme-color">`
+- **SW 缓存**: v2.61 → v2.92
+- **手势去重**: mobile.js 滑动逻辑移除，由 mobileGestures.js 统一管理
+
 ## v2.91.0 (2026-07-05) - 导出图片圆点彻底修复
 
 ### 🐛 导出修复
