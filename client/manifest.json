@@ -1,8 +1,10 @@
 {
   "name": "罐头场排期系统",
   "short_name": "排期系统",
-  "description": "罐头场通告排期Web版 - v2.63",
+  "description": "罐头场通告排期Web版",
   "start_url": "/",
+  "scope": "/",
+  "id": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#19c8b9",
@@ -23,5 +25,17 @@
   ],
   "categories": ["productivity", "business"],
   "lang": "zh-CN",
-  "dir": "ltr"
+  "dir": "ltr",
+  "shortcuts": [
+    {
+      "name": "新建项目",
+      "url": "/?action=new",
+      "icons": [
+        {
+          "src": "/icons/icon-192.svg",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
 }

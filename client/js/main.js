@@ -1108,6 +1108,20 @@ function createProjectCard(project, dateStr, projectIndex) {
     card.addEventListener('dragstart', handleDragStart);
     card.addEventListener('dragend', handleDragEnd);
     
+    // 移动端触摸长按拖拽
+    let touchTimer = null;
+    let touchMoved = false;
+    card.addEventListener('touchstart', (e) => {
+        touchMoved = false;
+        touchTimer = setTimeout(() => {
+            if (!touchMoved) {
+                showMobileMoveSheet(dateStr, projectIndex, card);
+            }
+        }, 500);
+    }, { passive: true });
+    card.addEventListener('touchmove', () => { touchMoved = true; }, { passive: true });
+    card.addEventListener('touchend', () => { clearTimeout(touchTimer); }, { passive: true });
+    
     // 添加删除按钮事件
     const deleteBtn = card.querySelector('.delete-btn');
     deleteBtn.addEventListener('click', (e) => {
@@ -3664,6 +3678,95 @@ async function handleDrop(e) {
     }
     
     return false;
+}
+
+// 移动端长按拖拽 — 底部日期选择面板
+function showMobileMoveSheet(srcDate, srcIndex, cardEl) {
+    if (navigator.vibrate) navigator.vibrate(50);
+    cardEl.classList.add('dragging');
+
+    const existing = document.getElementById('mobile-move-sheet');
+    if (existing) existing.remove();
+
+    const weekDates = getWeekDates(currentMonday);
+    const dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    const today = formatDate(new Date());
+
+    const sheet = document.createElement('div');
+    sheet.id = 'mobile-move-sheet';
+    sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:10001;background:#fff;border-radius:16px 16px 0 0;padding:16px;padding-bottom:max(24px,env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(0,0,0,0.15);';
+
+    const handle = document.createElement('div');
+    handle.style.cssText = 'width:36px;height:4px;background:#ccc;border-radius:2px;margin:0 auto 12px;';
+    sheet.appendChild(handle);
+
+    const title = document.createElement('div');
+    title.style.cssText = 'font-size:15px;font-weight:700;color:#794f27;text-align:center;margin-bottom:12px;';
+    title.textContent = '移动到...';
+    sheet.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(7,1fr);gap:8px;';
+
+    weekDates.forEach((d, i) => {
+        const btn = document.createElement('button');
+        const dateStr = formatDate(d);
+        const isSrc = dateStr === srcDate;
+        const isToday = dateStr === today;
+        btn.style.cssText = `display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;min-height:56px;background:${isSrc ? '#f0ebe3' : isToday ? '#e8f7f5' : '#f8f8f0'};color:${isSrc ? '#b5a58a' : isToday ? '#19c8b9' : '#794f27'};${isSrc ? 'opacity:0.5;' : ''}`;
+        btn.disabled = isSrc;
+        btn.innerHTML = `<span style="font-size:11px;">${dayNames[i]}</span><span style="font-size:16px;">${d.getDate()}</span>`;
+        if (!isSrc) {
+            btn.addEventListener('click', () => moveProjectToDate(srcDate, srcIndex, dateStr, sheet, cardEl));
+        }
+        grid.appendChild(btn);
+    });
+    sheet.appendChild(grid);
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.style.cssText = 'width:100%;margin-top:12px;padding:14px;border:none;border-radius:10px;font-size:15px;font-weight:600;background:#f0ebe3;color:#794f27;cursor:pointer;min-height:48px;';
+    cancelBtn.textContent = '取消';
+    cancelBtn.addEventListener('click', () => {
+        cardEl.classList.remove('dragging');
+        sheet.remove();
+    });
+    sheet.appendChild(cancelBtn);
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:10000;';
+    overlay.addEventListener('click', () => {
+        cardEl.classList.remove('dragging');
+        overlay.remove();
+        sheet.remove();
+    });
+    sheet._overlay = overlay;
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(sheet);
+}
+
+async function moveProjectToDate(srcDate, srcIndex, targetDate, sheetEl, cardEl) {
+    if (srcDate === targetDate) return;
+    const beforeState = cloneScheduleState();
+    try {
+        const project = scheduleData[srcDate][srcIndex];
+        scheduleData[srcDate].splice(srcIndex, 1);
+        if (scheduleData[srcDate].length === 0) delete scheduleData[srcDate];
+        if (!scheduleData[targetDate]) scheduleData[targetDate] = [];
+        scheduleData[targetDate].push(project);
+        await persistScheduleDate(srcDate);
+        await persistScheduleDate(targetDate);
+        pushUndoSnapshot('触摸移动项目', beforeState, scheduleData);
+        renderSchedule();
+        showToast('项目已移动', 'success');
+    } catch (error) {
+        console.error('移动项目时出错:', error);
+        scheduleData = beforeState;
+        showToast(error.message || '移动项目时出错', 'error');
+    }
+    cardEl.classList.remove('dragging');
+    if (sheetEl._overlay) sheetEl._overlay.remove();
+    sheetEl.remove();
 }
 
 function exportViewAsImage(elementId, title) {

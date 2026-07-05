@@ -440,6 +440,43 @@
         width: 42px;
         height: 42px;
     }
+
+    /* 月视图移动端 - 单列滚动 */
+    .month-view-grid {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .month-grid {
+        min-width: 560px;
+    }
+
+    .month-header {
+        min-width: 560px;
+    }
+
+    .month-day-cell {
+        min-height: 48px;
+        padding: 4px 2px;
+        font-size: 11px;
+    }
+
+    .month-bar {
+        font-size: 9px;
+        padding: 2px 4px;
+        margin-bottom: 1px;
+    }
+
+    /* 人员视图移动端 - 横向滚动 */
+    .personnel-view-table {
+        min-width: 600px;
+    }
+
+    .personnel-cell {
+        min-width: 50px;
+        font-size: 11px;
+        padding: 4px 2px;
+    }
 }
 
 /* 更小屏幕 */
