@@ -1034,7 +1034,7 @@ function createProjectCard(project, dateStr, projectIndex) {
     if (hasAnyRole) {
         staffInfo = '<div class="staff-info">';
         if (hasStartTime) {
-            staffInfo += `<div class="staff-row"><span class="staff-label">时间：</span><span style="display:inline-flex;align-items:center;gap:2px;"><span style="display:inline-block;width:5px;height:5px;min-width:5px;border-radius:50%;background:#ffffff;border:1px solid #d4c4a8;flex-shrink:0;">&nbsp;</span><span class="staff-name">${escapeHtml(project.startTime)}</span></span></div>`;
+            staffInfo += `<div class="staff-row"><span class="staff-label">时间：</span><span class="staff-pair"><span class="staff-dot" style="display:inline-block;width:7px;height:7px;min-width:7px;border-radius:50%;background:#19c8b9">&nbsp;</span><span class="staff-name">${escapeHtml(project.startTime)}</span></span></div>`;
         }
         cats.forEach(cat => {
             const val = project[cat.key] || (project.customFields && project.customFields[cat.key]);
@@ -3834,19 +3834,17 @@ function showExportModal() {
     drawScheduleToCanvas();
 }
 
-// 烘焙计算样式到 inline style — 确保 html2canvas 正确读取 CSS 类定义的颜色
+// 烘焙计算样式到 inline style — 完整 cssText 覆盖确保 html2canvas 正确读取
 function bakeComputedStyles(container) {
-    const bakeProps = ['background-color','background','color','border-color','border','font-weight','font-style','text-decoration','opacity'];
+    const skipTags = new Set(['SCRIPT', 'STYLE', 'LINK']);
     container.querySelectorAll('*').forEach(el => {
+        if (skipTags.has(el.tagName)) return;
         try {
-            const cs = window.getComputedStyle(el);
             const origStyle = el.getAttribute('style') || '';
-            bakeProps.forEach(p => {
-                const val = cs.getPropertyValue(p);
-                if (val && val !== 'initial' && val !== '' && !origStyle.includes(p)) {
-                    el.style.setProperty(p, val);
-                }
-            });
+            // 保留圆点和 inline-flex 的原始 inline style
+            if (origStyle.includes('border-radius:50%') || origStyle.includes('border-radius: 50%') || origStyle.includes('inline-flex')) return;
+            const cs = window.getComputedStyle(el);
+            el.style.cssText = cs.cssText;
         } catch(e) {}
     });
 }
@@ -3902,6 +3900,8 @@ async function drawScheduleToCanvas() {
     tempContainer.style.textRendering = 'optimizeSpeed';
     tempContainer.style.letterSpacing = '0';
     tempContainer.style.wordSpacing = '0';
+    tempContainer.style.fontVariantNumeric = 'tabular-nums';
+    tempContainer.style.fontFeatureSettings = '"tnum"';
 
     // 根据列数计算宽度
     const cols = totalDays;
@@ -4022,8 +4022,11 @@ async function drawScheduleToCanvas() {
     // 将所有元素的计算样式烘焙为 inline style，确保 html2canvas 正确读取颜色
     bakeComputedStyles(tempContainer);
 
+    const isMobile = window.innerWidth <= 768 || /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const canvasScale = isMobile ? 1.5 : 2;
+
     html2canvas(tempContainer, {
-        scale: 2,
+        scale: canvasScale,
         useCORS: true,
         backgroundColor: '#f5f5f7',
         logging: false,
