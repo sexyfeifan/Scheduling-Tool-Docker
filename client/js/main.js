@@ -1034,7 +1034,7 @@ function createProjectCard(project, dateStr, projectIndex) {
     if (hasAnyRole) {
         staffInfo = '<div class="staff-info">';
         if (hasStartTime) {
-            staffInfo += `<div class="staff-row"><span class="staff-label">时间：</span><span class="staff-names-grid"><span class="staff-pair"><span class="staff-dot" style="display:inline-block;width:7px;height:7px;min-width:7px;border-radius:50%;background:#fff;border:1px solid #d4c4a8">&nbsp;</span><span class="staff-name" style="font-family:system-ui,-apple-system,sans-serif">${escapeHtml(project.startTime)}</span></span></span></div>`;
+            staffInfo += `<div class="staff-row"><span class="staff-label">时间：</span><span class="staff-names-grid"><span class="staff-pair"><span class="staff-dot" style="display:inline-block;width:7px;height:7px;min-width:7px;border-radius:50%;background:#fff">&nbsp;</span><span class="staff-name" style="font-family:system-ui,-apple-system,sans-serif">${escapeHtml(project.startTime)}</span></span></span></div>`;
         }
         cats.forEach(cat => {
             const val = project[cat.key] || (project.customFields && project.customFields[cat.key]);
