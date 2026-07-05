@@ -1034,7 +1034,7 @@ function createProjectCard(project, dateStr, projectIndex) {
     if (hasAnyRole) {
         staffInfo = '<div class="staff-info">';
         if (hasStartTime) {
-            staffInfo += `<div class="staff-row"><span class="staff-label">时间：</span><span style="display:inline-block;width:5px;height:5px;min-width:5px;border-radius:50%;background:#ffffff;border:1px solid #d4c4a8;vertical-align:middle;margin-right:2px;">&nbsp;</span><span class="staff-name" style="vertical-align:middle;">${escapeHtml(project.startTime)}</span></div>`;
+            staffInfo += `<div class="staff-row"><span class="staff-label">时间：</span><span style="display:inline-flex;align-items:center;gap:2px;"><span style="display:inline-block;width:5px;height:5px;min-width:5px;border-radius:50%;background:#ffffff;border:1px solid #d4c4a8;flex-shrink:0;">&nbsp;</span><span class="staff-name">${escapeHtml(project.startTime)}</span></span></div>`;
         }
         cats.forEach(cat => {
             const val = project[cat.key] || (project.customFields && project.customFields[cat.key]);
@@ -1088,7 +1088,7 @@ function createProjectCard(project, dateStr, projectIndex) {
         ${staffInfo}
         <div class="project-location">📍 ${escapeHtml(project.location)}</div>
         <div>
-            <span class="project-type ${typeClass}" style="display:inline-block;vertical-align:middle;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6);vertical-align:middle;margin-right:4px;">&nbsp;</span>${escapeHtml(project.type)}</span>
+            <span class="project-type ${typeClass}"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6);flex-shrink:0;vertical-align:middle;">&nbsp;</span>${escapeHtml(project.type)}</span>
         </div>
         <div class="card-actions">
             <button class="copy-btn" data-date="${escapeHtml(dateStr)}" data-index="${projectIndex}">📋 复制</button>
@@ -3868,31 +3868,16 @@ function drawScheduleToCanvas() {
                 cleanCard.querySelectorAll('.delete-btn, .copy-btn').forEach(el => el.remove());
                 projectCard.querySelectorAll('.delete-btn, .copy-btn').forEach(el => el.remove());
 
-                // 从原始卡片复制所有计算样式，确保导出样式与编辑页一致
+                // 从原始卡片复制卡片级别计算样式
                 const origCS = window.getComputedStyle(projectCard);
-                cleanCard.style.cssText = origCS.cssText;
+                const cardKeepProps = ['background','background-color','border','border-radius','padding','box-shadow','font-family','font-size','color','line-height','letter-spacing','display','flex-direction','gap','position','overflow'];
+                cardKeepProps.forEach(p => {
+                    try { cleanCard.style.setProperty(p, origCS.getPropertyValue(p)); } catch(e) {}
+                });
                 cleanCard.style.width = '100%';
                 cleanCard.style.marginBottom = '8px';
-
-                // 复制子元素样式（跳过圆点元素和 inline-flex 容器，避免 getComputedStyle 覆盖 inline 尺寸）
-                cleanCard.querySelectorAll('*').forEach((clone, idx) => {
-                    const orig = projectCard.querySelectorAll('*')[idx];
-                    if (orig) {
-                        const origStyle = orig.getAttribute('style') || '';
-                        if (origStyle.includes('border-radius:50%') || origStyle.includes('border-radius: 50%')) return;
-                        if (origStyle.includes('inline-flex')) return;
-                        try {
-                            const cs = window.getComputedStyle(orig);
-                            clone.style.cssText = cs.cssText;
-                        } catch(e) {}
-                    }
-                });
-
-                // 圆点 inline style 已在 createProjectCard 中设置，且 getComputedStyle 循环已跳过
-                // 无需额外处理
-
-                // 移除动画
                 cleanCard.style.removeProperty('animation');
+                cleanCard.style.removeProperty('transition');
 
                 if (cols > 10) {
                     cleanCard.style.fontSize = '11px';

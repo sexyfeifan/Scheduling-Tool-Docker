@@ -185,7 +185,9 @@
 
 /* 类型标签 */
 .project-card .project-type {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     padding: 3px 10px;
     border-radius: 50px;
     font-size: 11px;

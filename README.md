@@ -1,6 +1,6 @@
 # 罐头场通告排期 — Docker 版本
 
-> 当前版本：**v2.90** | Docker Hub: `sexyfeifan/scheduling-tool:2.90`
+> 当前版本：**v2.91** | Docker Hub: `sexyfeifan/scheduling-tool:2.91`
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/sexyfeifan/scheduling-tool)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
 [![Docker Image Size](https://img.shields.io/docker/image-size/sexyfeifan/scheduling-tool/latest)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
@@ -89,7 +89,7 @@ mkdir -p scheduling-tool && cd scheduling-tool
 cat > docker-compose.yml << 'EOF'
 services:
   scheduling-tool:
-    image: sexyfeifan/scheduling-tool:2.90
+    image: sexyfeifan/scheduling-tool:2.91
     container_name: scheduling-tool
     ports:
       - "3000:3000"
@@ -146,7 +146,7 @@ docker buildx create --name multiarch-builder --use
 # 构建并推送多架构镜像
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -t sexyfeifan/scheduling-tool:2.90 \
+  -t sexyfeifan/scheduling-tool:2.91 \
   -t sexyfeifan/scheduling-tool:latest \
   --push .
 ```
@@ -262,7 +262,14 @@ docker buildx build \
 
 ## 更新日志
 
-### v2.90 (2026-07-05) - 导出图片圆点修复
+### v2.91 (2026-07-05) - 导出图片圆点彻底修复
+
+**🐛 导出修复**:
+- 移除 getComputedStyle.cssText 全量覆盖子元素样式（根因）
+- 导出仅复制卡片级别必要属性（background、border、padding 等），子元素样式由 CSS 类自然继承
+- 恢复白点/项目类型 inline-flex 渲染（编辑页显示正确）
+
+### v2.90 (2026-07-05) - 导出图片圆点修复（已废弃）
 
 **🐛 导出修复**:
 - 开始时间白点导出对齐修复（inline-block 替代 inline-flex）

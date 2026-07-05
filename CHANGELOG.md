@@ -1,6 +1,13 @@
 # Changelog
 
-## v2.90.0 (2026-07-05) - 导出图片圆点修复
+## v2.91.0 (2026-07-05) - 导出图片圆点彻底修复
+
+### 🐛 导出修复
+- **根因修复**: 移除 `getComputedStyle().cssText` 全量覆盖子元素样式循环，此循环会覆盖 CSS 类定义的 flex 布局导致圆点偏移
+- **选择性样式复制**: 导出仅复制卡片级别必要属性（background、border、padding、box-shadow 等），子元素样式由 CSS 类自然继承
+- **渲染恢复**: 白点和项目类型标签恢复 inline-flex（编辑页显示正确，不再被导出循环破坏）
+
+## v2.90.0 (2026-07-05) - 导出图片圆点修复（已废弃）
 
 ### 🐛 导出修复
 - **开始时间白点导出对齐**: 改用 `inline-block` + `vertical-align:middle` 替代 `inline-flex` wrapper，确保 html2canvas 正确渲染
