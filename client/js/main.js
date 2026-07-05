@@ -1034,7 +1034,7 @@ function createProjectCard(project, dateStr, projectIndex) {
     if (hasAnyRole) {
         staffInfo = '<div class="staff-info">';
         if (hasStartTime) {
-            staffInfo += `<div class="staff-row"><span class="staff-label">时间：</span><span class="staff-names-grid"><span class="staff-pair"><span class="staff-dot" style="display:inline-block;width:7px;height:7px;min-width:7px;border-radius:50%;background:#333">&nbsp;</span><span class="staff-name">${escapeHtml(project.startTime)}</span></span></span></div>`;
+            staffInfo += `<div class="staff-row"><span class="staff-label">时间：</span><span class="staff-names-grid"><span class="staff-pair"><span class="staff-dot" style="display:inline-block;width:7px;height:7px;min-width:7px;border-radius:50%;background:#fff;border:1px solid #d4c4a8">&nbsp;</span><span class="staff-name">${escapeHtml(project.startTime)}</span></span></span></div>`;
         }
         cats.forEach(cat => {
             const val = project[cat.key] || (project.customFields && project.customFields[cat.key]);
@@ -3881,12 +3881,9 @@ function drawScheduleToCanvas() {
     tempContainer.style.fontFamily = '"Noto Sans SC", "Source Han Sans SC", "Helvetica Neue", Arial, sans-serif';
     tempContainer.style.padding = '24px';
     tempContainer.style.minHeight = '800px';
-    tempContainer.style.fontKerning = 'none';
-    tempContainer.style.textRendering = 'optimizeSpeed';
-    tempContainer.style.letterSpacing = '0';
-    tempContainer.style.wordSpacing = '0';
-    tempContainer.style.fontVariantNumeric = 'tabular-nums';
-    tempContainer.style.fontFeatureSettings = '"tnum"';
+    tempContainer.style.textRendering = 'auto';
+    tempContainer.style.letterSpacing = 'normal';
+    tempContainer.style.wordSpacing = 'normal';
 
     // 根据列数计算宽度
     const cols = totalDays;
