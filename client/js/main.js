@@ -3872,14 +3872,11 @@ function drawScheduleToCanvas() {
         headerText = `通告排期 ${formatDateChinese(startDate)} - ${formatDateChinese(endDate)}`;
     }
 
-    // 创建临时DOM（使用 opacity:0 + pointer-events:none 代替 left:-9999px，确保 html2canvas 正确读取布局）
+    // 创建临时DOM
     const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'fixed';
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
     tempContainer.style.top = '0';
-    tempContainer.style.left = '0';
-    tempContainer.style.opacity = '0';
-    tempContainer.style.pointerEvents = 'none';
-    tempContainer.style.zIndex = '-1';
     tempContainer.style.background = '#f5f5f7';
     tempContainer.style.fontFamily = '"Noto Sans SC", "Source Han Sans SC", "Helvetica Neue", Arial, sans-serif';
     tempContainer.style.padding = '24px';
