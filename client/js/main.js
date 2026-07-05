@@ -4012,7 +4012,7 @@ function drawScheduleToCanvas() {
         backgroundColor: '#f5f5f7',
         logging: false,
         allowTaint: true,
-        foreignObjectRendering: false,
+        foreignObjectRendering: true,
         removeContainer: false
     }).then(canvas => {
         const exportCtx = exportCanvas.getContext('2d');
