@@ -1,6 +1,6 @@
 # 罐头场通告排期 — Docker 版本
 
-> 当前版本：**v2.89** | Docker Hub: `sexyfeifan/scheduling-tool:2.89`
+> 当前版本：**v2.90** | Docker Hub: `sexyfeifan/scheduling-tool:2.90`
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/sexyfeifan/scheduling-tool)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
 [![Docker Image Size](https://img.shields.io/docker/image-size/sexyfeifan/scheduling-tool/latest)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
@@ -89,7 +89,7 @@ mkdir -p scheduling-tool && cd scheduling-tool
 cat > docker-compose.yml << 'EOF'
 services:
   scheduling-tool:
-    image: sexyfeifan/scheduling-tool:2.89
+    image: sexyfeifan/scheduling-tool:2.90
     container_name: scheduling-tool
     ports:
       - "3000:3000"
@@ -146,7 +146,7 @@ docker buildx create --name multiarch-builder --use
 # 构建并推送多架构镜像
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -t sexyfeifan/scheduling-tool:2.89 \
+  -t sexyfeifan/scheduling-tool:2.90 \
   -t sexyfeifan/scheduling-tool:latest \
   --push .
 ```
@@ -261,6 +261,13 @@ docker buildx build \
 ---
 
 ## 更新日志
+
+### v2.90 (2026-07-05) - 导出图片圆点修复
+
+**🐛 导出修复**:
+- 开始时间白点导出对齐修复（inline-block 替代 inline-flex）
+- 项目类型彩色圆点导出渲染修复（inline-block 替代 inline-flex）
+- 导出样式复制跳过 inline-flex 容器，保留原始 inline style
 
 ### v2.89 (2026-06-29) - 里程碑版本
 

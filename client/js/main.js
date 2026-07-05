@@ -1034,7 +1034,7 @@ function createProjectCard(project, dateStr, projectIndex) {
     if (hasAnyRole) {
         staffInfo = '<div class="staff-info">';
         if (hasStartTime) {
-            staffInfo += `<div class="staff-row"><span class="staff-label">时间：</span><span style="display:inline-flex;align-items:center;gap:2px;"><span style="display:inline-block;width:5px;height:5px;min-width:5px;border-radius:50%;background:#ffffff;border:1px solid #d4c4a8;flex-shrink:0;">&nbsp;</span><span class="staff-name">${escapeHtml(project.startTime)}</span></span></div>`;
+            staffInfo += `<div class="staff-row"><span class="staff-label">时间：</span><span style="display:inline-block;width:5px;height:5px;min-width:5px;border-radius:50%;background:#ffffff;border:1px solid #d4c4a8;vertical-align:middle;margin-right:2px;">&nbsp;</span><span class="staff-name" style="vertical-align:middle;">${escapeHtml(project.startTime)}</span></div>`;
         }
         cats.forEach(cat => {
             const val = project[cat.key] || (project.customFields && project.customFields[cat.key]);
@@ -1088,7 +1088,7 @@ function createProjectCard(project, dateStr, projectIndex) {
         ${staffInfo}
         <div class="project-location">📍 ${escapeHtml(project.location)}</div>
         <div>
-            <span class="project-type ${typeClass}"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6);flex-shrink:0;vertical-align:middle;">&nbsp;</span>${escapeHtml(project.type)}</span>
+            <span class="project-type ${typeClass}" style="display:inline-block;vertical-align:middle;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6);vertical-align:middle;margin-right:4px;">&nbsp;</span>${escapeHtml(project.type)}</span>
         </div>
         <div class="card-actions">
             <button class="copy-btn" data-date="${escapeHtml(dateStr)}" data-index="${projectIndex}">📋 复制</button>
@@ -3874,12 +3874,13 @@ function drawScheduleToCanvas() {
                 cleanCard.style.width = '100%';
                 cleanCard.style.marginBottom = '8px';
 
-                // 复制子元素样式（跳过圆点元素，避免 getComputedStyle 覆盖 inline 尺寸）
+                // 复制子元素样式（跳过圆点元素和 inline-flex 容器，避免 getComputedStyle 覆盖 inline 尺寸）
                 cleanCard.querySelectorAll('*').forEach((clone, idx) => {
                     const orig = projectCard.querySelectorAll('*')[idx];
                     if (orig) {
                         const origStyle = orig.getAttribute('style') || '';
                         if (origStyle.includes('border-radius:50%') || origStyle.includes('border-radius: 50%')) return;
+                        if (origStyle.includes('inline-flex')) return;
                         try {
                             const cs = window.getComputedStyle(orig);
                             clone.style.cssText = cs.cssText;

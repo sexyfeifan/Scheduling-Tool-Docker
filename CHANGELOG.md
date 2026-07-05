@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.90.0 (2026-07-05) - 导出图片圆点修复
+
+### 🐛 导出修复
+- **开始时间白点导出对齐**: 改用 `inline-block` + `vertical-align:middle` 替代 `inline-flex` wrapper，确保 html2canvas 正确渲染
+- **项目类型彩色圆点导出**: `.project-type` 改用 `display:inline-block`，圆点使用 `vertical-align:middle` 对齐
+- **导出样式复制跳过优化**: 扩展跳过条件，保留含 `inline-flex` 的 inline style 元素
+
 ## v2.89.0 (2026-06-29) - 里程碑版本
 
 ### 🎨 UI/UX
