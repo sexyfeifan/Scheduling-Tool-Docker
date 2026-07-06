@@ -723,6 +723,9 @@ async function initApp() {
         mobileBottomBar.querySelectorAll('.mobile-bar-btn[data-view]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const view = btn.dataset.view;
+                // 切换视图时移除 mobile-day-mode，让 switchView 接管显示
+                document.body.classList.remove('mobile-day-mode');
+                if (view === 'day') document.body.classList.add('mobile-day-mode');
                 document.getElementById(`view-${view}`)?.click();
                 mobileBottomBar.querySelectorAll('.mobile-bar-btn[data-view]').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -736,9 +739,12 @@ async function initApp() {
             });
         }
 
+        // 同步顶部视图切换到底部按钮 + 移除 mobile-day-mode
         document.querySelectorAll('.toolbar .view-btn').forEach(topBtn => {
             topBtn.addEventListener('click', () => {
                 const view = topBtn.id.replace('view-', '');
+                document.body.classList.remove('mobile-day-mode');
+                if (view === 'day') document.body.classList.add('mobile-day-mode');
                 mobileBottomBar.querySelectorAll('.mobile-bar-btn[data-view]').forEach(b => {
                     b.classList.toggle('active', b.dataset.view === view);
                 });
