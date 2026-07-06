@@ -658,6 +658,26 @@ body.mobile-day-mode .week-mobile-nav { display: flex; }
 body.mobile-day-mode #month-view { display: none; }
 body.mobile-day-mode #personnel-view { display: none; }
 
+/* 移动端隐藏桌面端工具栏按钮（通过 class 控制，不依赖媒体查询） */
+body.mobile-day-mode .toolbar .view-btn,
+body.mobile-day-mode .toolbar #conflict-btn,
+body.mobile-day-mode .toolbar #add-project,
+body.mobile-day-mode .toolbar #undo-action,
+body.mobile-day-mode .toolbar #export-image,
+body.mobile-day-mode .toolbar #export-week-text,
+body.mobile-day-mode .toolbar #paste-recognition,
+body.mobile-day-mode .toolbar #heatmap-btn,
+body.mobile-day-mode .toolbar #webhook-btn,
+body.mobile-day-mode .toolbar #admin-btn,
+body.mobile-day-mode .toolbar .toolbar-divider,
+body.mobile-day-mode #settings {
+    display: none !important;
+}
+
+body.mobile-day-mode .mobile-bottom-bar {
+    display: flex !important;
+}
+
 /* ── iPad 横版详情区 ── */
 .ipad-day-detail {
     background: #fff;

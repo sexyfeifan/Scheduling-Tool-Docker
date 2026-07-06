@@ -629,9 +629,9 @@ async function initApp() {
 
     // ── 移动端底部工具栏 + 视图切换 ──
     const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/.test(navigator.userAgent)
-                         || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-                         || /Android/.test(navigator.userAgent);
-    const IS_MOBILE = window.innerWidth <= 1023 || (isMobileDevice && window.innerWidth <= 1440);
+                         || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 0)
+                         || ('ontouchstart' in window && navigator.maxTouchPoints > 1);
+    const IS_MOBILE = window.innerWidth <= 1023 || isMobileDevice;
     const mobileBottomBar = document.getElementById('mobile-bottom-bar');
     const mobileMql = window.matchMedia('(max-width: 1023px), (max-width: 1440px) and (hover: none) and (pointer: coarse)');
 
