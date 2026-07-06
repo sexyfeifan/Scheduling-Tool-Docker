@@ -641,6 +641,47 @@ body.mobile-device .mobile-bottom-bar {
     display: flex !important;
 }
 
+/* ── 日/周视图共享：日期选择器 + 详情区 ── */
+body.mobile-device .mobile-day-picker {
+    display: flex !important;
+}
+body.mobile-device #touch-day-detail {
+    /* 由 JS 控制显隐 */
+}
+
+/* ── 日视图：隐藏原生日期导航（改用 picker 选择） ── */
+body.mobile-device #day-view .day-view-header {
+    display: none !important;
+}
+
+/* ── 月视图 / 人视图：隐藏 picker 和 detail ── */
+body.mobile-device.view-month .mobile-day-picker,
+body.mobile-device.view-month #touch-day-detail,
+body.mobile-device.view-personnel .mobile-day-picker,
+body.mobile-device.view-personnel #touch-day-detail {
+    display: none !important;
+}
+
+/* ── 日/周视图：隐藏原生 .schedule-container 和 .week-header（改用 picker+detail） ── */
+body.mobile-device.view-day .schedule-container,
+body.mobile-device.view-day .week-header,
+body.mobile-device.view-week .schedule-container,
+body.mobile-device.view-week .week-header,
+body.mobile-device.view-week #day-view {
+    display: none !important;
+}
+
+/* ── 日视图：隐藏周视图的 schedule-container ── */
+body.mobile-device.view-day .schedule-container,
+body.mobile-device.view-day .week-header {
+    display: none !important;
+}
+
+/* ── 周视图：隐藏日视图面板 ── */
+body.mobile-device.view-week #day-view {
+    display: none !important;
+}
+
 /* ── 触屏设备日期切换栏始终显示 ── */
 body.mobile-device .week-mobile-nav {
     display: flex !important;
@@ -784,7 +825,6 @@ body.mobile-device .day-header .day-project-count {
 body.mobile-day-mode #day-view { display: block; }
 body.mobile-day-mode .schedule-container { display: none; }
 body.mobile-day-mode .week-header { display: none; }
-body.mobile-day-mode .week-mobile-nav { display: flex; }
 body.mobile-day-mode #month-view { display: none; }
 body.mobile-day-mode #personnel-view { display: none; }
 

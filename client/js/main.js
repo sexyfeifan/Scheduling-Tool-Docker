@@ -613,10 +613,35 @@ async function initApp() {
     
     // 初始化视图切换器（传入渲染回调）
     initViewSwitcher({
-        week: () => { if (typeof renderMobileDayPicker === 'function') renderMobileDayPicker(); },
-        month: () => monthViewModule.render(),
-        personnel: () => personnelViewModule.render(),
-        day: () => renderDayView(new Date())
+        week: () => {
+            if (IS_MOBILE) {
+                document.body.classList.remove('view-day', 'view-month', 'view-personnel');
+                document.body.classList.add('view-week');
+                renderMobileDayPicker();
+            }
+        },
+        month: () => {
+            if (IS_MOBILE) {
+                document.body.classList.remove('view-day', 'view-week', 'view-personnel');
+                document.body.classList.add('view-month');
+            }
+            monthViewModule.render();
+        },
+        personnel: () => {
+            if (IS_MOBILE) {
+                document.body.classList.remove('view-day', 'view-week', 'view-month');
+                document.body.classList.add('view-personnel');
+            }
+            personnelViewModule.render();
+        },
+        day: () => {
+            if (IS_MOBILE) {
+                document.body.classList.remove('view-week', 'view-month', 'view-personnel');
+                document.body.classList.add('view-day');
+                renderMobileDayPicker();
+            }
+            renderDayView(new Date());
+        }
     });
     
     // 单日视图导航按钮
@@ -637,6 +662,7 @@ async function initApp() {
 
     if (IS_MOBILE) {
         document.body.classList.add('mobile-device');
+        document.body.classList.add('view-week');
         renderSchedule();
     }
 
@@ -745,11 +771,10 @@ async function initApp() {
         mobileBottomBar.querySelectorAll('.mobile-bar-btn[data-view]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const view = btn.dataset.view;
+                // 视图切换时同步 picker+detail 显隐
                 document.getElementById(`view-${view}`)?.click();
                 mobileBottomBar.querySelectorAll('.mobile-bar-btn[data-view]').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                // 切换视图后更新日期选择器
-                if (view === 'week') setTimeout(renderMobileDayPicker, 100);
             });
         });
 
