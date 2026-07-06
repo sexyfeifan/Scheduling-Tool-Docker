@@ -596,20 +596,6 @@
         padding-bottom: 72px;
     }
 
-    /* 隐藏桌面端顶部工具栏的视图切换和功能按钮（保留导航） */
-    .toolbar .view-btn,
-    .toolbar #conflict-btn,
-    .toolbar #add-project,
-    .toolbar #undo-action,
-    .toolbar #export-image,
-    .toolbar #export-week-text,
-    .toolbar #paste-recognition,
-    .toolbar #heatmap-btn,
-    .toolbar #webhook-btn,
-    .toolbar #admin-btn {
-        display: none;
-    }
-
     /* 隐藏桌面端 week-header（移动端日视图不需要） */
     .week-header {
         display: none !important;
@@ -655,8 +641,8 @@ body.mobile-device .mobile-bottom-bar {
     display: flex !important;
 }
 
-/* ── 移动端设备 UI（底部栏始终显示） ── */
-body.mobile-device .mobile-bottom-bar {
+/* ── 触屏设备日期切换栏始终显示 ── */
+body.mobile-device .week-mobile-nav {
     display: flex !important;
 }
 

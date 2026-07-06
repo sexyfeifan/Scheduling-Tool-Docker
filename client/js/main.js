@@ -4231,6 +4231,21 @@ function drawScheduleToCanvas() {
                 }
                 dayColumn.appendChild(cleanCard);
             });
+
+            // 烘焙颜色到 inline style（移动端 html2canvas 无法正确解析 CSS 类颜色）
+            dayColumn.querySelectorAll('.project-card *').forEach(el => {
+                try {
+                    const s = el.getAttribute('style') || '';
+                    if (s.includes('border-radius:50%') || s.includes('inline-flex')) return;
+                    const cs = window.getComputedStyle(el);
+                    if (!s.includes('background-color') && cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)')
+                        el.style.backgroundColor = cs.backgroundColor;
+                    if (!s.includes('color') && cs.color)
+                        el.style.color = cs.color;
+                    if (!s.includes('border-color') && cs.borderColor)
+                        el.style.borderColor = cs.borderColor;
+                } catch(e) {}
+            });
         } else {
             const emptyState = document.createElement('div');
             emptyState.className = 'empty-state';
