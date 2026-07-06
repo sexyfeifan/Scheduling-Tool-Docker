@@ -627,7 +627,7 @@ async function initApp() {
     if (dayNextBtn) dayNextBtn.addEventListener('click', () => { dayViewDate.setDate(dayViewDate.getDate() + 1); renderDayView(dayViewDate); });
     if (dayTodayBtn) dayTodayBtn.addEventListener('click', () => { dayViewDate = new Date(); renderDayView(dayViewDate); });
 
-    // ── 移动端：所有触屏设备统一显示日视图，横竖屏一致 ──
+    // ── 移动端：所有触屏设备统一显示，横竖屏一致 ──
     const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/.test(navigator.userAgent)
                          || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 0)
                          || ('ontouchstart' in window && navigator.maxTouchPoints > 1);
@@ -635,9 +635,9 @@ async function initApp() {
     const mobileBottomBar = document.getElementById('mobile-bottom-bar');
 
     if (IS_MOBILE) {
+        document.body.classList.add('mobile-device');
         document.body.classList.add('mobile-day-mode');
         renderDayView(new Date());
-        if (mobileBottomBar) mobileBottomBar.style.display = 'flex';
     }
 
     if (IS_MOBILE && mobileBottomBar) {
@@ -646,9 +646,13 @@ async function initApp() {
         mobileBottomBar.querySelectorAll('.mobile-bar-btn[data-view]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const view = btn.dataset.view;
-                // 切换视图时移除 mobile-day-mode，让 switchView 接管显示
-                document.body.classList.remove('mobile-day-mode');
-                if (view === 'day') document.body.classList.add('mobile-day-mode');
+                // mobile-device 始终保留（控制工具栏隐藏+底部栏显示）
+                // 只切换 mobile-day-mode（控制日视图面板）
+                if (view === 'day') {
+                    document.body.classList.add('mobile-day-mode');
+                } else {
+                    document.body.classList.remove('mobile-day-mode');
+                }
                 document.getElementById(`view-${view}`)?.click();
                 mobileBottomBar.querySelectorAll('.mobile-bar-btn[data-view]').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -662,12 +666,15 @@ async function initApp() {
             });
         }
 
-        // 同步顶部视图切换到底部按钮 + 移除 mobile-day-mode
+        // 同步顶部视图切换到底部按钮
         document.querySelectorAll('.toolbar .view-btn').forEach(topBtn => {
             topBtn.addEventListener('click', () => {
                 const view = topBtn.id.replace('view-', '');
-                document.body.classList.remove('mobile-day-mode');
-                if (view === 'day') document.body.classList.add('mobile-day-mode');
+                if (view === 'day') {
+                    document.body.classList.add('mobile-day-mode');
+                } else {
+                    document.body.classList.remove('mobile-day-mode');
+                }
                 mobileBottomBar.querySelectorAll('.mobile-bar-btn[data-view]').forEach(b => {
                     b.classList.toggle('active', b.dataset.view === view);
                 });
