@@ -17,6 +17,15 @@
     <link rel="stylesheet" href="css/animal-island-icons.css">
     <link rel="manifest" href="manifest.json">
     <script src="js/vendor/html2canvas.min.js"></script>
+    <!-- 移动端调试工具：URL 带 ?debug=1 时加载 -->
+    <script>
+        if (new URLSearchParams(location.search).has('debug')) {
+            var s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/eruda@3/eruda.min.js';
+            s.onload = function() { eruda.init(); };
+            document.head.appendChild(s);
+        }
+    </script>
     <style>
         /* ── 只读模式 ── */
         body.readonly .delete-btn,
@@ -95,6 +104,7 @@
             <div class="version-info" id="version-info">
                 <span class="version-number">v2.64</span>
                 <span class="version-date">build 2026-06-23</span>
+                <button id="force-refresh" class="btn icon-btn" title="强制刷新（清除缓存）" style="font-size:12px;padding:2px 8px;min-height:28px;margin-left:8px;">🔄</button>
             </div>
         </div>
 

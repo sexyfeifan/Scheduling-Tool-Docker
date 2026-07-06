@@ -1,9 +1,9 @@
 /**
  * Service Worker — PWA 离线支持
- * 缓存静态资源，支持离线访问
+ * v3.22: 静态资源改为网络优先，确保更新及时生效
  */
 
-const CACHE_NAME = 'scheduling-tool-v2.92';
+const CACHE_NAME = 'scheduling-tool-v3.22';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -65,6 +65,7 @@ const STATIC_ASSETS = [
   '/manifest.json'
 ];
 
+// 安装：跳过等待，立即激活
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
@@ -76,12 +77,16 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
+// 激活：删除所有旧缓存
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then(names => {
       return Promise.all(
         names.filter(name => name !== CACHE_NAME)
-          .map(name => caches.delete(name))
+          .map(name => {
+            console.log('[SW] 删除旧缓存:', name);
+            return caches.delete(name);
+          })
       );
     })
   );
@@ -91,75 +96,38 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // 只处理 http/https 请求，忽略 chrome-extension 等
+  // 只处理 http/https 请求
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     return;
   }
 
-  // API 请求：网络优先，带缓存过期检查
+  // API 请求：网络优先
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      caches.match(event.request).then(async (cached) => {
-        if (cached) {
-          const cachedAt = parseInt(cached.headers.get('sw-cached-at') || '0', 10);
-          if (Date.now() - cachedAt > 300000) {
-            try {
-              const fresh = await fetch(event.request);
-              if (fresh.ok) {
-                const clone = fresh.clone();
-                const headers = new Headers(clone.headers);
-                headers.set('sw-cached-at', Date.now().toString());
-                const timedResponse = new Response(await clone.text(), {
-                  status: clone.status,
-                  statusText: clone.statusText,
-                  headers
-                });
-                caches.open(CACHE_NAME).then(cache => cache.put(event.request, timedResponse));
-                return fresh;
-              }
-            } catch (e) { /* fall through to stale cache */ }
-          }
-          return cached;
+      fetch(event.request).then(response => {
+        if (event.request.method === 'GET' && response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
-        return fetch(event.request).then(response => {
-          if (event.request.method === 'GET' && response.ok) {
-            const clone = response.clone();
-            const headers = new Headers(clone.headers);
-            headers.set('sw-cached-at', Date.now().toString());
-            clone.text().then(body => {
-              const timedResponse = new Response(body, {
-                status: clone.status,
-                statusText: clone.statusText,
-                headers
-              });
-              caches.open(CACHE_NAME).then(cache => cache.put(event.request, timedResponse));
-            });
-          }
-          return response;
-        });
-      })
+        return response;
+      }).catch(() => caches.match(event.request))
     );
     return;
   }
 
-  // 同源静态资源：缓存优先
+  // 同源静态资源：网络优先（确保更新及时生效）
   if (url.origin === location.origin) {
     event.respondWith(
-      caches.match(event.request).then(cached => {
-        if (cached) return cached;
-        return fetch(event.request).then(response => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, clone);
-            });
-          }
-          return response;
-        });
-      }).catch(() => {
-        if (event.request.destination === 'document') {
-          return caches.match('/index.html');
+      fetch(event.request).then(response => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
+        return response;
+      }).catch(() => {
+        return caches.match(event.request).then(cached => {
+          return cached || (event.request.destination === 'document' ? caches.match('/index.html') : undefined);
+        });
       })
     );
   }

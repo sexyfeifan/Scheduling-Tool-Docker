@@ -905,6 +905,27 @@ async function loadVersionInfo() {
     }
 }
 
+// 强制刷新：清除 SW 缓存 + 重新加载
+document.addEventListener('DOMContentLoaded', () => {
+    const forceRefreshBtn = document.getElementById('force-refresh');
+    if (forceRefreshBtn) {
+        forceRefreshBtn.addEventListener('click', async () => {
+            forceRefreshBtn.textContent = '⏳';
+            try {
+                if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    for (const reg of regs) await reg.unregister();
+                }
+                if ('caches' in window) {
+                    const keys = await caches.keys();
+                    for (const key of keys) await caches.delete(key);
+                }
+            } catch (e) { console.warn('清除缓存失败:', e); }
+            location.reload(true);
+        });
+    }
+});
+
 // 移动端显示今日日期
 function showTodayOnMobile() {
     const today = new Date();
