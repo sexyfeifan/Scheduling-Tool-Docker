@@ -34,7 +34,12 @@
         body.readonly .history-toggle,
         body.readonly #clipboard-hint,
         body.readonly .theme-toggle,
-        body.readonly .version-info { display: none !important; }
+        body.readonly .version-info,
+        body.readonly #add-project,
+        body.readonly #undo-action,
+        body.readonly #paste-recognition,
+        body.readonly #webhook-btn,
+        body.readonly #admin-btn { display: none !important; }
         body.readonly .project-card { cursor: default !important; }
         body.readonly .project-card:hover { transform: none !important; }
         body.readonly .day-column { cursor: default !important; }
@@ -512,13 +517,13 @@
                             <label class="animal-switch" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                                 <input type="checkbox" id="share-enabled-setting" class="switch-input">
                                 <span class="switch"><span class="handle"></span></span>
-                                <span class="animal-switch-label">启用只读分享链接</span>
+                                <span class="animal-switch-label">启用只读分享子页面</span>
                             </label>
                         </div>
                         <div class="form-group">
-                            <label for="share-token-setting">分享标识:</label>
-                            <input type="text" id="share-token-setting" placeholder="例如 team-weekly">
-                            <p>分享地址会生成为 `/share/你的分享标识`。</p>
+                            <label for="share-path-setting">子页面路径:</label>
+                            <input type="text" id="share-path-setting" placeholder="canbox" value="canbox">
+                            <p>访问地址为 <code>http://你的域名:3000/<strong id="share-path-preview">canbox</strong></code></p>
                         </div>
                         <div class="form-group">
                             <button id="save-access-settings" class="btn primary">保存访问设置</button>

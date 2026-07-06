@@ -17,15 +17,15 @@ export function createSettingsModule(ctx) {
     const healthBadge = document.getElementById('health-badge');
     const shareLinkDisplay = document.getElementById('share-link-display');
     const shareEnabledSetting = document.getElementById('share-enabled-setting');
-    const shareTokenSetting = document.getElementById('share-token-setting');
+    const sharePathSetting = document.getElementById('share-path-setting');
     const editPasswordSetting = document.getElementById('edit-password-setting');
     const searchProjectsInput = document.getElementById('search-projects');
     const filterTypeSelect = document.getElementById('filter-type');
 
     function updateShareLinkDisplay() {
         if (!shareLinkDisplay) return;
-        if (accessSettings.shareEnabled && accessSettings.shareUrl) {
-            shareLinkDisplay.textContent = accessSettings.shareUrl;
+        if (accessSettings.shareEnabled && accessSettings.sharePath) {
+            shareLinkDisplay.textContent = `${window.location.origin}/${accessSettings.sharePath}`;
         } else {
             shareLinkDisplay.textContent = '分享链接尚未启用';
         }
@@ -33,12 +33,7 @@ export function createSettingsModule(ctx) {
 
     async function loadAccessSettings() {
         if (!getAdminPassword()) {
-            accessSettings = {
-                editPasswordEnabled: false,
-                shareEnabled: false,
-                shareToken: '',
-                shareUrl: ''
-            };
+            accessSettings = { editPasswordEnabled: false, shareEnabled: false, sharePath: 'canbox' };
             updateShareLinkDisplay();
             return;
         }
@@ -46,7 +41,7 @@ export function createSettingsModule(ctx) {
         try {
             accessSettings = await settingAPI.getAccessSettings();
             if (shareEnabledSetting) shareEnabledSetting.checked = accessSettings.shareEnabled;
-            if (shareTokenSetting) shareTokenSetting.value = accessSettings.shareToken || '';
+            if (sharePathSetting) sharePathSetting.value = accessSettings.sharePath || 'canbox';
             if (editPasswordSetting) editPasswordSetting.value = '';
             updateShareLinkDisplay();
         } catch (error) {

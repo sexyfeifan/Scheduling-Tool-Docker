@@ -23,7 +23,7 @@ let currentMonday = getMonday(new Date());
 
 // 项目数据存储
 // ── 只读模式检测 ──
-const IS_READONLY = new URLSearchParams(window.location.search).has('readonly');
+const IS_READONLY = window.location.pathname === '/canbox' || new URLSearchParams(window.location.search).has('readonly');
 if (IS_READONLY) document.body.classList.add('readonly');
 
 let scheduleData = {};
@@ -352,12 +352,9 @@ async function undoLastChange() {
 }
 
 function updateShareLinkDisplay() {
-    if (!shareLinkDisplay) {
-        return;
-    }
-
-    if (accessSettings.shareEnabled && accessSettings.shareUrl) {
-        shareLinkDisplay.textContent = accessSettings.shareUrl;
+    if (!shareLinkDisplay) return;
+    if (accessSettings.shareEnabled && accessSettings.sharePath) {
+        shareLinkDisplay.textContent = `${window.location.origin}/${accessSettings.sharePath}`;
     } else {
         shareLinkDisplay.textContent = '分享链接尚未启用';
     }
@@ -365,12 +362,7 @@ function updateShareLinkDisplay() {
 
 async function loadAccessSettings() {
     if (!adminPassword) {
-        accessSettings = {
-            editPasswordEnabled: false,
-            shareEnabled: false,
-            shareToken: '',
-            shareUrl: ''
-        };
+        accessSettings = { editPasswordEnabled: false, shareEnabled: false, sharePath: 'canbox' };
         updateShareLinkDisplay();
         return;
     }
@@ -378,7 +370,8 @@ async function loadAccessSettings() {
     try {
         accessSettings = await settingAPI.getAccessSettings();
         shareEnabledSetting.checked = accessSettings.shareEnabled;
-        shareTokenSetting.value = accessSettings.shareToken || '';
+        const sharePathInput = document.getElementById('share-path-setting');
+        if (sharePathInput) sharePathInput.value = accessSettings.sharePath || 'canbox';
         editPasswordSetting.value = '';
         updateShareLinkDisplay();
     } catch (error) {
@@ -1459,14 +1452,19 @@ function setupEventListeners() {
                 return;
             }
 
+            const sharePathInput = document.getElementById('share-path-setting');
+            const sharePath = (sharePathInput ? sharePathInput.value.trim() : 'canbox') || 'canbox';
+
             try {
                 const response = await settingAPI.saveAccessSettings({
                     editPassword: editPasswordSetting.value,
                     shareEnabled: shareEnabledSetting.checked,
-                    shareToken: shareTokenSetting.value.trim()
+                    sharePath: sharePath
                 });
                 accessSettings = response.access;
                 editPassword = editPasswordSetting.value ? editPasswordSetting.value : editPassword;
+                const pathPreview = document.getElementById('share-path-preview');
+                if (pathPreview) pathPreview.textContent = sharePath;
                 updateShareLinkDisplay();
                 showToast('访问控制已保存', 'success');
             } catch (error) {
@@ -1478,13 +1476,13 @@ function setupEventListeners() {
 
     if (copyShareLinkBtn) {
         copyShareLinkBtn.addEventListener('click', async () => {
-            if (!accessSettings.shareUrl) {
+            if (!accessSettings.shareEnabled || !accessSettings.sharePath) {
                 showToast('请先启用分享链接', 'warning');
                 return;
             }
-
+            const url = `${window.location.origin}/${accessSettings.sharePath}`;
             try {
-                await navigator.clipboard.writeText(accessSettings.shareUrl);
+                await navigator.clipboard.writeText(url);
                 showToast('分享链接已复制', 'success');
             } catch (error) {
                 showToast('复制失败，请手动复制', 'warning');

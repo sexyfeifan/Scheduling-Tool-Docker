@@ -162,7 +162,20 @@ function createApp(options = {}) {
 
   app.use(express.static(CLIENT_DIR));
   app.get('/', (req, res) => res.sendFile(path.join(CLIENT_DIR, 'index.html')));
-  app.get('/notice', (req, res) => res.redirect('/?readonly=1'));
+
+  // 只读分享子页面路由 — 动态读取设置中的路径
+  app.get('/canbox', (req, res) => {
+    try {
+      const settings = store.getSettings ? store.getSettings() : {};
+      if (settings.shareEnabled) {
+        res.sendFile(path.join(CLIENT_DIR, 'index.html'));
+      } else {
+        res.status(404).send('子页面未启用');
+      }
+    } catch (e) {
+      res.sendFile(path.join(CLIENT_DIR, 'index.html'));
+    }
+  });
 
   app.use((error, req, res, next) => {
     logger.error(error);
