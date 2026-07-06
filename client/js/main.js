@@ -28,7 +28,7 @@ let scheduleData = {};
 const DEFAULT_TYPE_COLORS = {
     '平面': '#10B981',
     '视频': '#EC4899',
-    '直播': '#F59E0B',
+    '直播': '#3B82F6',
     '试做': '#8B5CF6',
     '特殊': '#FF8C00'
 };
@@ -4037,7 +4037,7 @@ function drawScheduleToCanvas() {
                 projectCard.querySelectorAll('.delete-btn, .copy-btn, .card-actions').forEach(el => el.remove());
 
                 const origCS = window.getComputedStyle(projectCard);
-                const cardKeepProps = ['background','background-color','border','border-radius','padding','box-shadow','font-family','font-size','color','line-height','letter-spacing','display','flex-direction','gap','position','overflow'];
+                const cardKeepProps = ['border-radius','padding','box-shadow','font-family','font-size','line-height','letter-spacing','display','flex-direction','gap','position','overflow'];
                 cardKeepProps.forEach(p => {
                     try { cleanCard.style.setProperty(p, origCS.getPropertyValue(p)); } catch(e) {}
                 });
