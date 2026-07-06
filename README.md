@@ -1,6 +1,6 @@
 # 罐头场通告排期 — Docker 版本
 
-> 当前版本：**v2.92** | Docker Hub: `sexyfeifan/scheduling-tool:2.92`
+> 当前版本：**v3.00** | Docker Hub: `sexyfeifan/scheduling-tool:3.00`
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/sexyfeifan/scheduling-tool)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
 [![Docker Image Size](https://img.shields.io/docker/image-size/sexyfeifan/scheduling-tool/latest)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
@@ -21,7 +21,7 @@
 - 月视图日历（项目/人员模式切换，显示每日排期名称）
 - 人员排期矩阵（按自然月显示，按部门分组，角色颜色标记）
 - 项目添加 / 编辑 / 删除 / 复制
-- 卡片按项目类型鲜艳配色（平面=绿 / 视频=粉 / 直播=琥珀 / 试做=紫）
+- 卡片按项目类型鲜艳配色（平面=绿 / 视频=粉 / 直播=蓝 / 试做=紫 / 特殊=橘），支持自定义颜色
 - 项目名单行不换行（响应式字号缩放）
 - 人员姓名每行至多 2 人自动换行对齐
 
@@ -53,7 +53,7 @@
 - 数据备份 / 恢复（服务端备份 + 本地文件导入导出）
 - 操作历史记录
 - 动态职能管理（单选 / 多选 radio 切换）
-- 项目类型管理
+- 项目类型管理（颜色选择器 + 还原默认 + 自动分配不重复颜色）
 - 项目模板
 - 数据管理（姓名更替 / 任务交接，支持并列人名自动拆分）
 
@@ -89,7 +89,7 @@ mkdir -p scheduling-tool && cd scheduling-tool
 cat > docker-compose.yml << 'EOF'
 services:
   scheduling-tool:
-    image: sexyfeifan/scheduling-tool:2.92
+    image: sexyfeifan/scheduling-tool:3.00
     container_name: scheduling-tool
     ports:
       - "3000:3000"
@@ -146,7 +146,7 @@ docker buildx create --name multiarch-builder --use
 # 构建并推送多架构镜像
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -t sexyfeifan/scheduling-tool:2.92 \
+  -t sexyfeifan/scheduling-tool:3.00 \
   -t sexyfeifan/scheduling-tool:latest \
   --push .
 ```
@@ -261,6 +261,37 @@ docker buildx build \
 ---
 
 ## 更新日志
+
+### v3.00 (2026-07-06) - 里程碑版本：类型颜色系统重构
+
+**🎨 项目类型颜色系统**:
+- 集中式类型颜色管理（`DEFAULT_TYPE_COLORS` + `TYPE_COLOR_PALETTE` 15 色池）
+- 药丸标和卡片背景同色系（自动生成 rgba 透明背景 + 边框 + 加深文字）
+- 设置页颜色选择器（`<input type="color">` 实时预览）
+- 还原默认颜色按钮
+- 新增类型自动分配不重复颜色
+- 类型重命名保留颜色
+- 无类型时卡片默认白色
+
+**🎨 默认类型颜色**:
+- 平面=#10B981(绿) / 视频=#EC4899(粉) / 直播=#3B82F6(蓝) / 试做=#8B5CF6(紫) / 特殊=#FF8C00(橘)
+
+**🐛 导出修复**:
+- 修复导出图片卡片颜色统一为同一颜色（getComputedStyle 在 detach 元素返回默认值）
+- 导出跳过 background/color 属性复制，保留 cloneNode 的 inline style
+
+**📱 移动端优化（v2.92~v2.97）**:
+- 触摸区域 ≥ 44px / 添加按钮触摸可见 / 管理页 Tab 横向滚动
+- iOS Safari 下载兼容 / 新标签页降级 / blob URL 内存释放
+- viewport-fit=cover / hover 禁用 / background-attachment 修复
+- iOS PWA 元标签 / SW 缓存更新 / 手势去重
+- 触摸拖拽（长按底部日期选择面板）
+- 月视图 / 人员视图移动端横向滚动
+
+**🕐 时间显示修复（v2.92~v2.97）**:
+- 时间圆点统一为 staff-dot 风格（7×7px 柠檬黄 #FFD700）
+- 时间文字 system-ui 字体（修复 canvas 渲染冒号字距）
+- 导出容器恢复正常字距渲染
 
 ### v2.92 (2026-07-05) - 移动端全面优化
 
