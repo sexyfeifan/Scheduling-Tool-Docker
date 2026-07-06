@@ -693,10 +693,22 @@ async function initApp() {
             btn.addEventListener('click', () => {
                 mobileDayPicker.dataset.selected = dateStr;
                 showTouchDayDetail(dateStr);
-                renderMobileDayPicker(); // 重绘选中态
+                renderMobileDayPicker();
             });
             mobileDayPicker.appendChild(btn);
         });
+    }
+
+    // 切换周后自动选中今天（如果在本周）或第一天
+    function autoSelectDayForMobile() {
+        if (!IS_MOBILE || !mobileDayPicker) return;
+        const weekDates = getWeekDates(currentMonday);
+        const todayStr = formatDate(new Date());
+        let targetDate = weekDates.find(d => formatDate(d) === todayStr);
+        if (!targetDate) targetDate = weekDates[0];
+        const dateStr = formatDate(targetDate);
+        mobileDayPicker.dataset.selected = dateStr;
+        showTouchDayDetail(dateStr);
     }
 
     function showTouchDayDetail(dateStr) {
@@ -1460,30 +1472,45 @@ function setupEventListeners() {
         currentMonday.setDate(currentMonday.getDate() - 7);
         updateWeekDisplay();
         renderSchedule();
-        if (IS_MOBILE && typeof renderMobileDayPicker === 'function') renderMobileDayPicker();
     });
     
     nextWeekBtn.addEventListener('click', () => {
         currentMonday.setDate(currentMonday.getDate() + 7);
         updateWeekDisplay();
         renderSchedule();
-        if (IS_MOBILE && typeof renderMobileDayPicker === 'function') renderMobileDayPicker();
     });
     
     currentWeekBtn.addEventListener('click', () => {
         currentMonday = getMonday(new Date());
         updateWeekDisplay();
         renderSchedule();
-        if (IS_MOBILE && typeof renderMobileDayPicker === 'function') renderMobileDayPicker();
     });
 
-    // 移动端周导航按钮
+    // 移动端周导航按钮（直接调用函数，不通过 .click() 代理）
     const weekNavPrev = document.getElementById('week-nav-prev');
     const weekNavNext = document.getElementById('week-nav-next');
     const weekNavToday = document.getElementById('week-nav-today');
-    if (weekNavPrev) weekNavPrev.addEventListener('click', () => { prevWeekBtn.click(); });
-    if (weekNavNext) weekNavNext.addEventListener('click', () => { nextWeekBtn.click(); });
-    if (weekNavToday) weekNavToday.addEventListener('click', () => { currentWeekBtn.click(); });
+    if (weekNavPrev) weekNavPrev.addEventListener('click', () => {
+        currentMonday.setDate(currentMonday.getDate() - 7);
+        updateWeekDisplay();
+        renderSchedule();
+        if (typeof renderMobileDayPicker === 'function') renderMobileDayPicker();
+        autoSelectDayForMobile();
+    });
+    if (weekNavNext) weekNavNext.addEventListener('click', () => {
+        currentMonday.setDate(currentMonday.getDate() + 7);
+        updateWeekDisplay();
+        renderSchedule();
+        if (typeof renderMobileDayPicker === 'function') renderMobileDayPicker();
+        autoSelectDayForMobile();
+    });
+    if (weekNavToday) weekNavToday.addEventListener('click', () => {
+        currentMonday = getMonday(new Date());
+        updateWeekDisplay();
+        renderSchedule();
+        if (typeof renderMobileDayPicker === 'function') renderMobileDayPicker();
+        autoSelectDayForMobile();
+    });
     
     // 添加项目按钮
     addProjectBtn.addEventListener('click', () => {
