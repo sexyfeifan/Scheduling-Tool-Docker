@@ -699,7 +699,7 @@ async function initApp() {
         });
     }
 
-    // 切换周后自动选中今天（如果在本周）或第一天
+    // 切换周后自动选中今天（如果在本周）或第一天，并重绘picker
     function autoSelectDayForMobile() {
         if (!IS_MOBILE || !mobileDayPicker) return;
         const weekDates = getWeekDates(currentMonday);
@@ -708,6 +708,7 @@ async function initApp() {
         if (!targetDate) targetDate = weekDates[0];
         const dateStr = formatDate(targetDate);
         mobileDayPicker.dataset.selected = dateStr;
+        renderMobileDayPicker();
         showTouchDayDetail(dateStr);
     }
 
@@ -1494,21 +1495,18 @@ function setupEventListeners() {
         currentMonday.setDate(currentMonday.getDate() - 7);
         updateWeekDisplay();
         renderSchedule();
-        if (typeof renderMobileDayPicker === 'function') renderMobileDayPicker();
         autoSelectDayForMobile();
     });
     if (weekNavNext) weekNavNext.addEventListener('click', () => {
         currentMonday.setDate(currentMonday.getDate() + 7);
         updateWeekDisplay();
         renderSchedule();
-        if (typeof renderMobileDayPicker === 'function') renderMobileDayPicker();
         autoSelectDayForMobile();
     });
     if (weekNavToday) weekNavToday.addEventListener('click', () => {
         currentMonday = getMonday(new Date());
         updateWeekDisplay();
         renderSchedule();
-        if (typeof renderMobileDayPicker === 'function') renderMobileDayPicker();
         autoSelectDayForMobile();
     });
     
