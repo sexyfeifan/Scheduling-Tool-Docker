@@ -631,19 +631,40 @@ async function initApp() {
     const IS_MOBILE = window.innerWidth <= 1023;
     const mobileBottomBar = document.getElementById('mobile-bottom-bar');
     
-    if (IS_MOBILE && mobileBottomBar) {
-        mobileBottomBar.style.display = 'flex';
-        
-        // 默认切到日视图 — 直接 DOM 操作
+    // ── 屏幕旋转自动切换视图（matchMedia API，iOS 可靠检测） ──
+    const scheduleContainerEl = document.querySelector('.schedule-container');
+    const weekHeaderEl = document.querySelector('.week-header');
+    const mobileMql = window.matchMedia('(max-width: 1023px)');
+
+    function applyViewForViewport(isMobile) {
         const dayViewEl = document.getElementById('day-view');
-        if (dayViewEl) dayViewEl.style.display = '';
-        const scheduleContainerEl = document.querySelector('.schedule-container');
-        if (scheduleContainerEl) scheduleContainerEl.style.display = 'none';
-        const weekHeaderElInit = document.querySelector('.week-header');
-        if (weekHeaderElInit) weekHeaderElInit.style.display = 'none';
-        document.getElementById('view-day')?.classList.add('active');
-        document.getElementById('view-week')?.classList.remove('active');
-        renderDayView(new Date());
+        if (isMobile) {
+            if (dayViewEl) dayViewEl.style.display = '';
+            if (scheduleContainerEl) scheduleContainerEl.style.display = 'none';
+            if (weekHeaderEl) weekHeaderEl.style.display = 'none';
+            document.getElementById('view-day')?.classList.add('active');
+            document.getElementById('view-week')?.classList.remove('active');
+            renderDayView(new Date());
+        } else {
+            if (dayViewEl) dayViewEl.style.setProperty('display', 'none', 'important');
+            if (scheduleContainerEl) scheduleContainerEl.style.setProperty('display', 'grid', 'important');
+            if (weekHeaderEl) weekHeaderEl.style.setProperty('display', '', 'important');
+            document.getElementById('view-week')?.classList.add('active');
+            document.getElementById('view-day')?.classList.remove('active');
+            renderSchedule();
+        }
+        if (mobileBottomBar) mobileBottomBar.style.display = isMobile ? 'flex' : 'none';
+    }
+
+    // 初始应用
+    if (IS_MOBILE) {
+        applyViewForViewport(true);
+    }
+
+    // 监听视口变化（比 resize 可靠，iOS 原生支持）
+    mobileMql.addEventListener('change', (e) => {
+        applyViewForViewport(e.matches);
+    });
 
         // 底部工具栏按钮事件
         mobileBottomBar.querySelectorAll('.mobile-bar-btn[data-view]').forEach(btn => {
@@ -675,52 +696,6 @@ async function initApp() {
             });
         });
     }
-
-    // ── 屏幕旋转/resize 自动切换视图（防抖 + 锁 + 直接 DOM 操作） ──
-    let lastWidth = window.innerWidth;
-    let resizeLock = false;
-    let resizeTimer = null;
-    const scheduleContainerEl = document.querySelector('.schedule-container');
-    const weekHeaderEl = document.querySelector('.week-header');
-
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-            if (resizeLock) return;
-            const w = window.innerWidth;
-            const wasMobile = lastWidth <= 1023;
-            const isMobile = w <= 1023;
-            if (wasMobile !== isMobile) {
-                resizeLock = true;
-                const dayViewEl = document.getElementById('day-view');
-
-                if (isMobile) {
-                    // 切到日视图
-                    if (dayViewEl) dayViewEl.style.display = '';
-                    if (scheduleContainerEl) scheduleContainerEl.style.display = 'none';
-                    if (weekHeaderEl) weekHeaderEl.style.display = 'none';
-                    document.getElementById('view-day')?.classList.add('active');
-                    document.getElementById('view-week')?.classList.remove('active');
-                    const dayViewDate = new Date();
-                    renderDayView(dayViewDate);
-                } else {
-                    // 切到周视图 — 直接 DOM 操作，不依赖 switchView
-                    if (dayViewEl) dayViewEl.style.display = 'none';
-                    if (scheduleContainerEl) scheduleContainerEl.style.display = 'grid';
-                    if (weekHeaderEl) weekHeaderEl.style.display = '';
-                    document.getElementById('view-week')?.classList.add('active');
-                    document.getElementById('view-day')?.classList.remove('active');
-                    renderSchedule();
-                }
-
-                if (mobileBottomBar) mobileBottomBar.style.display = isMobile ? 'flex' : 'none';
-                lastWidth = w;
-                setTimeout(() => { resizeLock = false; }, 300);
-            } else {
-                lastWidth = w;
-            }
-        }, 150);
-    });
 
     // 月视图导出按钮
     const monthExportBtn = document.getElementById('month-export');
