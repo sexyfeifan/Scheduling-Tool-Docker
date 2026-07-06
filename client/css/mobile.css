@@ -593,8 +593,21 @@
     display: none;
 }
 
-/* ── iPad 横屏（1024-1199px）：字号间距紧凑，不用 transform ── */
+/* ── iPad 横屏（1024-1199px）：纯 CSS 强制周视图 ── */
 @media (min-width: 1024px) and (max-width: 1199px) {
+    /* 强制隐藏日视图，强制显示周视图 7 列 */
+    #day-view {
+        display: none !important;
+    }
+    .schedule-container {
+        display: grid !important;
+        grid-template-columns: repeat(7, 1fr) !important;
+    }
+    .week-header {
+        display: grid !important;
+        grid-template-columns: repeat(7, 1fr) !important;
+    }
+    /* 紧凑样式 */
     .header {
         padding: 10px 14px;
     }
@@ -614,9 +627,6 @@
     }
     .week-display {
         font-size: 12px;
-    }
-    .schedule-container {
-        grid-template-columns: repeat(7, 1fr);
     }
     .day-column {
         padding: 8px;
@@ -679,6 +689,8 @@
         gap: 1px 8px;
     }
 }
+
+
 
 /* 更小屏幕 */
 @media (max-width: 480px) {
