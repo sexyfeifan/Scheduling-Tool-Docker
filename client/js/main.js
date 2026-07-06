@@ -635,7 +635,7 @@ async function initApp() {
         mobileBottomBar.style.display = 'flex';
         
         // 默认切到日视图
-        setTimeout(() => switchView('day'), 100);
+        switchView('day');
 
         // 底部工具栏按钮事件
         mobileBottomBar.querySelectorAll('.mobile-bar-btn[data-view]').forEach(btn => {
@@ -668,22 +668,36 @@ async function initApp() {
         });
     }
 
-    // ── 屏幕旋转/resize 自动切换视图 ──
+    // ── 屏幕旋转/resize 自动切换视图（防抖 + 锁） ──
     let lastWidth = window.innerWidth;
+    let resizeLock = false;
+    let resizeTimer = null;
     window.addEventListener('resize', () => {
-        const w = window.innerWidth;
-        const wasMobile = lastWidth <= 1023;
-        const isMobile = w <= 1023;
-        if (wasMobile !== isMobile) {
-            if (isMobile && getCurrentView() !== 'day') {
-                switchView('day');
-            } else if (!isMobile && getCurrentView() === 'day') {
-                switchView('week');
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            if (resizeLock) return;
+            const w = window.innerWidth;
+            const wasMobile = lastWidth <= 1023;
+            const isMobile = w <= 1023;
+            if (wasMobile !== isMobile) {
+                resizeLock = true;
+                const dayViewEl = document.getElementById('day-view');
+                if (isMobile) {
+                    switchView('day');
+                    if (dayViewEl) dayViewEl.style.display = '';
+                } else {
+                    // 切回周视图时显式隐藏日视图
+                    if (dayViewEl) dayViewEl.style.display = 'none';
+                    switchView('week');
+                    renderSchedule();
+                }
+                if (mobileBottomBar) mobileBottomBar.style.display = isMobile ? 'flex' : 'none';
+                lastWidth = w;
+                setTimeout(() => { resizeLock = false; }, 300);
+            } else {
+                lastWidth = w;
             }
-            // 更新底部栏显示
-            if (mobileBottomBar) mobileBottomBar.style.display = isMobile ? 'flex' : 'none';
-        }
-        lastWidth = w;
+        }, 150);
     });
 
     // 月视图导出按钮
