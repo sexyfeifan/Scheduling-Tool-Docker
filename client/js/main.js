@@ -675,6 +675,7 @@ async function initApp() {
 
     function renderMobileDayPicker() {
         if (!mobileDayPicker) return;
+        if (!document.body.classList.contains('mobile-device')) return;
         const weekDates = getWeekDates(currentMonday);
         const dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
         const todayStr = formatDate(new Date());
