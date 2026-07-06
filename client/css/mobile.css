@@ -650,23 +650,27 @@
     display: none;
 }
 
-/* ── 移动端设备 UI（始终生效，不随视图切换变化） ── */
-body.mobile-device .toolbar .view-btn,
-body.mobile-device .toolbar #conflict-btn,
-body.mobile-device .toolbar #add-project,
-body.mobile-device .toolbar #undo-action,
-body.mobile-device .toolbar #export-image,
-body.mobile-device .toolbar #export-week-text,
-body.mobile-device .toolbar #paste-recognition,
-body.mobile-device .toolbar #heatmap-btn,
-body.mobile-device .toolbar #webhook-btn,
-body.mobile-device .toolbar #admin-btn,
-body.mobile-device .toolbar .toolbar-divider,
-body.mobile-device #settings {
-    display: none !important;
-}
+/* ── 移动端设备 UI（底部栏始终显示） ── */
 body.mobile-device .mobile-bottom-bar {
     display: flex !important;
+}
+
+/* ── 小屏手机隐藏桌面工具栏（≤1023px） ── */
+@media (max-width: 1023px) {
+    body.mobile-device .toolbar .view-btn,
+    body.mobile-device .toolbar #conflict-btn,
+    body.mobile-device .toolbar #add-project,
+    body.mobile-device .toolbar #undo-action,
+    body.mobile-device .toolbar #export-image,
+    body.mobile-device .toolbar #export-week-text,
+    body.mobile-device .toolbar #paste-recognition,
+    body.mobile-device .toolbar #heatmap-btn,
+    body.mobile-device .toolbar #webhook-btn,
+    body.mobile-device .toolbar #admin-btn,
+    body.mobile-device .toolbar .toolbar-divider,
+    body.mobile-device #settings {
+        display: none !important;
+    }
 }
 
 /* ── 日视图模式（仅控制视图面板显示） ── */
