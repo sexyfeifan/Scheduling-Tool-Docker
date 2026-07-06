@@ -712,10 +712,6 @@ async function initApp() {
         } else {
             projects.forEach((project, index) => {
                 const card = createProjectCard(project, dateStr, index);
-                if (IS_MOBILE) {
-                    card.querySelectorAll('.delete-btn, .copy-btn, .card-actions').forEach(el => el.remove());
-                    card.style.cursor = 'default';
-                }
                 touchDetailContent.appendChild(card);
             });
         }
@@ -734,6 +730,15 @@ async function initApp() {
         touchDetailClose.addEventListener('click', () => {
             if (touchDetail) touchDetail.style.display = 'none';
             document.querySelectorAll('.day-header').forEach(h => h.classList.remove('touch-selected'));
+        });
+    }
+
+    // 详情区新增按钮
+    const touchDetailAdd = document.getElementById('touch-detail-add');
+    if (touchDetailAdd) {
+        touchDetailAdd.addEventListener('click', () => {
+            const selectedDate = mobileDayPicker ? mobileDayPicker.dataset.selected : '';
+            if (selectedDate) showProjectModal(selectedDate);
         });
     }
 
@@ -1455,18 +1460,21 @@ function setupEventListeners() {
         currentMonday.setDate(currentMonday.getDate() - 7);
         updateWeekDisplay();
         renderSchedule();
+        if (IS_MOBILE && typeof renderMobileDayPicker === 'function') renderMobileDayPicker();
     });
     
     nextWeekBtn.addEventListener('click', () => {
         currentMonday.setDate(currentMonday.getDate() + 7);
         updateWeekDisplay();
         renderSchedule();
+        if (IS_MOBILE && typeof renderMobileDayPicker === 'function') renderMobileDayPicker();
     });
     
     currentWeekBtn.addEventListener('click', () => {
         currentMonday = getMonday(new Date());
         updateWeekDisplay();
         renderSchedule();
+        if (IS_MOBILE && typeof renderMobileDayPicker === 'function') renderMobileDayPicker();
     });
 
     // 移动端周导航按钮
