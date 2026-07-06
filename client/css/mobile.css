@@ -7,8 +7,8 @@
  * mobile.css — 响应式媒体查询
  * 罐头场通告排期系统 v2.59
  * ======================================== */
-/* ── 响应式设计 - 移动端 + iPad 竖屏 ── */
-@media (max-width: 1023px) {
+/* ── 响应式设计 - 移动端 + iPad 竖屏 + 大屏平板竖屏 ── */
+@media (max-width: 1023px), (max-width: 1440px) and (hover: none) and (pointer: coarse) {
     /* 安全区域 */
     .container {
         padding: 12px;

@@ -628,9 +628,12 @@ async function initApp() {
     if (dayTodayBtn) dayTodayBtn.addEventListener('click', () => { dayViewDate = new Date(); renderDayView(dayViewDate); });
 
     // ── 移动端底部工具栏 + 视图切换 ──
-    const IS_MOBILE = window.innerWidth <= 1023;
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/.test(navigator.userAgent)
+                         || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+                         || /Android/.test(navigator.userAgent);
+    const IS_MOBILE = window.innerWidth <= 1023 || (isMobileDevice && window.innerWidth <= 1440);
     const mobileBottomBar = document.getElementById('mobile-bottom-bar');
-    const mobileMql = window.matchMedia('(max-width: 1023px)');
+    const mobileMql = window.matchMedia('(max-width: 1023px), (max-width: 1440px) and (hover: none) and (pointer: coarse)');
 
     // 移动端默认日视图（纯 CSS class 控制，不用 !important）
     if (IS_MOBILE) {
