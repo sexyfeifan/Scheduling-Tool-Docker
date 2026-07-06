@@ -674,7 +674,7 @@ async function initApp() {
     const mobileDayPicker = document.getElementById('mobile-day-picker');
 
     function renderMobileDayPicker() {
-        if (!IS_MOBILE || !mobileDayPicker) return;
+        if (!mobileDayPicker) return;
         const weekDates = getWeekDates(currentMonday);
         const dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
         const todayStr = formatDate(new Date());
@@ -698,6 +698,7 @@ async function initApp() {
             mobileDayPicker.appendChild(btn);
         });
     }
+    window.renderMobileDayPicker = renderMobileDayPicker;
 
     // 切换周后自动选中今天（如果在本周）或第一天，并重绘picker
     function autoSelectDayForMobile() {
@@ -1246,7 +1247,7 @@ function renderSchedule() {
         }
     });
     // 触屏设备：更新日期选择器
-    if (typeof renderMobileDayPicker === 'function') renderMobileDayPicker();
+    if (typeof window.renderMobileDayPicker === 'function') window.renderMobileDayPicker();
 }
 
 // 创建项目卡片
