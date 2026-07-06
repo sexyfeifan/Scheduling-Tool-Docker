@@ -632,23 +632,23 @@ async function initApp() {
     const mobileBottomBar = document.getElementById('mobile-bottom-bar');
     
     // ── 屏幕旋转自动切换视图（matchMedia API，iOS 可靠检测） ──
-    const scheduleContainerEl = document.querySelector('.schedule-container');
-    const weekHeaderEl = document.querySelector('.week-header');
     const mobileMql = window.matchMedia('(max-width: 1023px)');
 
     function applyViewForViewport(isMobile) {
-        const dayViewEl = document.getElementById('day-view');
+        const dayView = document.getElementById('day-view');
+        const schedContainer = document.querySelector('.schedule-container');
+        const weekHdr = document.querySelector('.week-header');
         if (isMobile) {
-            if (dayViewEl) dayViewEl.style.display = '';
-            if (scheduleContainerEl) scheduleContainerEl.style.display = 'none';
-            if (weekHeaderEl) weekHeaderEl.style.display = 'none';
+            if (dayView) dayView.style.display = '';
+            if (schedContainer) schedContainer.style.display = 'none';
+            if (weekHdr) weekHdr.style.display = 'none';
             document.getElementById('view-day')?.classList.add('active');
             document.getElementById('view-week')?.classList.remove('active');
             renderDayView(new Date());
         } else {
-            if (dayViewEl) dayViewEl.style.setProperty('display', 'none', 'important');
-            if (scheduleContainerEl) scheduleContainerEl.style.setProperty('display', 'grid', 'important');
-            if (weekHeaderEl) weekHeaderEl.style.setProperty('display', '', 'important');
+            if (dayView) dayView.style.setProperty('display', 'none', 'important');
+            if (schedContainer) schedContainer.style.setProperty('display', 'grid', 'important');
+            if (weekHdr) weekHdr.style.setProperty('display', '', 'important');
             document.getElementById('view-week')?.classList.add('active');
             document.getElementById('view-day')?.classList.remove('active');
             renderSchedule();
@@ -656,12 +656,10 @@ async function initApp() {
         if (mobileBottomBar) mobileBottomBar.style.display = isMobile ? 'flex' : 'none';
     }
 
-    // 初始应用
     if (IS_MOBILE) {
         applyViewForViewport(true);
     }
 
-    // 监听视口变化（比 resize 可靠，iOS 原生支持）
     mobileMql.addEventListener('change', (e) => {
         applyViewForViewport(e.matches);
     });
