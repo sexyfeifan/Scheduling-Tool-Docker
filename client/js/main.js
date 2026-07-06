@@ -613,7 +613,7 @@ async function initApp() {
     
     // 初始化视图切换器（传入渲染回调）
     initViewSwitcher({
-        week: () => { if (typeof updateDayProjectCounts === 'function') updateDayProjectCounts(); },
+        week: () => { if (typeof renderMobileDayPicker === 'function') renderMobileDayPicker(); },
         month: () => monthViewModule.render(),
         personnel: () => personnelViewModule.render(),
         day: () => renderDayView(new Date())
@@ -637,33 +637,39 @@ async function initApp() {
 
     if (IS_MOBILE) {
         document.body.classList.add('mobile-device');
-        // 触屏设备默认周视图（不添加 mobile-day-mode）
         renderSchedule();
     }
 
-    // ── 触屏设备：日期点击展开详情 + 项目数圆点 ──
+    // ── 触屏设备：日期选择器 + 详情区 ──
     const touchDetail = document.getElementById('touch-day-detail');
     const touchDetailDate = document.getElementById('touch-detail-date');
     const touchDetailContent = document.getElementById('touch-detail-content');
     const touchDetailClose = document.getElementById('touch-detail-close');
+    const mobileDayPicker = document.getElementById('mobile-day-picker');
 
-    function updateDayProjectCounts() {
-        if (!IS_MOBILE) return;
+    function renderMobileDayPicker() {
+        if (!IS_MOBILE || !mobileDayPicker) return;
         const weekDates = getWeekDates(currentMonday);
-        const headers = document.querySelectorAll('.day-header');
-        headers.forEach((header, i) => {
-            // 移除旧圆点
-            const oldDot = header.querySelector('.day-project-count');
-            if (oldDot) oldDot.remove();
-            // 添加新圆点
-            const dateStr = formatDate(weekDates[i]);
+        const dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+        const todayStr = formatDate(new Date());
+        const selectedStr = mobileDayPicker.dataset.selected || '';
+
+        mobileDayPicker.innerHTML = '';
+        weekDates.forEach((d, i) => {
+            const dateStr = formatDate(d);
             const count = (scheduleData[dateStr] || []).length;
-            if (count > 0) {
-                const dot = document.createElement('span');
-                dot.className = 'day-project-count';
-                dot.textContent = count;
-                header.appendChild(dot);
-            }
+            const isToday = dateStr === todayStr;
+            const isSelected = dateStr === selectedStr;
+
+            const btn = document.createElement('div');
+            btn.className = 'picker-day' + (isToday ? ' picker-today' : '') + (isSelected ? ' picker-selected' : '');
+            btn.innerHTML = `<span class="picker-day-name">${dayNames[i]}</span><span class="picker-day-num">${d.getDate()}</span>${count > 0 ? `<span class="picker-count">${count}项</span>` : ''}`;
+            btn.addEventListener('click', () => {
+                mobileDayPicker.dataset.selected = dateStr;
+                showTouchDayDetail(dateStr);
+                renderMobileDayPicker(); // 重绘选中态
+            });
+            mobileDayPicker.appendChild(btn);
         });
     }
 
@@ -705,7 +711,7 @@ async function initApp() {
         });
     }
 
-    // 代理：触屏设备点击日期标题展开详情
+    // 代理：触屏设备点击日期标题展开详情（保留备用）
     document.addEventListener('click', (e) => {
         if (!document.body.classList.contains('mobile-device')) return;
         const header = e.target.closest('.day-header');
@@ -715,16 +721,21 @@ async function initApp() {
         const idx = dayMap[headerId];
         if (idx === undefined) return;
         const weekDates = getWeekDates(currentMonday);
-        showTouchDayDetail(formatDate(weekDates[idx]));
+        const dateStr = formatDate(weekDates[idx]);
+        mobileDayPicker.dataset.selected = dateStr;
+        showTouchDayDetail(dateStr);
+        renderMobileDayPicker();
     });
 
-    // 初始渲染项目数圆点 + 自动选中今天
+    // 初始渲染日期选择器 + 自动选中今天
     if (IS_MOBILE) {
-        updateDayProjectCounts();
+        renderMobileDayPicker();
         const todayStr = formatDate(new Date());
         const weekDates = getWeekDates(currentMonday);
         if (weekDates.some(d => formatDate(d) === todayStr)) {
             showTouchDayDetail(todayStr);
+            if (mobileDayPicker) mobileDayPicker.dataset.selected = todayStr;
+            renderMobileDayPicker();
         }
     }
 
@@ -737,8 +748,8 @@ async function initApp() {
                 document.getElementById(`view-${view}`)?.click();
                 mobileBottomBar.querySelectorAll('.mobile-bar-btn[data-view]').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                // 切换视图后更新圆点
-                if (view === 'week') setTimeout(updateDayProjectCounts, 100);
+                // 切换视图后更新日期选择器
+                if (view === 'week') setTimeout(renderMobileDayPicker, 100);
             });
         });
 
@@ -1191,8 +1202,8 @@ function renderSchedule() {
             column.appendChild(emptyState);
         }
     });
-    // 触屏设备：更新日期栏项目数圆点
-    if (typeof updateDayProjectCounts === 'function') updateDayProjectCounts();
+    // 触屏设备：更新日期选择器
+    if (typeof renderMobileDayPicker === 'function') renderMobileDayPicker();
 }
 
 // 创建项目卡片
