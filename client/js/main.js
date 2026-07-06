@@ -668,6 +668,24 @@ async function initApp() {
         });
     }
 
+    // ── 屏幕旋转/resize 自动切换视图 ──
+    let lastWidth = window.innerWidth;
+    window.addEventListener('resize', () => {
+        const w = window.innerWidth;
+        const wasMobile = lastWidth <= 1023;
+        const isMobile = w <= 1023;
+        if (wasMobile !== isMobile) {
+            if (isMobile && getCurrentView() !== 'day') {
+                switchView('day');
+            } else if (!isMobile && getCurrentView() === 'day') {
+                switchView('week');
+            }
+            // 更新底部栏显示
+            if (mobileBottomBar) mobileBottomBar.style.display = isMobile ? 'flex' : 'none';
+        }
+        lastWidth = w;
+    });
+
     // 月视图导出按钮
     const monthExportBtn = document.getElementById('month-export');
     if (monthExportBtn) monthExportBtn.addEventListener('click', () => exportViewAsImage('month-view-grid', '月视图排期'));

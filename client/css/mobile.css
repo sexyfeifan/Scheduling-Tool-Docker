@@ -593,6 +593,40 @@
     display: none;
 }
 
+/* ── iPad 横屏（1024-1199px）：桌面布局等比缩放 ── */
+@media (min-width: 1024px) and (max-width: 1199px) {
+    .container {
+        transform: scale(0.82);
+        transform-origin: top center;
+        width: 121.95%;
+        margin-left: -10.975%;
+    }
+    .header {
+        padding: 12px 16px;
+    }
+    .header h1 {
+        font-size: 18px;
+    }
+    .toolbar .btn {
+        font-size: 12px;
+        padding: 5px 10px;
+    }
+    .project-card {
+        padding: 10px;
+        margin-bottom: 8px;
+    }
+    .project-card .project-title {
+        font-size: 12px;
+    }
+    .staff-label,
+    .staff-name {
+        font-size: 11px;
+    }
+    .day-column {
+        padding: 10px;
+    }
+}
+
 /* 更小屏幕 */
 @media (max-width: 480px) {
     .container {
