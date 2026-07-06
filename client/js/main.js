@@ -627,95 +627,18 @@ async function initApp() {
     if (dayNextBtn) dayNextBtn.addEventListener('click', () => { dayViewDate.setDate(dayViewDate.getDate() + 1); renderDayView(dayViewDate); });
     if (dayTodayBtn) dayTodayBtn.addEventListener('click', () => { dayViewDate = new Date(); renderDayView(dayViewDate); });
 
-    // ── 移动端底部工具栏 + 视图切换 ──
+    // ── 移动端：所有触屏设备统一显示日视图，横竖屏一致 ──
     const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/.test(navigator.userAgent)
                          || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 0)
                          || ('ontouchstart' in window && navigator.maxTouchPoints > 1);
     const IS_MOBILE = window.innerWidth <= 1023 || isMobileDevice;
     const mobileBottomBar = document.getElementById('mobile-bottom-bar');
-    const mobileMql = window.matchMedia('(max-width: 1023px), (max-width: 1440px) and (hover: none) and (pointer: coarse)');
 
-    // 移动端默认日视图（纯 CSS class 控制，不用 !important）
     if (IS_MOBILE) {
         document.body.classList.add('mobile-day-mode');
         renderDayView(new Date());
         if (mobileBottomBar) mobileBottomBar.style.display = 'flex';
     }
-
-    mobileMql.addEventListener('change', (e) => {
-        if (e.matches) {
-            document.body.classList.add('mobile-day-mode');
-            document.body.classList.remove('ipad-landscape');
-            renderDayView(new Date());
-            if (mobileBottomBar) mobileBottomBar.style.display = 'flex';
-        } else {
-            document.body.classList.remove('mobile-day-mode');
-            if (isIPad) document.body.classList.add('ipad-landscape');
-            renderSchedule();
-            if (mobileBottomBar) mobileBottomBar.style.display = 'none';
-        }
-    });
-
-    // ── iPad 横版：点击日期展开详情 ──
-    const isIPad = (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-                 || /iPad/.test(navigator.userAgent);
-
-    if (isIPad && window.innerWidth > 1023) {
-        document.body.classList.add('ipad-landscape');
-    }
-
-    const ipadDetail = document.getElementById('ipad-day-detail');
-    const ipadDetailDate = document.getElementById('ipad-detail-date');
-    const ipadDetailContent = document.getElementById('ipad-detail-content');
-    const ipadDetailClose = document.getElementById('ipad-detail-close');
-
-    function showIPadDayDetail(dateStr) {
-        if (!ipadDetail || !ipadDetailContent) return;
-        const projects = scheduleData[dateStr] || [];
-        const d = new Date(dateStr + 'T00:00:00');
-        const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-        if (ipadDetailDate) ipadDetailDate.textContent = `${d.getMonth()+1}月${d.getDate()}日 ${weekdays[d.getDay()]} · ${projects.length} 个项目`;
-
-        ipadDetailContent.innerHTML = '';
-        if (projects.length === 0) {
-            ipadDetailContent.innerHTML = '<div class="ipad-detail-empty">🈚️ 当日无排期</div>';
-        } else {
-            projects.forEach((project, index) => {
-                const card = createProjectCard(project, dateStr, index);
-                card.querySelectorAll('.delete-btn, .copy-btn, .card-actions').forEach(el => el.remove());
-                card.style.cursor = 'default';
-                ipadDetailContent.appendChild(card);
-            });
-        }
-        ipadDetail.style.display = 'block';
-
-        document.querySelectorAll('.day-header').forEach(h => h.classList.remove('ipad-selected'));
-        const headers = document.querySelectorAll('.day-header');
-        const weekDates = getWeekDates(currentMonday);
-        weekDates.forEach((d, i) => {
-            if (formatDate(d) === dateStr && headers[i]) headers[i].classList.add('ipad-selected');
-        });
-    }
-
-    if (ipadDetailClose) {
-        ipadDetailClose.addEventListener('click', () => {
-            if (ipadDetail) ipadDetail.style.display = 'none';
-            document.querySelectorAll('.day-header').forEach(h => h.classList.remove('ipad-selected'));
-        });
-    }
-
-    // 代理：点击日期标题展开详情（仅 iPad 横版）
-    document.addEventListener('click', (e) => {
-        if (!document.body.classList.contains('ipad-landscape')) return;
-        const header = e.target.closest('.day-header');
-        if (!header) return;
-        const headerId = header.id;
-        const dayMap = { 'monday-header': 0, 'tuesday-header': 1, 'wednesday-header': 2, 'thursday-header': 3, 'friday-header': 4, 'saturday-header': 5, 'sunday-header': 6 };
-        const idx = dayMap[headerId];
-        if (idx === undefined) return;
-        const weekDates = getWeekDates(currentMonday);
-        showIPadDayDetail(formatDate(weekDates[idx]));
-    });
 
     if (IS_MOBILE && mobileBottomBar) {
         mobileBottomBar.style.display = 'flex';
