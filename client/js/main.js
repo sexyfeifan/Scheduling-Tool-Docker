@@ -201,6 +201,7 @@ const apiClient = createApiClient({
 // Toast 提示函数
 function showToast(message, type = 'info', duration = 3000) {
     const container = document.getElementById('toast-container');
+    if (!container) return;
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.textContent = message;
@@ -1183,6 +1184,7 @@ function renderSchedule() {
     const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
     dayHeaders.forEach((headerId, index) => {
         const header = document.getElementById(headerId);
+        if (!header) return;
         const date = weekDates[index];
         const dateStr = formatDate(date);
         const month = date.getMonth() + 1;
@@ -1199,6 +1201,7 @@ function renderSchedule() {
     
     dayColumns.forEach((columnId, index) => {
         const column = document.getElementById(columnId);
+        if (!column) return;
         const dateStr = formatDate(weekDates[index]);
         
         // 今日高亮列
@@ -1222,12 +1225,13 @@ function renderSchedule() {
         });
         column.appendChild(addBtn);
         
-        // 添加拖拽事件监听器
-        if (!IS_READONLY) {
+        // 添加拖拽事件监听器（只添加一次，避免重复）
+        if (!IS_READONLY && !column.dataset.dragBound) {
             column.addEventListener('dragover', handleDragOver);
             column.addEventListener('dragenter', handleDragEnter);
             column.addEventListener('dragleave', handleDragLeave);
             column.addEventListener('drop', handleDrop);
+            column.dataset.dragBound = '1';
         }
         
         const dayProjects = (scheduleData[dateStr] || []).filter((project) => matchesProjectFilters(project, filterState));
@@ -4302,21 +4306,6 @@ function drawScheduleToCanvas() {
                 }
                 dayColumn.appendChild(cleanCard);
             });
-
-            // 烘焙颜色到 inline style（移动端 html2canvas 无法正确解析 CSS 类颜色）
-            dayColumn.querySelectorAll('.project-card *').forEach(el => {
-                try {
-                    const s = el.getAttribute('style') || '';
-                    if (s.includes('border-radius:50%') || s.includes('inline-flex')) return;
-                    const cs = window.getComputedStyle(el);
-                    if (!s.includes('background-color') && cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)')
-                        el.style.backgroundColor = cs.backgroundColor;
-                    if (!s.includes('color') && cs.color)
-                        el.style.color = cs.color;
-                    if (!s.includes('border-color') && cs.borderColor)
-                        el.style.borderColor = cs.borderColor;
-                } catch(e) {}
-            });
         } else {
             const emptyState = document.createElement('div');
             emptyState.className = 'empty-state';
@@ -4337,6 +4326,21 @@ function drawScheduleToCanvas() {
     tempContainer.appendChild(header);
     tempContainer.appendChild(mainContent);
     document.body.appendChild(tempContainer);
+
+    // 烘焙颜色到 inline style（必须在 appendChild 之后，否则 detach 元素 getComputedStyle 返回默认值）
+    tempContainer.querySelectorAll('.project-card *').forEach(el => {
+        try {
+            const s = el.getAttribute('style') || '';
+            if (s.includes('border-radius:50%') || s.includes('inline-flex')) return;
+            const cs = window.getComputedStyle(el);
+            if (!s.includes('background-color') && cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)')
+                el.style.backgroundColor = cs.backgroundColor;
+            if (!s.includes('color') && cs.color)
+                el.style.color = cs.color;
+            if (!s.includes('border-color') && cs.borderColor)
+                el.style.borderColor = cs.borderColor;
+        } catch(e) {}
+    });
 
     const isMobileExport = window.innerWidth <= 1023 || /Android|iPhone|iPad|iPod/.test(navigator.userAgent);
     html2canvas(tempContainer, {
