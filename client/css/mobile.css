@@ -655,22 +655,93 @@ body.mobile-device .mobile-bottom-bar {
     display: flex !important;
 }
 
-/* ── 小屏手机隐藏桌面工具栏（≤1023px） ── */
-@media (max-width: 1023px) {
-    body.mobile-device .toolbar .view-btn,
-    body.mobile-device .toolbar #conflict-btn,
-    body.mobile-device .toolbar #add-project,
-    body.mobile-device .toolbar #undo-action,
-    body.mobile-device .toolbar #export-image,
-    body.mobile-device .toolbar #export-week-text,
-    body.mobile-device .toolbar #paste-recognition,
-    body.mobile-device .toolbar #heatmap-btn,
-    body.mobile-device .toolbar #webhook-btn,
-    body.mobile-device .toolbar #admin-btn,
-    body.mobile-device .toolbar .toolbar-divider,
-    body.mobile-device #settings {
-        display: none !important;
-    }
+/* ── 移动端设备 UI（底部栏始终显示） ── */
+body.mobile-device .mobile-bottom-bar {
+    display: flex !important;
+}
+
+/* ── 触屏设备：日期栏可点击 + 详情区 ── */
+body.mobile-device .day-header {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s;
+    border-radius: 8px;
+    position: relative;
+}
+body.mobile-device .day-header:active {
+    background: rgba(25, 200, 185, 0.15);
+}
+body.mobile-device .day-header.touch-selected {
+    background: rgba(25, 200, 185, 0.12);
+    color: #19c8b9;
+    font-weight: 700;
+}
+body.mobile-device .day-header .day-project-count {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #19c8b9;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+/* 详情区 */
+.touch-day-detail {
+    background: #fff;
+    border-radius: 16px;
+    border: 1.5px solid rgba(170, 166, 157, 0.2);
+    margin-top: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+.touch-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1.5px solid rgba(170, 166, 157, 0.15);
+}
+.touch-detail-date {
+    font-size: 16px;
+    font-weight: 700;
+    color: #794f27;
+}
+.touch-detail-close {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(170, 166, 157, 0.15);
+    color: #794f27;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.touch-detail-close:active {
+    background: rgba(170, 166, 157, 0.3);
+}
+.touch-detail-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.touch-detail-content .project-card {
+    margin-bottom: 0;
+}
+.touch-detail-empty {
+    text-align: center;
+    padding: 30px;
+    color: #c4b89e;
+    font-size: 16px;
 }
 
 /* ── 日视图模式（仅控制视图面板显示） ── */

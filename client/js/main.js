@@ -636,9 +636,89 @@ async function initApp() {
 
     if (IS_MOBILE) {
         document.body.classList.add('mobile-device');
-        document.body.classList.add('mobile-day-mode');
-        renderDayView(new Date());
+        // 触屏设备默认周视图（不添加 mobile-day-mode）
+        renderSchedule();
     }
+
+    // ── 触屏设备：日期点击展开详情 + 项目数圆点 ──
+    const touchDetail = document.getElementById('touch-day-detail');
+    const touchDetailDate = document.getElementById('touch-detail-date');
+    const touchDetailContent = document.getElementById('touch-detail-content');
+    const touchDetailClose = document.getElementById('touch-detail-close');
+
+    function updateDayProjectCounts() {
+        if (!IS_MOBILE) return;
+        const weekDates = getWeekDates(currentMonday);
+        const headers = document.querySelectorAll('.day-header');
+        headers.forEach((header, i) => {
+            // 移除旧圆点
+            const oldDot = header.querySelector('.day-project-count');
+            if (oldDot) oldDot.remove();
+            // 添加新圆点
+            const dateStr = formatDate(weekDates[i]);
+            const count = (scheduleData[dateStr] || []).length;
+            if (count > 0) {
+                const dot = document.createElement('span');
+                dot.className = 'day-project-count';
+                dot.textContent = count;
+                header.appendChild(dot);
+            }
+        });
+    }
+
+    function showTouchDayDetail(dateStr) {
+        if (!touchDetail || !touchDetailContent) return;
+        const projects = scheduleData[dateStr] || [];
+        const d = new Date(dateStr + 'T00:00:00');
+        const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        if (touchDetailDate) touchDetailDate.textContent = `${d.getMonth()+1}月${d.getDate()}日 ${weekdays[d.getDay()]} · ${projects.length} 个项目`;
+
+        touchDetailContent.innerHTML = '';
+        if (projects.length === 0) {
+            touchDetailContent.innerHTML = '<div class="touch-detail-empty">🈚️ 当日无排期</div>';
+        } else {
+            projects.forEach((project, index) => {
+                const card = createProjectCard(project, dateStr, index);
+                if (IS_MOBILE) {
+                    card.querySelectorAll('.delete-btn, .copy-btn, .card-actions').forEach(el => el.remove());
+                    card.style.cursor = 'default';
+                }
+                touchDetailContent.appendChild(card);
+            });
+        }
+        touchDetail.style.display = 'block';
+
+        // 高亮选中日期
+        document.querySelectorAll('.day-header').forEach(h => h.classList.remove('touch-selected'));
+        const headers = document.querySelectorAll('.day-header');
+        const weekDates = getWeekDates(currentMonday);
+        weekDates.forEach((d, i) => {
+            if (formatDate(d) === dateStr && headers[i]) headers[i].classList.add('touch-selected');
+        });
+    }
+
+    if (touchDetailClose) {
+        touchDetailClose.addEventListener('click', () => {
+            if (touchDetail) touchDetail.style.display = 'none';
+            document.querySelectorAll('.day-header').forEach(h => h.classList.remove('touch-selected'));
+        });
+    }
+
+    // 代理：触屏设备点击日期标题展开详情
+    document.addEventListener('click', (e) => {
+        if (!document.body.classList.contains('mobile-device')) return;
+        const header = e.target.closest('.day-header');
+        if (!header) return;
+        const headerId = header.id;
+        const dayMap = { 'monday-header': 0, 'tuesday-header': 1, 'wednesday-header': 2, 'thursday-header': 3, 'friday-header': 4, 'saturday-header': 5, 'sunday-header': 6 };
+        const idx = dayMap[headerId];
+        if (idx === undefined) return;
+        const weekDates = getWeekDates(currentMonday);
+        showTouchDayDetail(formatDate(weekDates[idx]));
+    });
+
+    // 初始渲染项目数圆点
+    if (IS_MOBILE) updateDayProjectCounts();
 
     if (IS_MOBILE && mobileBottomBar) {
         mobileBottomBar.style.display = 'flex';
@@ -646,16 +726,11 @@ async function initApp() {
         mobileBottomBar.querySelectorAll('.mobile-bar-btn[data-view]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const view = btn.dataset.view;
-                // mobile-device 始终保留（控制工具栏隐藏+底部栏显示）
-                // 只切换 mobile-day-mode（控制日视图面板）
-                if (view === 'day') {
-                    document.body.classList.add('mobile-day-mode');
-                } else {
-                    document.body.classList.remove('mobile-day-mode');
-                }
                 document.getElementById(`view-${view}`)?.click();
                 mobileBottomBar.querySelectorAll('.mobile-bar-btn[data-view]').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
+                // 切换视图后更新圆点
+                if (view === 'week') setTimeout(updateDayProjectCounts, 100);
             });
         });
 
@@ -1087,6 +1162,8 @@ function renderSchedule() {
             column.appendChild(emptyState);
         }
     });
+    // 触屏设备：更新日期栏项目数圆点
+    if (typeof updateDayProjectCounts === 'function') updateDayProjectCounts();
 }
 
 // 创建项目卡片
