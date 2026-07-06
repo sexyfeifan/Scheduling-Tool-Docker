@@ -628,7 +628,7 @@ async function initApp() {
     if (dayTodayBtn) dayTodayBtn.addEventListener('click', () => { dayViewDate = new Date(); renderDayView(dayViewDate); });
 
     // ── 移动端底部工具栏 + 默认日视图 ──
-    const IS_MOBILE = window.innerWidth <= 768;
+    const IS_MOBILE = window.innerWidth <= 1023;
     const mobileBottomBar = document.getElementById('mobile-bottom-bar');
     
     if (IS_MOBILE && mobileBottomBar) {
@@ -4077,6 +4077,16 @@ function drawScheduleToCanvas() {
 
                 cleanCard.querySelectorAll('.delete-btn, .copy-btn, .card-actions').forEach(el => el.remove());
                 projectCard.querySelectorAll('.delete-btn, .copy-btn, .card-actions').forEach(el => el.remove());
+
+                // 确保 clone 的 inline style 完整（移动端 cloneNode 可能丢失子元素 inline style）
+                const origAll = projectCard.querySelectorAll('*');
+                const cloneAll = cleanCard.querySelectorAll('*');
+                cloneAll.forEach((cloneEl, ci) => {
+                    const origEl = origAll[ci];
+                    if (origEl && origEl.getAttribute('style') && !cloneEl.getAttribute('style')) {
+                        cloneEl.setAttribute('style', origEl.getAttribute('style'));
+                    }
+                });
 
                 const origCS = window.getComputedStyle(projectCard);
                 const cardKeepProps = ['border-radius','padding','box-shadow','font-family','font-size','line-height','letter-spacing','display','flex-direction','gap','position','overflow'];

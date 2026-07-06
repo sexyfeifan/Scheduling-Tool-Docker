@@ -20,6 +20,9 @@ COPY client/ ./
 # ── 阶段 3: 最终镜像 ──
 FROM node:22-alpine
 
+ARG BUILD_DATE
+ENV BUILD_DATE=${BUILD_DATE}
+
 RUN apk add --no-cache bash wget && \
     addgroup -S appgroup && adduser -S appuser -G appgroup
 

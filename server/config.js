@@ -1,8 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const APP_VERSION = '3.04';
+const APP_VERSION = '3.05';
 const APP_CREATE_DATE = '2026-06-03';
+const BUILD_DATE = process.env.BUILD_DATE || APP_CREATE_DATE;
 const SCHEMA_VERSION = 2;
 
 function resolveStorageDir(envName, dirName) {
@@ -31,6 +32,7 @@ const BACKUP_PASSWORD = process.env.BACKUP_PASSWORD || 'sexyfeifan';
 module.exports = {
   APP_VERSION,
   APP_CREATE_DATE,
+  BUILD_DATE,
   BACKUP_DIR,
   BACKUP_PASSWORD,
   CLIENT_DIR,

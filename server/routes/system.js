@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { APP_CREATE_DATE, APP_VERSION } = require('../config');
+const { APP_CREATE_DATE, APP_VERSION, BUILD_DATE } = require('../config');
 
 function createSystemRouter({ store }) {
   const router = express.Router();
@@ -11,7 +11,7 @@ function createSystemRouter({ store }) {
     res.json({
       version: APP_VERSION,
       createDate: version.createDate || APP_CREATE_DATE,
-      buildDate: version.buildDate || new Date().toISOString().split('T')[0]
+      buildDate: BUILD_DATE
     });
   });
 
