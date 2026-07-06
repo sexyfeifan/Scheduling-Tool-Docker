@@ -643,25 +643,20 @@
 }
 
 /* 桌面端隐藏底部工具栏和移动端周导航 */
-.mobile-bottom-bar,
+.mobile-bottom-bar {
+    display: none;
+}
 .week-mobile-nav {
     display: none;
 }
 
-/* ── iPad 横屏（1024px+）：纯 CSS 强制周视图 + 定时兜底 ── */
-@media (min-width: 1024px) {
-    #day-view {
-        display: none !important;
-    }
-    .schedule-container {
-        display: grid !important;
-        grid-template-columns: repeat(7, 1fr) !important;
-    }
-    .week-header {
-        display: grid !important;
-        grid-template-columns: repeat(7, 1fr) !important;
-    }
-}
+/* ── 移动端日视图模式（由 JS 添加 body.mobile-day-mode） ── */
+body.mobile-day-mode #day-view { display: block; }
+body.mobile-day-mode .schedule-container { display: none; }
+body.mobile-day-mode .week-header { display: none; }
+body.mobile-day-mode .week-mobile-nav { display: flex; }
+body.mobile-day-mode #month-view { display: none; }
+body.mobile-day-mode #personnel-view { display: none; }
 
 /* ── iPad 横屏紧凑样式（1024-1199px） ── */
 @media (min-width: 1024px) and (max-width: 1199px) {

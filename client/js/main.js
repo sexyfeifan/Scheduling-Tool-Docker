@@ -627,52 +627,29 @@ async function initApp() {
     if (dayNextBtn) dayNextBtn.addEventListener('click', () => { dayViewDate.setDate(dayViewDate.getDate() + 1); renderDayView(dayViewDate); });
     if (dayTodayBtn) dayTodayBtn.addEventListener('click', () => { dayViewDate = new Date(); renderDayView(dayViewDate); });
 
-    // ── 移动端底部工具栏 + 默认日视图 ──
+    // ── 移动端底部工具栏 + 视图切换 ──
     const IS_MOBILE = window.innerWidth <= 1023;
     const mobileBottomBar = document.getElementById('mobile-bottom-bar');
-    
-    // ── 视图切换：matchMedia + 定时兜底 ──
     const mobileMql = window.matchMedia('(max-width: 1023px)');
 
-    function applyViewForViewport(isMobile) {
-        const dayView = document.getElementById('day-view');
-        const schedContainer = document.querySelector('.schedule-container');
-        const weekHdr = document.querySelector('.week-header');
-        if (isMobile) {
-            if (dayView) dayView.style.display = '';
-            if (schedContainer) schedContainer.style.display = 'none';
-            if (weekHdr) weekHdr.style.display = 'none';
-            document.getElementById('view-day')?.classList.add('active');
-            document.getElementById('view-week')?.classList.remove('active');
-            renderDayView(new Date());
-        } else {
-            if (dayView) dayView.style.setProperty('display', 'none', 'important');
-            if (schedContainer) schedContainer.style.setProperty('display', 'grid', 'important');
-            if (weekHdr) weekHdr.style.setProperty('display', 'grid', 'important');
-            document.getElementById('view-week')?.classList.add('active');
-            document.getElementById('view-day')?.classList.remove('active');
-            renderSchedule();
-        }
-        if (mobileBottomBar) mobileBottomBar.style.display = isMobile ? 'flex' : 'none';
-    }
-
+    // 移动端默认日视图（纯 CSS class 控制，不用 !important）
     if (IS_MOBILE) {
-        applyViewForViewport(true);
+        document.body.classList.add('mobile-day-mode');
+        renderDayView(new Date());
+        if (mobileBottomBar) mobileBottomBar.style.display = 'flex';
     }
 
     mobileMql.addEventListener('change', (e) => {
-        applyViewForViewport(e.matches);
-    });
-
-    // 定时兜底：每秒检查一次，大屏幕上日视图不应可见
-    setInterval(() => {
-        if (window.innerWidth > 1023) {
-            const dv = document.getElementById('day-view');
-            if (dv && getComputedStyle(dv).display !== 'none') {
-                applyViewForViewport(false);
-            }
+        if (e.matches) {
+            document.body.classList.add('mobile-day-mode');
+            renderDayView(new Date());
+            if (mobileBottomBar) mobileBottomBar.style.display = 'flex';
+        } else {
+            document.body.classList.remove('mobile-day-mode');
+            renderSchedule();
+            if (mobileBottomBar) mobileBottomBar.style.display = 'none';
         }
-    }, 1000);
+    });
 
     if (IS_MOBILE && mobileBottomBar) {
         mobileBottomBar.style.display = 'flex';
