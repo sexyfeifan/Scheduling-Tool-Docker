@@ -1044,8 +1044,19 @@ function createProjectCard(project, dateStr, projectIndex) {
     card.dataset.status = project.status || '待确认';
     if (project.type) card.dataset.type = project.type;
     
-    const typeColor = getTypeColor(project.type);
-    const typeCardColors = getTypeCardColors(project.type);
+    const typeColor = project.type ? getTypeColor(project.type) : null;
+    const typeCardColors = project.type ? getTypeCardColors(project.type) : null;
+    
+    // 无类型时卡片为默认白色
+    if (typeCardColors) {
+        card.style.background = typeCardColors.bg;
+        card.style.borderColor = typeCardColors.border;
+        card.style.color = typeCardColors.text;
+    } else {
+        card.style.background = '#ffffff';
+        card.style.borderColor = '#e0e0e0';
+        card.style.color = '#725d42';
+    }
     
     // 构建工作人员信息（动态）
     const cats = (roleCategories || []).filter(c => c.key !== 'location');
@@ -1118,7 +1129,7 @@ function createProjectCard(project, dateStr, projectIndex) {
         ${staffInfo}
         <div class="project-location">📍 ${escapeHtml(project.location)}</div>
         <div>
-            <span class="project-type" style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:700;color:#fff;background:${typeColor};font-family:'Nunito','Noto Sans SC',sans-serif;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6);flex-shrink:0;">&nbsp;</span>${escapeHtml(project.type)}</span>
+            ${project.type ? `<span class="project-type" style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:700;color:#fff;background:${typeColor};font-family:'Nunito','Noto Sans SC',sans-serif;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6);flex-shrink:0;">&nbsp;</span>${escapeHtml(project.type)}</span>` : ''}
         </div>
         <div class="card-actions">
             <button class="copy-btn" data-date="${escapeHtml(dateStr)}" data-index="${projectIndex}">📋 复制</button>

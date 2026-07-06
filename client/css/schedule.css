@@ -12,8 +12,8 @@
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
-    background: rgb(247, 243, 223);
-    border: 1.5px solid #d4c4a8;
+    background: #ffffff;
+    border: 1.5px solid #e0e0e0;
     color: #725d42;
 }
 
@@ -183,7 +183,7 @@
     font-family: 'Nunito', 'Noto Sans SC', sans-serif;
 }
 
-/* 类型标签 */
+/* 类型标签 — 样式已改为 inline，仅保留布局 */
 .project-card .project-type {
     display: inline-flex;
     align-items: center;
@@ -206,26 +206,6 @@
     border-radius: 50%;
     background: rgba(255,255,255,0.6);
     flex-shrink: 0;
-}
-
-.project-card .project-type.plane {
-    background: #10B981;
-    color: #fff;
-}
-
-.project-card .project-type.video {
-    background: #EC4899;
-    color: #fff;
-}
-
-.project-card .project-type.live {
-    background: #F59E0B;
-    color: #fff;
-}
-
-.project-card .project-type.test {
-    background: #8B5CF6;
-    color: #fff;
 }
 
 /* 卡片操作按钮 */
@@ -281,30 +261,5 @@
     border-color: #fc736d;
     color: #9a3a3a;
     opacity: 0.7;
-}
-
-/* 项目类型卡片配色 — 动森 Card Color */
-.project-card[data-type="平面"] {
-    background: #e8faf5;
-    border-color: #82d5bb;
-    color: #2a6b5a;
-}
-
-.project-card[data-type="视频"] {
-    background: #fde4e8;
-    border-color: #f8a6b2;
-    color: #a85565;
-}
-
-.project-card[data-type="直播"] {
-    background: #fff8e0;
-    border-color: #f7cd67;
-    color: #7a6528;
-}
-
-.project-card[data-type="试做"] {
-    background: #f0e8ff;
-    border-color: #b77dee;
-    color: #6b3fa0;
 }
 
