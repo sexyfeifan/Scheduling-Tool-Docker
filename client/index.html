@@ -191,13 +191,14 @@
                     </div>
                     <div class="form-group">
                         <label for="project-type">类型:</label>
-                        <select id="project-type">
-                            <option value="">请选择</option>
-                            <option value="平面">平面</option>
-                            <option value="视频">视频</option>
-                            <option value="直播">直播</option>
-                            <option value="试做">试做</option>
-                        </select>
+<select id="project-type">
+    <option value="">请选择</option>
+    <option value="平面">平面</option>
+    <option value="视频">视频</option>
+    <option value="直播">直播</option>
+    <option value="试做">试做</option>
+    <option value="特殊">特殊</option>
+</select>
                     </div>
                     <div class="form-group">
                         <label for="project-date">日期:</label>
@@ -343,14 +344,15 @@
                             <button type="button" id="add-role-category" class="btn">+ 添加职能</button>
                         </div>
                     </div>
-                    <div class="settings-section">
-                        <h3>项目类型</h3>
-                        <p class="hint-text">管理项目编辑表单中的类型选项</p>
-                        <div id="project-types-container"></div>
-                        <div class="form-actions" style="margin-top: 12px;">
-                            <button type="button" id="add-project-type" class="btn">+ 添加类型</button>
-                        </div>
-                    </div>
+    <div class="settings-section">
+        <h3>项目类型</h3>
+        <p class="hint-text">管理项目编辑表单中的类型选项和颜色</p>
+        <div id="project-types-container"></div>
+        <div class="form-actions" style="margin-top: 12px;">
+            <button type="button" id="add-project-type" class="btn">+ 添加类型</button>
+            <button type="button" id="reset-type-colors" class="btn" style="background:#f0ebe3;color:#794f27;">还原默认颜色</button>
+        </div>
+    </div>
                     <div class="settings-section">
                         <h3>项目模板</h3>
                         <p class="hint-text">可保存常用项目模板，在新增项目时一键套用</p>

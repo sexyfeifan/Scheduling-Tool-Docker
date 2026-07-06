@@ -21,12 +21,12 @@ export function createMonthViewModule({ api, onJumpToWeek }) {
     rd: '#8B5CF6', operational: '#EC4899', audio: '#06B6D4', business: '#F97316'
   };
 
-  const TYPE_COLORS = {
-    '平面': { bg: '#10B981', color: '#fff' },
-    '视频': { bg: '#EC4899', color: '#fff' },
-    '直播': { bg: '#F59E0B', color: '#fff' },
-    '试做': { bg: '#8B5CF6', color: '#fff' },
-  };
+  const TYPE_COLORS_PROXY = new Proxy({}, {
+    get(_, typeName) {
+      const hex = (window.typeColors && window.typeColors[typeName]) || (window.getTypeColor && window.getTypeColor(typeName)) || '#9f927d';
+      return { bg: hex, color: '#fff' };
+    }
+  });
   const STATUS_COLORS = {
     '待确认': '#F59E0B',
     '已确认': '#10B981',
@@ -126,7 +126,7 @@ export function createMonthViewModule({ api, onJumpToWeek }) {
           }
         } else {
         projects.slice(0, 6).forEach(proj => {
-          const tc = TYPE_COLORS[proj.type] || { bg: '#10B981', color: '#fff' };
+          const tc = TYPE_COLORS_PROXY[proj.type];
           const statusDot = STATUS_COLORS[proj.status] || STATUS_COLORS['待确认'];
           const persons = [proj.director, proj.photographer].filter(Boolean).join('/');
           html += `<div class="month-gantt-bar" style="background:${tc.bg};color:${tc.color}" title="${escapeAttr(proj.name)}">`;

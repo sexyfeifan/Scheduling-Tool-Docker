@@ -24,9 +24,45 @@ let currentMonday = getMonday(new Date());
 // 项目数据存储
 let scheduleData = {};
 
+// ── 项目类型颜色集中管理 ──
+const DEFAULT_TYPE_COLORS = {
+    '平面': '#10B981',
+    '视频': '#EC4899',
+    '直播': '#F59E0B',
+    '试做': '#8B5CF6',
+    '特殊': '#FF8C00'
+};
+const TYPE_COLOR_PALETTE = [
+    '#10B981','#EC4899','#F59E0B','#8B5CF6','#FF8C00',
+    '#06B6D4','#EF4444','#84CC16','#6366F1','#F97316',
+    '#14B8A6','#E11D48','#A855F7','#0EA5E9','#D946EF'
+];
+let typeColors = { ...DEFAULT_TYPE_COLORS };
+
+function getTypeColor(typeName) {
+    if (!typeName) return '#9f927d';
+    if (typeColors[typeName]) return typeColors[typeName];
+    const used = new Set(Object.values(typeColors));
+    const avail = TYPE_COLOR_PALETTE.find(c => !used.has(c)) || '#9f927d';
+    typeColors[typeName] = avail;
+    return avail;
+}
+
+function getTypeCardColors(typeName) {
+    const hex = getTypeColor(typeName);
+    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    return {
+        bg: `rgba(${r},${g},${b},0.12)`,
+        border: `rgba(${r},${g},${b},0.4)`,
+        text: `rgb(${Math.max(0,r-60)},${Math.max(0,g-60)},${Math.max(0,b-60)})`
+    };
+}
+
 // 向非模块脚本暴露实时引用
 Object.defineProperty(window, '__scheduleData', { get: () => scheduleData, configurable: true });
 Object.defineProperty(window, '__currentMonday', { get: () => currentMonday, configurable: true });
+window.typeColors = typeColors;
+window.getTypeColor = getTypeColor;
 
 // DOM元素
 const weekDisplay = document.getElementById('week-display');
@@ -1008,14 +1044,8 @@ function createProjectCard(project, dateStr, projectIndex) {
     card.dataset.status = project.status || '待确认';
     if (project.type) card.dataset.type = project.type;
     
-    const typeClassMap = {
-        '平面': 'plane',
-        '视频': 'video',
-        '直播': 'live',
-        '试做': 'test'
-    };
-    
-    const typeClass = typeClassMap[project.type] || 'plane';
+    const typeColor = getTypeColor(project.type);
+    const typeCardColors = getTypeCardColors(project.type);
     
     // 构建工作人员信息（动态）
     const cats = (roleCategories || []).filter(c => c.key !== 'location');
@@ -1088,7 +1118,7 @@ function createProjectCard(project, dateStr, projectIndex) {
         ${staffInfo}
         <div class="project-location">📍 ${escapeHtml(project.location)}</div>
         <div>
-            <span class="project-type ${typeClass}"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6);flex-shrink:0;vertical-align:middle;">&nbsp;</span>${escapeHtml(project.type)}</span>
+            <span class="project-type" style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:700;color:#fff;background:${typeColor};font-family:'Nunito','Noto Sans SC',sans-serif;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6);flex-shrink:0;">&nbsp;</span>${escapeHtml(project.type)}</span>
         </div>
         <div class="card-actions">
             <button class="copy-btn" data-date="${escapeHtml(dateStr)}" data-index="${projectIndex}">📋 复制</button>
@@ -1357,9 +1387,20 @@ function setupEventListeners() {
         addProjectTypeBtn.addEventListener('click', () => {
             const types = getProjectTypes();
             const newType = `新类型${types.length + 1}`;
+            getTypeColor(newType);
             types.push(newType);
             updateProjectTypeSelect(types);
             renderProjectTypes();
+        });
+    }
+
+    const resetTypeColorsBtn = document.getElementById('reset-type-colors');
+    if (resetTypeColorsBtn) {
+        resetTypeColorsBtn.addEventListener('click', () => {
+            typeColors = { ...DEFAULT_TYPE_COLORS };
+            renderProjectTypes();
+            renderSchedule();
+            showToast('已还原默认颜色', 'success');
         });
     }
 
@@ -3126,22 +3167,38 @@ function renderProjectTypes() {
     const types = getProjectTypes();
     projectTypesContainer.innerHTML = '';
     types.forEach((type, index) => {
+        const color = getTypeColor(type);
         const item = document.createElement('div');
         item.className = 'role-category-item';
         item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:6px;';
         item.innerHTML = `
+            <input type="color" class="type-color-picker" data-index="${index}" value="${color}" style="width:32px;height:32px;border:none;border-radius:8px;cursor:pointer;padding:0;background:none;" title="选择颜色">
             <input type="text" class="role-label-input" data-index="${index}" value="${escapeHtml(type)}" style="flex:1;padding:6px 10px;border:2px solid rgba(170,166,157,0.3);border-radius:16px;font-size:14px;font-weight:600;font-family:'Nunito','Noto Sans SC',sans-serif;color:#794f27;">
             <button type="button" class="role-category-remove" data-index="${index}" title="删除" style="background:none;border:none;color:#e05a5a;font-size:18px;cursor:pointer;padding:4px 8px;">×</button>
         `;
         projectTypesContainer.appendChild(item);
     });
 
+    projectTypesContainer.querySelectorAll('.type-color-picker').forEach(picker => {
+        picker.addEventListener('input', () => {
+            const idx = parseInt(picker.dataset.index, 10);
+            const types = getProjectTypes();
+            typeColors[types[idx]] = picker.value;
+            renderSchedule();
+        });
+    });
+
     projectTypesContainer.querySelectorAll('.role-label-input').forEach(input => {
         input.addEventListener('change', () => {
             const idx = parseInt(input.dataset.index, 10);
             const oldTypes = getProjectTypes();
+            const oldName = oldTypes[idx];
             const newTypes = [...oldTypes];
             newTypes[idx] = input.value;
+            if (oldName && oldName !== input.value && typeColors[oldName]) {
+                typeColors[input.value] = typeColors[oldName];
+                delete typeColors[oldName];
+            }
             updateProjectTypeSelect(newTypes);
         });
     });
@@ -3150,6 +3207,8 @@ function renderProjectTypes() {
         btn.addEventListener('click', () => {
             const idx = parseInt(btn.dataset.index, 10);
             const oldTypes = getProjectTypes();
+            const removed = oldTypes[idx];
+            if (removed) delete typeColors[removed];
             const newTypes = oldTypes.filter((_, i) => i !== idx);
             updateProjectTypeSelect(newTypes);
             renderProjectTypes();
