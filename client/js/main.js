@@ -22,6 +22,10 @@ function escapeAttr(str) {
 let currentMonday = getMonday(new Date());
 
 // 项目数据存储
+// ── 只读模式检测 ──
+const IS_READONLY = new URLSearchParams(window.location.search).has('readonly');
+if (IS_READONLY) document.body.classList.add('readonly');
+
 let scheduleData = {};
 
 // ── 项目类型颜色集中管理 ──
@@ -1009,10 +1013,12 @@ function renderSchedule() {
         column.appendChild(addBtn);
         
         // 添加拖拽事件监听器
-        column.addEventListener('dragover', handleDragOver);
-        column.addEventListener('dragenter', handleDragEnter);
-        column.addEventListener('dragleave', handleDragLeave);
-        column.addEventListener('drop', handleDrop);
+        if (!IS_READONLY) {
+            column.addEventListener('dragover', handleDragOver);
+            column.addEventListener('dragenter', handleDragEnter);
+            column.addEventListener('dragleave', handleDragLeave);
+            column.addEventListener('drop', handleDrop);
+        }
         
         const dayProjects = (scheduleData[dateStr] || []).filter((project) => matchesProjectFilters(project, filterState));
 
@@ -1037,8 +1043,7 @@ function renderSchedule() {
 function createProjectCard(project, dateStr, projectIndex) {
     const card = document.createElement('div');
     card.className = `project-card`;
-    // 添加拖拽功能
-    card.draggable = true;
+    card.draggable = !IS_READONLY;
     card.dataset.date = dateStr;
     card.dataset.index = projectIndex;
     card.dataset.status = project.status || '待确认';
@@ -1137,31 +1142,30 @@ function createProjectCard(project, dateStr, projectIndex) {
     `;
     
     // 添加点击事件
-    card.addEventListener('click', (e) => {
-        // 如果点击的是删除按钮或复制按钮，则不触发编辑
-        if (e.target.classList.contains('delete-btn') || e.target.classList.contains('copy-btn')) {
-            return;
-        }
-        editProject(dateStr, projectIndex);
-    });
+    if (!IS_READONLY) {
+        card.addEventListener('click', (e) => {
+            if (e.target.classList.contains('delete-btn') || e.target.classList.contains('copy-btn')) return;
+            editProject(dateStr, projectIndex);
+        });
+    }
     
-    // 添加拖拽事件
-    card.addEventListener('dragstart', handleDragStart);
-    card.addEventListener('dragend', handleDragEnd);
-    
-    // 移动端触摸长按拖拽
-    let touchTimer = null;
-    let touchMoved = false;
-    card.addEventListener('touchstart', (e) => {
-        touchMoved = false;
-        touchTimer = setTimeout(() => {
-            if (!touchMoved) {
-                showMobileMoveSheet(dateStr, projectIndex, card);
-            }
-        }, 500);
-    }, { passive: true });
-    card.addEventListener('touchmove', () => { touchMoved = true; }, { passive: true });
-    card.addEventListener('touchend', () => { clearTimeout(touchTimer); }, { passive: true });
+    // 拖拽事件
+    if (!IS_READONLY) {
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+        
+        // 移动端触摸长按拖拽
+        let touchTimer = null;
+        let touchMoved = false;
+        card.addEventListener('touchstart', (e) => {
+            touchMoved = false;
+            touchTimer = setTimeout(() => {
+                if (!touchMoved) showMobileMoveSheet(dateStr, projectIndex, card);
+            }, 500);
+        }, { passive: true });
+        card.addEventListener('touchmove', () => { touchMoved = true; }, { passive: true });
+        card.addEventListener('touchend', () => { clearTimeout(touchTimer); }, { passive: true });
+    }
     
     // 添加删除按钮事件
     const deleteBtn = card.querySelector('.delete-btn');

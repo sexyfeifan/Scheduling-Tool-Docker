@@ -162,7 +162,7 @@ function createApp(options = {}) {
 
   app.use(express.static(CLIENT_DIR));
   app.get('/', (req, res) => res.sendFile(path.join(CLIENT_DIR, 'index.html')));
-  app.get('/notice', (req, res) => res.sendFile(path.join(CLIENT_DIR, 'preview.html')));
+  app.get('/notice', (req, res) => res.redirect('/?readonly=1'));
 
   app.use((error, req, res, next) => {
     logger.error(error);

@@ -17,6 +17,28 @@
     <link rel="stylesheet" href="css/animal-island-icons.css">
     <link rel="manifest" href="manifest.json">
     <script src="js/vendor/html2canvas.min.js"></script>
+    <style>
+        /* ── 只读模式 ── */
+        body.readonly .delete-btn,
+        body.readonly .copy-btn,
+        body.readonly .card-actions,
+        body.readonly .add-btn,
+        body.readonly #settings,
+        body.readonly #admin-modal,
+        body.readonly .notice-day-btn,
+        body.readonly .sort-day-btn,
+        body.readonly #quick-add-panel,
+        body.readonly #quick-add-toggle,
+        body.readonly #undo-btn,
+        body.readonly #redo-btn,
+        body.readonly .history-toggle,
+        body.readonly #clipboard-hint,
+        body.readonly .theme-toggle,
+        body.readonly .version-info { display: none !important; }
+        body.readonly .project-card { cursor: default !important; }
+        body.readonly .project-card:hover { transform: none !important; }
+        body.readonly .day-column { cursor: default !important; }
+    </style>
 </head>
 <body>
     <div class="container">
