@@ -477,6 +477,120 @@
         font-size: 11px;
         padding: 4px 2px;
     }
+
+    /* ── 移动端底部工具栏 ── */
+    .mobile-bottom-bar {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 9999;
+        background: #fff;
+        border-top: 1px solid rgba(0,0,0,0.08);
+        padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+        justify-content: space-around;
+        align-items: center;
+        box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+    }
+
+    .mobile-bar-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        padding: 4px 12px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        border-radius: 10px;
+        min-width: 56px;
+        min-height: 48px;
+        transition: background 0.15s;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .mobile-bar-btn:active {
+        background: rgba(25, 200, 185, 0.1);
+    }
+
+    .mobile-bar-btn.active {
+        color: #19c8b9;
+    }
+
+    .mobile-bar-btn.active .mobile-bar-icon {
+        transform: scale(1.1);
+    }
+
+    .mobile-bar-icon {
+        font-size: 20px;
+        line-height: 1;
+    }
+
+    .mobile-bar-label {
+        font-size: 10px;
+        font-weight: 600;
+        color: #794f27;
+    }
+
+    .mobile-bar-btn.active .mobile-bar-label {
+        color: #19c8b9;
+    }
+
+    /* 为底部工具栏留出空间 */
+    body {
+        padding-bottom: 72px;
+    }
+
+    /* 隐藏桌面端顶部工具栏的视图切换和功能按钮（保留导航） */
+    .toolbar .view-btn,
+    .toolbar #conflict-btn,
+    .toolbar #add-project,
+    .toolbar #undo-action,
+    .toolbar #export-image,
+    .toolbar #export-week-text,
+    .toolbar #paste-recognition,
+    .toolbar #heatmap-btn,
+    .toolbar #webhook-btn,
+    .toolbar #admin-btn {
+        display: none;
+    }
+
+    /* 隐藏桌面端 week-header（移动端日视图不需要） */
+    .week-header {
+        display: none !important;
+    }
+
+    /* 日视图移动端优化 */
+    #day-view .day-view-header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    #day-view .day-view-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #794f27;
+    }
+
+    #day-view .day-view-content {
+        padding: 12px;
+    }
+
+    #day-view .project-card {
+        margin-bottom: 12px;
+    }
+}
+
+/* 桌面端隐藏底部工具栏 */
+.mobile-bottom-bar {
+    display: none;
 }
 
 /* 更小屏幕 */
