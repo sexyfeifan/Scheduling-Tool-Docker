@@ -664,19 +664,18 @@ async function initApp() {
         applyViewForViewport(e.matches);
     });
 
-        // 底部工具栏按钮事件
+    if (IS_MOBILE && mobileBottomBar) {
+        mobileBottomBar.style.display = 'flex';
+
         mobileBottomBar.querySelectorAll('.mobile-bar-btn[data-view]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const view = btn.dataset.view;
-                // 同步顶部视图按钮状态
                 document.getElementById(`view-${view}`)?.click();
-                // 更新底部按钮高亮
                 mobileBottomBar.querySelectorAll('.mobile-bar-btn[data-view]').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
             });
         });
 
-        // 导出按钮
         const mobileExportBtn = document.getElementById('mobile-bar-export');
         if (mobileExportBtn) {
             mobileExportBtn.addEventListener('click', () => {
@@ -684,7 +683,6 @@ async function initApp() {
             });
         }
 
-        // 同步顶部视图切换到底部按钮
         document.querySelectorAll('.toolbar .view-btn').forEach(topBtn => {
             topBtn.addEventListener('click', () => {
                 const view = topBtn.id.replace('view-', '');
