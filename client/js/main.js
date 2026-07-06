@@ -613,6 +613,7 @@ async function initApp() {
     
     // 初始化视图切换器（传入渲染回调）
     initViewSwitcher({
+        week: () => { if (typeof updateDayProjectCounts === 'function') updateDayProjectCounts(); },
         month: () => monthViewModule.render(),
         personnel: () => personnelViewModule.render(),
         day: () => renderDayView(new Date())
@@ -717,8 +718,15 @@ async function initApp() {
         showTouchDayDetail(formatDate(weekDates[idx]));
     });
 
-    // 初始渲染项目数圆点
-    if (IS_MOBILE) updateDayProjectCounts();
+    // 初始渲染项目数圆点 + 自动选中今天
+    if (IS_MOBILE) {
+        updateDayProjectCounts();
+        const todayStr = formatDate(new Date());
+        const weekDates = getWeekDates(currentMonday);
+        if (weekDates.some(d => formatDate(d) === todayStr)) {
+            showTouchDayDetail(todayStr);
+        }
+    }
 
     if (IS_MOBILE && mobileBottomBar) {
         mobileBottomBar.style.display = 'flex';
@@ -4211,11 +4219,7 @@ function drawScheduleToCanvas() {
                     }
                 });
 
-                const origCS = window.getComputedStyle(projectCard);
-                const cardKeepProps = ['border-radius','padding','box-shadow','font-family','font-size','line-height','letter-spacing','display','flex-direction','gap','position','overflow'];
-                cardKeepProps.forEach(p => {
-                    try { cleanCard.style.setProperty(p, origCS.getPropertyValue(p)); } catch(e) {}
-                });
+                // 不再用 getComputedStyle 覆盖（detach 元素返回默认值导致颜色丢失）
                 cleanCard.style.width = '100%';
                 cleanCard.style.marginBottom = '8px';
                 cleanCard.style.removeProperty('animation');
@@ -4248,8 +4252,9 @@ function drawScheduleToCanvas() {
     tempContainer.appendChild(mainContent);
     document.body.appendChild(tempContainer);
 
+    const isMobileExport = window.innerWidth <= 1023 || /Android|iPhone|iPad|iPod/.test(navigator.userAgent);
     html2canvas(tempContainer, {
-        scale: 2,
+        scale: isMobileExport ? 1.5 : 2,
         useCORS: true,
         backgroundColor: '#f5f5f7',
         logging: false,
