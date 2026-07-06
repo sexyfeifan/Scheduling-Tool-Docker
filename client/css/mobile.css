@@ -658,6 +658,75 @@ body.mobile-day-mode .week-mobile-nav { display: flex; }
 body.mobile-day-mode #month-view { display: none; }
 body.mobile-day-mode #personnel-view { display: none; }
 
+/* ── iPad 横版详情区 ── */
+.ipad-day-detail {
+    background: #fff;
+    border-radius: 16px;
+    border: 1.5px solid rgba(170, 166, 157, 0.2);
+    margin-top: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+.ipad-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1.5px solid rgba(170, 166, 157, 0.15);
+}
+.ipad-detail-date {
+    font-size: 16px;
+    font-weight: 700;
+    color: #794f27;
+}
+.ipad-detail-close {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(170, 166, 157, 0.15);
+    color: #794f27;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ipad-detail-close:active {
+    background: rgba(170, 166, 157, 0.3);
+}
+.ipad-detail-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.ipad-detail-content .project-card {
+    margin-bottom: 0;
+}
+.ipad-detail-empty {
+    text-align: center;
+    padding: 30px;
+    color: #c4b89e;
+    font-size: 16px;
+}
+
+/* ── iPad 横版日期标题可点击 ── */
+body.ipad-landscape .day-header {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s;
+    border-radius: 8px;
+}
+body.ipad-landscape .day-header:active {
+    background: rgba(25, 200, 185, 0.15);
+}
+body.ipad-landscape .day-header.ipad-selected {
+    background: rgba(25, 200, 185, 0.12);
+    color: #19c8b9;
+    font-weight: 700;
+}
+
 /* ── iPad 横屏紧凑样式（1024-1199px） ── */
 @media (min-width: 1024px) and (max-width: 1199px) {
     .header {
