@@ -163,11 +163,12 @@ function createApp(options = {}) {
   app.use(express.static(CLIENT_DIR));
   app.get('/', (req, res) => res.sendFile(path.join(CLIENT_DIR, 'index.html')));
 
-  // 只读分享子页面路由 — 动态读取设置中的路径
+  // 只读分享子页面路由
   app.get('/canbox', (req, res) => {
     try {
       const settings = store.getSettings ? store.getSettings() : {};
-      if (settings.shareEnabled) {
+      const isEnabled = settings.access && settings.access.shareEnabled;
+      if (isEnabled) {
         res.sendFile(path.join(CLIENT_DIR, 'index.html'));
       } else {
         res.status(404).send('子页面未启用');
