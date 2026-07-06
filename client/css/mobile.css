@@ -85,6 +85,60 @@
         gap: 2px;
         padding: 4px 0;
     }
+
+    /* ── 移动端周导航栏 ── */
+    .week-mobile-nav {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 12px;
+        background: rgba(240, 232, 216, 0.4);
+        border-radius: 14px;
+        margin-bottom: 10px;
+    }
+
+    .week-nav-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border: 1.5px solid rgba(170, 166, 157, 0.3);
+        border-radius: 12px;
+        background: #fff;
+        color: #794f27;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .week-nav-btn:active {
+        background: #f0ebe3;
+        transform: scale(0.95);
+    }
+
+    .week-nav-today {
+        background: #19c8b9;
+        color: #fff;
+        border-color: #19c8b9;
+        padding: 0 14px;
+        width: auto;
+        font-size: 13px;
+    }
+
+    .week-nav-today:active {
+        background: #15a89c;
+    }
+
+    .week-nav-display {
+        font-size: 14px;
+        font-weight: 600;
+        color: #794f27;
+        text-align: center;
+        min-width: 120px;
+    }
     
     .day-header {
         padding: 10px 4px;
@@ -588,8 +642,9 @@
     }
 }
 
-/* 桌面端隐藏底部工具栏 */
-.mobile-bottom-bar {
+/* 桌面端隐藏底部工具栏和移动端周导航 */
+.mobile-bottom-bar,
+.week-mobile-nav {
     display: none;
 }
 

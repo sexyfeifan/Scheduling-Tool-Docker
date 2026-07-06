@@ -996,7 +996,10 @@ function updateWeekDisplay() {
     const weekDates = getWeekDates(currentMonday);
     const startDate = formatMonthDay(weekDates[0]);
     const endDate = formatMonthDay(weekDates[6]);
-    weekDisplay.textContent = `${startDate} - ${endDate}`;
+    const text = `${startDate} - ${endDate}`;
+    weekDisplay.textContent = text;
+    const mobileNavDisplay = document.getElementById('week-nav-display');
+    if (mobileNavDisplay) mobileNavDisplay.textContent = text;
 }
 
 // 渲染单日视图
@@ -1344,6 +1347,14 @@ function setupEventListeners() {
         updateWeekDisplay();
         renderSchedule();
     });
+
+    // 移动端周导航按钮
+    const weekNavPrev = document.getElementById('week-nav-prev');
+    const weekNavNext = document.getElementById('week-nav-next');
+    const weekNavToday = document.getElementById('week-nav-today');
+    if (weekNavPrev) weekNavPrev.addEventListener('click', () => { prevWeekBtn.click(); });
+    if (weekNavNext) weekNavNext.addEventListener('click', () => { nextWeekBtn.click(); });
+    if (weekNavToday) weekNavToday.addEventListener('click', () => { currentWeekBtn.click(); });
     
     // 添加项目按钮
     addProjectBtn.addEventListener('click', () => {
