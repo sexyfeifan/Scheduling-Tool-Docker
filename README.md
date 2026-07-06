@@ -1,6 +1,6 @@
 # 罐头场通告排期 — Docker 版本
 
-> 当前版本：**v3.00** | Docker Hub: `sexyfeifan/scheduling-tool:3.00`
+> 当前版本：**v3.31** | Docker Hub: `sexyfeifan/scheduling-tool:3.31`
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/sexyfeifan/scheduling-tool)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
 [![Docker Image Size](https://img.shields.io/docker/image-size/sexyfeifan/scheduling-tool/latest)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
@@ -89,7 +89,7 @@ mkdir -p scheduling-tool && cd scheduling-tool
 cat > docker-compose.yml << 'EOF'
 services:
   scheduling-tool:
-    image: sexyfeifan/scheduling-tool:3.00
+    image: sexyfeifan/scheduling-tool:3.31
     container_name: scheduling-tool
     ports:
       - "3000:3000"
@@ -146,7 +146,7 @@ docker buildx create --name multiarch-builder --use
 # 构建并推送多架构镜像
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -t sexyfeifan/scheduling-tool:3.00 \
+  -t sexyfeifan/scheduling-tool:3.31 \
   -t sexyfeifan/scheduling-tool:latest \
   --push .
 ```
@@ -158,7 +158,8 @@ docker buildx build \
 | 路径 | 说明 |
 |------|------|
 | `http://localhost:3000` | 主编辑页面 |
-| `http://localhost:3000/notice` | 只读预览页面 |
+| `http://localhost:3000/canbox` | 移动端只读子页面（需在管理后台启用） |
+| `http://localhost:3000/?debug=1` | 带 eruda 调试工具的编辑页 |
 | `http://localhost:3000/api/health` | 健康检查 |
 
 ## API 端点
