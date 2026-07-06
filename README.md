@@ -1,6 +1,6 @@
 # 罐头场通告排期 — Docker 版本
 
-> 当前版本：**v3.31** | Docker Hub: `sexyfeifan/scheduling-tool:3.31`
+> 当前版本：**v3.33** | Docker Hub: `sexyfeifan/scheduling-tool:3.33`
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/sexyfeifan/scheduling-tool)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
 [![Docker Image Size](https://img.shields.io/docker/image-size/sexyfeifan/scheduling-tool/latest)](https://hub.docker.com/r/sexyfeifan/scheduling-tool)
@@ -49,13 +49,24 @@
 
 - 管理员密码验证
 - 编辑密码保护
-- 只读分享链接
+- 只读分享子页面（`/canbox`，管理员控制开关和路径）
 - 数据备份 / 恢复（服务端备份 + 本地文件导入导出）
 - 操作历史记录
 - 动态职能管理（单选 / 多选 radio 切换）
 - 项目类型管理（颜色选择器 + 还原默认 + 自动分配不重复颜色）
 - 项目模板
 - 数据管理（姓名更替 / 任务交接，支持并列人名自动拆分）
+
+### 移动端适配
+
+- 响应式布局：手机竖屏 / iPad 竖屏 / iPad 横屏 / 桌面端自适应
+- 触屏设备检测：UA + `maxTouchPoints` + `ontouchstart` 三重检测
+- 移动端日/周视图：日期选择器（7天横向）+ 详情区（大面积卡片展示）
+- 移动端月/人视图：日历/矩阵横向滚动
+- 底部导航栏：日 / 周 / 月 / 人 / 导出
+- 触摸区域 ≥ 44px，hover 效果禁用
+- iOS Safari 下载兼容 / 新标签页降级
+- viewport-fit=cover / safe-area-inset 适配
 
 ### UI 组件（Animal Island 风格）
 
@@ -65,15 +76,16 @@
 - Card 卡片（纯色背景 + 类型鲜艳配色 + 人员彩色圆点）
 - Modal 弹窗（奶油底 + zoom-in 动画）
 - Toast 提示（花纹底 + 类型边框色）
-- HUD 时钟（周几 + 日期 + 时:分:秒，冒号闪烁）
+- HUD 时钟（周几 + 日期 + 时分秒，冒号闪烁）
 - SVG 图标（40+ Feather 风格，替代 emoji）
 
 ### PWA 与离线
 
-- Service Worker 预缓存静态资源
+- Service Worker 预缓存静态资源（网络优先策略，确保更新及时生效）
 - API 缓存 5 分钟过期
 - 离线指示器（自动检测网络状态）
 - 支持「添加到主屏幕」
+- 强制刷新按钮（清除 SW + Cache Storage）
 
 ---
 
@@ -89,7 +101,7 @@ mkdir -p scheduling-tool && cd scheduling-tool
 cat > docker-compose.yml << 'EOF'
 services:
   scheduling-tool:
-    image: sexyfeifan/scheduling-tool:3.31
+    image: sexyfeifan/scheduling-tool:3.33
     container_name: scheduling-tool
     ports:
       - "3000:3000"
@@ -146,7 +158,8 @@ docker buildx create --name multiarch-builder --use
 # 构建并推送多架构镜像
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -t sexyfeifan/scheduling-tool:3.31 \
+  --build-arg BUILD_DATE=$(date +%Y-%m-%d) \
+  -t sexyfeifan/scheduling-tool:3.33 \
   -t sexyfeifan/scheduling-tool:latest \
   --push .
 ```
@@ -167,7 +180,7 @@ docker buildx build \
 | 端点 | 方法 | 说明 |
 |------|------|------|
 | `/api/health` | GET | 健康检查 |
-| `/api/version` | GET | 版本信息 |
+| `/api/version` | GET | 版本信息 + BUILD_DATE |
 | `/api/schedules` | GET/POST | 排期 CRUD |
 | `/api/schedules/search` | GET | 搜索排期 |
 | `/api/schedules/batch` | POST | 批量操作 |
@@ -200,11 +213,6 @@ docker buildx build \
 - 2GB+ 磁盘空间
 - 1GB RAM
 
-**支持的平台**:
-- ✅ Intel/AMD 64位服务器
-- ✅ Apple Silicon (M1/M2/M3) Mac
-- ✅ ARM 服务器 (AWS Graviton, 树莓派等)
-
 ## 环境变量
 
 | 变量名 | 默认值 | 说明 |
@@ -213,6 +221,7 @@ docker buildx build \
 | `DATA_DIR` | `/app/data` | 数据目录 |
 | `BACKUP_DIR` | `/app/backups` | 备份目录 |
 | `BACKUP_PASSWORD` | `sexyfeifan` | 管理员密码（强烈建议修改）|
+| `BUILD_DATE` | 自动生成 | 镜像构建日期（Dockerfile ARG 注入）|
 
 ## 数据持久化
 
@@ -221,210 +230,58 @@ docker buildx build \
 ./backups  → /app/backups  (备份文件)
 ```
 
-## 项目结构
-
-```
-├── client/
-│   ├── index.html              # 主页面
-│   ├── sw.js                   # Service Worker
-│   ├── css/
-│   │   ├── style.css           # 样式入口 (@import 所有子模块)
-│   │   ├── animal-island-components.css  # 动森组件
-│   │   ├── animal-island-forms.css       # 动森表单
-│   │   ├── components.css      # 视图组件
-│   │   ├── schedule.css        # 项目卡片
-│   │   ├── modal.css           # 弹窗
-│   │   └── ...
-│   └── js/
-│       ├── main.js             # 应用入口（单体架构）
-│       └── modules/
-│           ├── api.js          # API 客户端
-│           ├── date.js         # 日期工具
-│           ├── filters.js      # 过滤器
-│           ├── undo.js         # 撤销管理
-│           └── utils.js        # 公共工具
-├── server/
-│   ├── app.js                  # Express 应用
-│   ├── config.js               # 配置
-│   ├── logger.js               # pino 日志
-│   ├── middleware/auth.js      # 认证 + CSRF
-│   ├── routes/                 # API 路由 (12 个)
-│   ├── services/
-│   │   ├── sqliteStore.js      # SQLite 存储
-│   │   ├── backupService.js    # 备份服务
-│   │   └── migrator.js         # Schema 迁移
-│   └── utils/normalize.js      # 数据标准化
-├── Dockerfile                  # 多阶段构建
-├── docker-compose.yml          # Compose 配置
-└── .dockerignore
-```
-
 ---
 
 ## 更新日志
 
-### v3.00 (2026-07-06) - 里程碑版本：类型颜色系统重构
+### v3.33 (2026-07-07) - 里程碑版本：代码质量 + 移动端 + 导出 + 子页面
 
-**🎨 项目类型颜色系统**:
-- 集中式类型颜色管理（`DEFAULT_TYPE_COLORS` + `TYPE_COLOR_PALETTE` 15 色池）
-- 药丸标和卡片背景同色系（自动生成 rgba 透明背景 + 边框 + 加深文字）
-- 设置页颜色选择器（`<input type="color">` 实时预览）
-- 还原默认颜色按钮
-- 新增类型自动分配不重复颜色
-- 类型重命名保留颜色
-- 无类型时卡片默认白色
+#### 🐛 Bug 修复
+- **导出颜色淡修复**: 颜色烘焙循环从 DOM detach 状态移到 `appendChild` 之后执行，`getComputedStyle` 正确返回 CSS 类颜色
+- **拖拽监听器泄漏**: 每次 `renderSchedule()` 重复添加 28 个监听器，改用 `dataset.dragBound` 只绑定一次
+- **null 检查**: `showToast` / `renderSchedule` 中 `getElementById` 结果添加 null 守卫
+- **闭包作用域修复**: `renderMobileDayPicker` 暴露到 `window`，修复 `renderSchedule`（全局函数）无法调用闭包内函数
+- **桌面端误显移动端组件**: `renderMobileDayPicker` 添加 `mobile-device` class 检查
 
-**🎨 默认类型颜色**:
-- 平面=#10B981(绿) / 视频=#EC4899(粉) / 直播=#3B82F6(蓝) / 试做=#8B5CF6(紫) / 特殊=#FF8C00(橘)
+#### 📱 移动端响应式重构
+- **设备检测**: UA + `maxTouchPoints > 0` + `ontouchstart` 三重检测，覆盖所有触屏设备
+- **日/周视图统合**: 移动端日视图和周视图共享日期选择器 + 详情区
+- **日期选择器**: 7 天横向排列（日期名 + 日期数字 + 项目数），可滚动，选中态高亮
+- **详情区**: 点击日期后下方大面积显示当日项目卡片（含删除/复制/新增按钮）
+- **自动选中**: 进入页面自动选中今天并显示当日项目，无需手动点击
+- **周切换同步**: 左右切换周数时，日期选择器和详情区自动跟随更新
+- **底部导航栏**: 日/周/月/人/导出 5 个按钮，触屏设备始终显示
+- **工具栏保留**: 所有触屏设备完整显示桌面端工具栏
+- **iPad 横屏**: 1024-1199px 紧凑样式（字号/间距缩小，7 列完整显示）
+- **CSS 控制**: `body.mobile-device` + `body.view-xxx` class 控制各视图元素显隐
 
-**🐛 导出修复**:
-- 修复导出图片卡片颜色统一为同一颜色（getComputedStyle 在 detach 元素返回默认值）
-- 导出跳过 background/color 属性复制，保留 cloneNode 的 inline style
+#### 🔗 只读分享子页面
+- **路径**: `/canbox`（管理员可自定义）
+- **控制**: 管理后台可开关 + 设置路径
+- **调试**: URL 带 `?debug=1` 加载 eruda 移动端调试面板
 
-**📱 移动端优化（v2.92~v2.97）**:
-- 触摸区域 ≥ 44px / 添加按钮触摸可见 / 管理页 Tab 横向滚动
-- iOS Safari 下载兼容 / 新标签页降级 / blob URL 内存释放
-- viewport-fit=cover / hover 禁用 / background-attachment 修复
-- iOS PWA 元标签 / SW 缓存更新 / 手势去重
-- 触摸拖拽（长按底部日期选择面板）
-- 月视图 / 人员视图移动端横向滚动
+#### 🏗️ 基础设施
+- **SW 缓存**: 网络优先策略，确保更新及时生效，缓存名随版本更新
+- **BUILD_DATE**: Dockerfile ARG 注入构建日期，`/api/version` 返回真实 build 时间
+- **强制刷新按钮**: 版本号旁 🔄 按钮，清除 SW + Cache Storage + 强制重载
 
-**🕐 时间显示修复（v2.92~v2.97）**:
-- 时间圆点统一为 staff-dot 风格（7×7px 柠檬黄 #FFD700）
-- 时间文字 system-ui 字体（修复 canvas 渲染冒号字距）
-- 导出容器恢复正常字距渲染
+### v3.00 (2026-07-06) - 类型颜色系统重构
 
-### v2.92 (2026-07-05) - 移动端全面优化
+- 集中式类型颜色管理（`DEFAULT_TYPE_COLORS` + 15 色池）
+- 药丸标和卡片背景同色系
+- 设置页颜色选择器 + 还原默认 + 自动分配不重复颜色
+- 默认类型：平面=绿 / 视频=粉 / 直播=蓝 / 试做=紫 / 特殊=橘
 
-**📱 触摸体验**:
-- 所有交互元素触摸区域 ≥ 44×44px（删除按钮、添加按钮、关闭按钮、日历、复选框、Tab、复制按钮）
-- 添加按钮在触摸设备上始终可见（不再依赖 hover）
-- 弹窗关闭按钮增大至 44px
-- 管理页 Tab 支持横向滚动
-- 横屏模式删除按钮从 20px 增大至 36px
+### v2.89 (2026-06-29) - 多视图 + 导出 + 管理功能
 
-**📤 导出修复（移动端）**:
-- iOS Safari 下载图片兼容（检测 iOS 设备，弹出新窗口显示图片+长按保存引导）
-- 新标签页打开降级处理（window.open 被拦截时自动 fallback 到 location.href）
-- blob URL 内存泄漏修复（60s 后自动 revokeObjectURL）
+- 日/周/月/人四视图完整实现
+- 周/月/人员视图图片导出
+- 管理员密码修复 + 数据管理 + 访问控制
+- 动森风格 UI 组件
 
-**🎨 样式修复**:
-- viewport-fit=cover 启用刘海屏 safe-area-inset
-- 5 个遗漏的 hover 效果在移动端禁用（copy-btn、copy-date-option、month-cell、day、month-day-cell）
-- background-attachment: fixed → scroll 消除 iOS 滚动卡顿
-- 弹窗 overscroll-behavior: contain 防止背景滚动
-- version-info 避开 safe area
+### v2.63 (2026-06-23) - 稳定性与安全性
 
-**🏗️ PWA**:
-- iOS PWA 元标签（apple-mobile-web-app-capable、status-bar-style）
-- theme-color meta 标签
-- Service Worker 缓存版本更新至 v2.92
-- 手势去重（mobile.js 滑动移至 mobileGestures.js 统一管理）
-
-### v2.91 (2026-07-05) - 导出图片圆点彻底修复
-
-**🐛 导出修复**:
-- 移除 getComputedStyle.cssText 全量覆盖子元素样式（根因）
-- 导出仅复制卡片级别必要属性（background、border、padding 等），子元素样式由 CSS 类自然继承
-- 恢复白点/项目类型 inline-flex 渲染（编辑页显示正确）
-
-### v2.90 (2026-07-05) - 导出图片圆点修复（已废弃）
-
-**🐛 导出修复**:
-- 开始时间白点导出对齐修复（inline-block 替代 inline-flex）
-- 项目类型彩色圆点导出渲染修复（inline-block 替代 inline-flex）
-- 导出样式复制跳过 inline-flex 容器，保留原始 inline style
-
-### v2.89 (2026-06-29) - 里程碑版本
-
-**🎨 UI/UX**:
-- 项目类型鲜艳配色（平面绿 / 视频粉 / 直播琥珀 / 试做紫 + 白字）
-- 人员姓名每行至多 2 人自动换行对齐（3 人以上按每行 2 人分组，圆点上下对齐）
-- 开始时间白点与时间文字垂直居中对齐
-- 导出图片彩色圆点彻底修复（inline style + &nbsp;）
-- 动森风格 Select/Switch/下拉选择器
-- 拍摄地样式美化
-- 全局 Select 选择器 Animal Island UI 风格
-
-**📊 视图系统**:
-- 日视图（查看单日排期，左右切换日期）
-- 月视图日历（项目/人员模式切换，显示每日排期名称）
-- 人员排期矩阵（按自然月显示，按月切换）
-- 视图切换按钮（单/周/月/人）全部生效
-
-**📤 导出功能**:
-- 周视图图片导出（html2canvas，预览 + 下载 + 新标签页）
-- 跨周数导出（选择起止日期，卡片样式与编辑页一致）
-- 月视图 / 人员视图图片导出
-- 导出图片颜色与编辑页完全一致
-
-**🛡️ 管理功能**:
-- 管理员密码登录修复
-- 数据管理（姓名更替 / 任务交接，支持并列人名拆分）
-- 访问控制独立 Tab
-- 项目类型管理
-- 预警弹窗跳转 + 删除
-
-**🐛 稳定性**:
-- settingsModal null 崩溃修复
-- escapeAttr 函数补全
-- 角色硬编码改动态 roleCategories
-- loadHistoryRecords null 检查
-- 78 个重复备份文件清理
-- 版本号统一 2.89
-
-### v2.63 (2026-06-23) - 稳定性与安全性重大更新
-
-**🐛 Bug 修复**:
-- 修复 SSE 无限重连问题（添加最多5次重连限制和指数退避策略）
-- 修复备份恢复操作无事务保护问题（使用 SQLite 事务保证原子性）
-- 修复 API 响应 JSON 解析错误可能导致客户端崩溃
-- 修复导出图片颜色偏淡问题（使用不透明背景色）
-- 完善日期验证（检查日期合法性，拒绝如 2024-02-30 的无效日期）
-
-**🔒 安全增强**:
-- 提高密码哈希强度（bcrypt cost factor 从 10 提升到 12）
-- 添加 SSE 连接超时限制（1小时自动断开，防止僵尸连接累积）
-- 添加所有 API 请求 30 秒超时设置
-
-**⚡ 性能优化**:
-- 优化搜索性能（添加 300ms 防抖，减少不必要的渲染）
-- 添加项目名称长度验证（最多 120 字符，避免 UI 问题）
-
-**🏗️ 架构改进**:
-- 导出图片样式修复
-- 事件绑定 null 守卫
-- 全量按钮功能恢复
-- 多架构 Docker 镜像支持（AMD64 + ARM64）
-
-### v2.62 (2026-06-22)
-- 周切换数据修复
-- SSE 回退机制
-- 人员全字段匹配
-- 预警重复检测
-- 管理页合并设置
-
-### v2.61 (2026-06-22)
-- 动森风格 UI
-- 多视图支持
-- 冲突预警
-- 安全加固
-- 性能优化
-
-### v2.60 (2026-06-20)
-- 15 个功能模块
-- 视图增强
-- 效率工具
-- PWA 支持
-- 架构优化
-
-### v2.59 (2026-06-14)
-- 跨周导出
-- 广告商单
-- 暗色模式
-- 快捷键
-- CI/CD
-
-### 早期版本
-- v2.58: 动态职能管理 / 商务职能
-- v2.54: 月视图优化 / 数据安全与恢复
+- SSE 无限重连修复 + 指数退避
+- 备份恢复事务保护
+- bcrypt cost factor 12
+- 多架构 Docker 镜像（AMD64 + ARM64）
