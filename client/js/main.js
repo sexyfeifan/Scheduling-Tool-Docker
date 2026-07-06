@@ -631,7 +631,7 @@ async function initApp() {
     const IS_MOBILE = window.innerWidth <= 1023;
     const mobileBottomBar = document.getElementById('mobile-bottom-bar');
     
-    // ── 屏幕旋转自动切换视图（matchMedia API，iOS 可靠检测） ──
+    // ── 视图切换：matchMedia + 定时兜底 ──
     const mobileMql = window.matchMedia('(max-width: 1023px)');
 
     function applyViewForViewport(isMobile) {
@@ -648,7 +648,7 @@ async function initApp() {
         } else {
             if (dayView) dayView.style.setProperty('display', 'none', 'important');
             if (schedContainer) schedContainer.style.setProperty('display', 'grid', 'important');
-            if (weekHdr) weekHdr.style.setProperty('display', '', 'important');
+            if (weekHdr) weekHdr.style.setProperty('display', 'grid', 'important');
             document.getElementById('view-week')?.classList.add('active');
             document.getElementById('view-day')?.classList.remove('active');
             renderSchedule();
@@ -663,6 +663,16 @@ async function initApp() {
     mobileMql.addEventListener('change', (e) => {
         applyViewForViewport(e.matches);
     });
+
+    // 定时兜底：每秒检查一次，大屏幕上日视图不应可见
+    setInterval(() => {
+        if (window.innerWidth > 1023) {
+            const dv = document.getElementById('day-view');
+            if (dv && getComputedStyle(dv).display !== 'none') {
+                applyViewForViewport(false);
+            }
+        }
+    }, 1000);
 
     if (IS_MOBILE && mobileBottomBar) {
         mobileBottomBar.style.display = 'flex';

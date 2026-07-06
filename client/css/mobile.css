@@ -593,9 +593,8 @@
     display: none;
 }
 
-/* ── iPad 横屏（1024-1199px）：纯 CSS 强制周视图 ── */
-@media (min-width: 1024px) and (max-width: 1199px) {
-    /* 强制隐藏日视图，强制显示周视图 7 列 */
+/* ── iPad 横屏（1024px+）：纯 CSS 强制周视图 + 定时兜底 ── */
+@media (min-width: 1024px) {
     #day-view {
         display: none !important;
     }
@@ -607,7 +606,10 @@
         display: grid !important;
         grid-template-columns: repeat(7, 1fr) !important;
     }
-    /* 紧凑样式 */
+}
+
+/* ── iPad 横屏紧凑样式（1024-1199px） ── */
+@media (min-width: 1024px) and (max-width: 1199px) {
     .header {
         padding: 10px 14px;
     }
