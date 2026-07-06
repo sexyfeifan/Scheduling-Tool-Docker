@@ -40,7 +40,8 @@ function createSettingsRouter({ baseUrlFromRequest, requireAdminPassword, requir
     const access = normalizeAccessConfig({
       ...settings.access,
       shareEnabled: req.body && req.body.shareEnabled,
-      shareToken: req.body && req.body.shareToken
+      shareToken: req.body && req.body.shareToken,
+      sharePath: req.body && req.body.sharePath
     });
 
     if (req.body && typeof req.body.editPassword === 'string') {

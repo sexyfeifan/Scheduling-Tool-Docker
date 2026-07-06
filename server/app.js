@@ -166,15 +166,15 @@ function createApp(options = {}) {
   // 只读分享子页面路由
   app.get('/canbox', (req, res) => {
     try {
-      const settings = store.getSettings ? store.getSettings() : {};
-      const isEnabled = settings.access && settings.access.shareEnabled;
-      if (isEnabled) {
+      const settings = store.readSettings();
+      const access = settings.access || {};
+      if (access.shareEnabled) {
         res.sendFile(path.join(CLIENT_DIR, 'index.html'));
       } else {
         res.status(404).send('子页面未启用');
       }
     } catch (e) {
-      res.sendFile(path.join(CLIENT_DIR, 'index.html'));
+      res.status(404).send('子页面未启用');
     }
   });
 

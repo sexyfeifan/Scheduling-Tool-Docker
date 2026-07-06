@@ -28,7 +28,8 @@ const DEFAULT_SETTINGS = {
   access: {
     editPasswordHash: '',
     shareEnabled: false,
-    shareToken: ''
+    shareToken: '',
+    sharePath: 'canbox'
   },
   webhook: {
     enabled: false,
@@ -164,10 +165,12 @@ function verifyPassword(candidate, hash) {
 function normalizeAccessConfig(rawAccess) {
   const access = rawAccess || {};
   const shareToken = normalizeText(access.shareToken, 80).replace(/[^a-zA-Z0-9_-]/g, '');
+  const sharePath = normalizeText(access.sharePath || 'canbox', 40).replace(/[^a-zA-Z0-9_-]/g, '') || 'canbox';
   return {
     editPasswordHash: normalizeText(access.editPasswordHash, 128),
-    shareEnabled: Boolean(access.shareEnabled && shareToken),
-    shareToken
+    shareEnabled: Boolean(access.shareEnabled),
+    shareToken,
+    sharePath
   };
 }
 
@@ -295,7 +298,8 @@ function sanitizeSettingsForClient(settings) {
     customRoleOptions: settings.customRoleOptions || {},
     projectTemplates: settings.projectTemplates || [],
     access: {
-      shareEnabled: Boolean(settings.access && settings.access.shareEnabled)
+      shareEnabled: Boolean(settings.access && settings.access.shareEnabled),
+      sharePath: (settings.access && settings.access.sharePath) || 'canbox'
     },
     webhook: settings.webhook || { enabled: false, url: '', platform: 'custom', dailyTemplate: '', weeklyTemplate: '' }
   };
@@ -307,8 +311,9 @@ function sanitizeAccessForClient(settings, baseUrl = '') {
     editPasswordEnabled: Boolean(access.editPasswordHash),
     shareEnabled: access.shareEnabled,
     shareToken: access.shareToken,
-    shareUrl: access.shareEnabled && access.shareToken
-      ? `${baseUrl}/?share=${access.shareToken}`
+    sharePath: access.sharePath || 'canbox',
+    shareUrl: access.shareEnabled && access.sharePath
+      ? `${baseUrl}/${access.sharePath}`
       : ''
   };
 }

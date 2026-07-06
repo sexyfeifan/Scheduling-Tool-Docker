@@ -121,7 +121,7 @@ const importFileInput = document.getElementById('import-file');
 const saveAccessSettingsBtn = document.getElementById('save-access-settings');
 const copyShareLinkBtn = document.getElementById('copy-share-link');
 const shareEnabledSetting = document.getElementById('share-enabled-setting');
-const shareTokenSetting = document.getElementById('share-token-setting');
+const sharePathSetting = document.getElementById('share-path-setting');
 const editPasswordSetting = document.getElementById('edit-password-setting');
 const shareLinkDisplay = document.getElementById('share-link-display');
 
@@ -370,8 +370,7 @@ async function loadAccessSettings() {
     try {
         accessSettings = await settingAPI.getAccessSettings();
         shareEnabledSetting.checked = accessSettings.shareEnabled;
-        const sharePathInput = document.getElementById('share-path-setting');
-        if (sharePathInput) sharePathInput.value = accessSettings.sharePath || 'canbox';
+        if (sharePathSetting) sharePathSetting.value = accessSettings.sharePath || 'canbox';
         editPasswordSetting.value = '';
         updateShareLinkDisplay();
     } catch (error) {
