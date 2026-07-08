@@ -1353,7 +1353,7 @@ function createProjectCard(project, dateStr, projectIndex) {
         ${staffInfo}
         <div class="project-location">📍 ${escapeHtml(project.location)}</div>
         <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:6px;">
-            ${project.type ? `<span class="project-type" style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:700;color:#fff;background:${typeColor};font-family:'Nunito','Noto Sans SC',sans-serif;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6);flex-shrink:0;">&nbsp;</span>${escapeHtml(project.type)}</span>` : ''}
+            ${project.type ? `<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;color:#fff;background:${typeColor};line-height:1.4;white-space:nowrap;letter-spacing:0.3px;">${escapeHtml(project.type)}</span>` : ''}
             ${(project.platforms || []).map(p => `<span class="badge-tag badge-platform">${escapeHtml(p)}</span>`).join('')}
             ${(project.orientations || []).map(o => `<span class="badge-tag badge-orientation">${escapeHtml(o)}</span>`).join('')}
         </div>
