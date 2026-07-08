@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const APP_VERSION = '3.37';
+const APP_VERSION = '3.38';
 const APP_CREATE_DATE = '2026-06-03';
 const BUILD_DATE = process.env.BUILD_DATE || APP_CREATE_DATE;
 const SCHEMA_VERSION = 2;
