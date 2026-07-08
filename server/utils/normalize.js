@@ -99,7 +99,9 @@ function normalizeProject(project) {
     laodao: Boolean(project && project.laodao),
     isAdvertiser: Boolean(project && project.isAdvertiser),
     advertiserNo: normalizeText(project && project.advertiserNo, 60),
-    status: validStatuses.includes(rawStatus) ? rawStatus : '待确认'
+    status: validStatuses.includes(rawStatus) ? rawStatus : '待确认',
+    platforms: Array.isArray(project && project.platforms) ? project.platforms.filter(p => typeof p === 'string' && p.trim()).map(p => p.trim()).slice(0, 10) : [],
+    orientations: Array.isArray(project && project.orientations) ? project.orientations.filter(o => ['横屏', '竖屏'].includes(o)) : []
   };
 
   if (project && project.customFields && typeof project.customFields === 'object') {
