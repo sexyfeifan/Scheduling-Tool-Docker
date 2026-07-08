@@ -4097,6 +4097,8 @@ function exportViewAsImage(elementId, title) {
     const clone = el.cloneNode(true);
     clone.style.width = 'max-content';
     clone.style.minWidth = '100%';
+    // 移除"今天"高亮标记（导出图片是通告文档，不需要标注今天）
+    clone.querySelectorAll('.today, .today-highlight').forEach(t => t.classList.remove('today', 'today-highlight'));
     wrapper.appendChild(clone);
     document.body.appendChild(wrapper);
 
