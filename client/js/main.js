@@ -1697,6 +1697,13 @@ function setupEventListeners() {
             if (platformEnabledCheckbox.checked) renderPlatformOptions();
         });
     }
+    // 拍摄方向按钮点击切换
+    const orientationDiv = document.getElementById('project-orientation-options');
+    if (orientationDiv) {
+        orientationDiv.querySelectorAll('.tag-btn').forEach(btn => {
+            btn.addEventListener('click', () => btn.classList.toggle('active'));
+        });
+    }
 
     // 跨周导出勾选切换
     if (exportCrossWeekCheckbox && exportDateRangeDiv) {
@@ -3594,6 +3601,7 @@ function renderPlatformOptions() {
         btn.className = 'tag-btn';
         btn.dataset.value = p;
         btn.textContent = p;
+        btn.addEventListener('click', () => btn.classList.toggle('active'));
         container.appendChild(btn);
     });
 }
