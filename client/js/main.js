@@ -36,6 +36,8 @@ const DEFAULT_TYPE_COLORS = {
     '试做': '#8B5CF6',
     '特殊': '#FF8C00'
 };
+const DEFAULT_PLATFORMS = ['B站', '抖音', '小红书', '视频号'];
+let platforms = [...DEFAULT_PLATFORMS];
 const TYPE_COLOR_PALETTE = [
     '#10B981','#EC4899','#F59E0B','#8B5CF6','#FF8C00',
     '#06B6D4','#EF4444','#84CC16','#6366F1','#F97316',
@@ -66,6 +68,7 @@ function getTypeCardColors(typeName) {
 Object.defineProperty(window, '__scheduleData', { get: () => scheduleData, configurable: true });
 Object.defineProperty(window, '__currentMonday', { get: () => currentMonday, configurable: true });
 window.typeColors = typeColors;
+window.platforms = platforms;
 window.getTypeColor = getTypeColor;
 
 // DOM元素
@@ -1349,8 +1352,10 @@ function createProjectCard(project, dateStr, projectIndex) {
         ${statusBadge}
         ${staffInfo}
         <div class="project-location">📍 ${escapeHtml(project.location)}</div>
-        <div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:6px;">
             ${project.type ? `<span class="project-type" style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:700;color:#fff;background:${typeColor};font-family:'Nunito','Noto Sans SC',sans-serif;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6);flex-shrink:0;">&nbsp;</span>${escapeHtml(project.type)}</span>` : ''}
+            ${(project.platforms || []).map(p => `<span class="badge-tag badge-platform">${escapeHtml(p)}</span>`).join('')}
+            ${(project.orientations || []).map(o => `<span class="badge-tag badge-orientation">${escapeHtml(o)}</span>`).join('')}
         </div>
         <div class="card-actions">
             <button class="copy-btn" data-date="${escapeHtml(dateStr)}" data-index="${projectIndex}">📋 复制</button>
@@ -1645,6 +1650,7 @@ function setupEventListeners() {
             types.push(newType);
             updateProjectTypeSelect(types);
             renderProjectTypes();
+            renderPlatforms();
         });
     }
 
@@ -1653,8 +1659,26 @@ function setupEventListeners() {
         resetTypeColorsBtn.addEventListener('click', () => {
             typeColors = { ...DEFAULT_TYPE_COLORS };
             renderProjectTypes();
+            renderPlatforms();
             renderSchedule();
             showToast('已还原默认颜色', 'success');
+        });
+    }
+
+    // 投放平台管理
+    const addPlatformBtn = document.getElementById('add-platform');
+    const resetPlatformsBtn = document.getElementById('reset-platforms');
+    if (addPlatformBtn) {
+        addPlatformBtn.addEventListener('click', () => {
+            platforms.push(`新平台${platforms.length + 1}`);
+            renderPlatforms();
+        });
+    }
+    if (resetPlatformsBtn) {
+        resetPlatformsBtn.addEventListener('click', () => {
+            platforms = [...DEFAULT_PLATFORMS];
+            renderPlatforms();
+            showToast('已还原默认平台', 'success');
         });
     }
 
@@ -1662,6 +1686,15 @@ function setupEventListeners() {
     if (projectAdvertiserCheckbox && advertiserNoWrap) {
         projectAdvertiserCheckbox.addEventListener('change', () => {
             advertiserNoWrap.style.display = projectAdvertiserCheckbox.checked ? 'block' : 'none';
+        });
+    }
+
+    const platformEnabledCheckbox = document.getElementById('project-platform-enabled');
+    const platformOptionsDiv = document.getElementById('project-platform-options');
+    if (platformEnabledCheckbox && platformOptionsDiv) {
+        platformEnabledCheckbox.addEventListener('change', () => {
+            platformOptionsDiv.style.display = platformEnabledCheckbox.checked ? 'flex' : 'none';
+            if (platformEnabledCheckbox.checked) renderPlatformOptions();
         });
     }
 
@@ -1888,6 +1921,13 @@ function showProjectModal(dayColumn = null) {
     document.querySelectorAll('#project-modal .tag-btn').forEach(btn => btn.classList.remove('active'));
     projectLaodaoCheckbox.checked = false;
     projectTemplateSelect.value = '';
+
+    const platformEnabledCb = document.getElementById('project-platform-enabled');
+    const platformOpts = document.getElementById('project-platform-options');
+    if (platformEnabledCb) platformEnabledCb.checked = false;
+    if (platformOpts) platformOpts.style.display = 'none';
+    const orientationOpts = document.getElementById('project-orientation-options');
+    if (orientationOpts) orientationOpts.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
     
     // 设置默认日期：如果指定了日期则使用，否则使用当前周的周一
     if (dayColumn && dayColumn.includes('-')) {
@@ -2044,6 +2084,30 @@ function editProject(dateStr, projectIndex) {
         projectAdvertiserNoInput.value = project.advertiserNo || '';
     }
 
+    // 投放平台
+    const platformEnabledCb2 = document.getElementById('project-platform-enabled');
+    const platformOpts2 = document.getElementById('project-platform-options');
+    const hasPlatforms = project.platforms && project.platforms.length > 0;
+    if (platformEnabledCb2) platformEnabledCb2.checked = hasPlatforms;
+    if (platformOpts2) {
+        platformOpts2.style.display = hasPlatforms ? 'flex' : 'none';
+        if (hasPlatforms) {
+            renderPlatformOptions();
+            platformOpts2.querySelectorAll('.tag-btn').forEach(btn => {
+                if (project.platforms.includes(btn.dataset.value)) btn.classList.add('active');
+            });
+        }
+    }
+    // 拍摄方向
+    const orientationOpts2 = document.getElementById('project-orientation-options');
+    if (orientationOpts2) {
+        orientationOpts2.querySelectorAll('.tag-btn').forEach(btn => btn.classList.remove('active'));
+        (project.orientations || []).forEach(o => {
+            const btn = orientationOpts2.querySelector(`[data-value="${o}"]`);
+            if (btn) btn.classList.add('active');
+        });
+    }
+
     projectTypeSelect.value = project.type || '';
 
     // 设置项目状态
@@ -2068,7 +2132,18 @@ async function saveProject() {
         advertiserNo: (projectAdvertiserCheckbox && projectAdvertiserCheckbox.checked && projectAdvertiserNoInput) ? projectAdvertiserNoInput.value.trim() : '',
         type: projectTypeSelect.value,
         startTime: projectStartTimeSelect.value,
-        status: (document.getElementById('project-status') || {}).value || '已确认'
+        status: (document.getElementById('project-status') || {}).value || '已确认',
+        platforms: (() => {
+            const cb = document.getElementById('project-platform-enabled');
+            const opts = document.getElementById('project-platform-options');
+            if (!cb || !cb.checked || !opts) return [];
+            return Array.from(opts.querySelectorAll('.tag-btn.active')).map(b => b.dataset.value);
+        })(),
+        orientations: (() => {
+            const opts = document.getElementById('project-orientation-options');
+            if (!opts) return [];
+            return Array.from(opts.querySelectorAll('.tag-btn.active')).map(b => b.dataset.value);
+        })(),
     };
     
     if (!project.name) {
@@ -2379,6 +2454,7 @@ async function showAdminModal() {
                     roleCategories = settings.roleCategories || [];
                     renderRoleSettings(settings);
                     renderProjectTypes();
+                    renderPlatforms();
                     updateProjectFormOptions();
                     setupBackupEvents();
                     loadBackupList();
@@ -3473,6 +3549,52 @@ function renderProjectTypes() {
             renderProjectTypes();
             showToast('已删除项目类型', 'success');
         });
+    });
+}
+
+function renderPlatforms() {
+    const container = document.getElementById('platforms-container');
+    if (!container) return;
+    container.innerHTML = '';
+    platforms.forEach((p, index) => {
+        const item = document.createElement('div');
+        item.className = 'role-category-item';
+        item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:6px;';
+        item.innerHTML = `
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#4A4A4A;flex-shrink:0;"></span>
+            <input type="text" class="role-label-input" data-index="${index}" value="${escapeHtml(p)}" style="flex:1;padding:6px 10px;border:2px solid rgba(170,166,157,0.3);border-radius:16px;font-size:14px;font-weight:600;font-family:'Nunito','Noto Sans SC',sans-serif;color:#794f27;">
+            <button type="button" class="role-category-remove" data-index="${index}" title="删除" style="background:none;border:none;color:#e05a5a;font-size:18px;cursor:pointer;padding:4px 8px;">×</button>
+        `;
+        container.appendChild(item);
+    });
+    container.querySelectorAll('.role-label-input').forEach(input => {
+        input.addEventListener('change', () => {
+            const idx = parseInt(input.dataset.index, 10);
+            platforms[idx] = input.value.trim() || platforms[idx];
+            renderPlatforms();
+        });
+    });
+    container.querySelectorAll('.role-category-remove').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.index, 10);
+            if (platforms.length <= 1) { showToast('至少保留一个平台', 'warning'); return; }
+            platforms.splice(idx, 1);
+            renderPlatforms();
+        });
+    });
+}
+
+function renderPlatformOptions() {
+    const container = document.getElementById('project-platform-options');
+    if (!container) return;
+    container.innerHTML = '';
+    platforms.forEach(p => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tag-btn';
+        btn.dataset.value = p;
+        btn.textContent = p;
+        container.appendChild(btn);
     });
 }
 

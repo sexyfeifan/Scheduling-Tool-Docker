@@ -295,6 +295,21 @@
                             <input type="text" id="project-advertiser-no" placeholder="请输入项目号" style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label class="animal-switch" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" id="project-platform-enabled" value="1" class="switch-input">
+                            <span class="switch"><span class="handle"></span></span>
+                            <span class="animal-switch-label">投放平台</span>
+                        </label>
+                        <div id="project-platform-options" class="checkbox-group" style="display:none;margin-top:8px;flex-wrap:wrap;gap:6px;"></div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:13px;font-weight:600;color:#794f27;margin-bottom:6px;display:block;">拍摄方向</label>
+                        <div id="project-orientation-options" class="checkbox-group" style="display:flex;flex-wrap:wrap;gap:6px;">
+                            <button type="button" class="tag-btn" data-value="横屏">横屏</button>
+                            <button type="button" class="tag-btn" data-value="竖屏">竖屏</button>
+                        </div>
+                    </div>
                     <div class="form-actions">
                         <button type="submit" class="btn primary">保存</button>
                         <button type="button" id="cancel-edit" class="btn">取消</button>
@@ -411,6 +426,16 @@
         <div class="form-actions" style="margin-top: 12px;">
             <button type="button" id="add-project-type" class="btn">+ 添加类型</button>
             <button type="button" id="reset-type-colors" class="btn" style="background:#f0ebe3;color:#794f27;">还原默认颜色</button>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h3>投放平台</h3>
+        <p class="hint-text">管理项目中的投放平台选项（默认：B站、抖音、小红书、视频号）</p>
+        <div id="platforms-container"></div>
+        <div class="form-actions" style="margin-top: 12px;">
+            <button type="button" id="add-platform" class="btn">+ 添加平台</button>
+            <button type="button" id="reset-platforms" class="btn" style="background:#f0ebe3;color:#794f27;">还原默认</button>
         </div>
     </div>
                     <div class="settings-section">
