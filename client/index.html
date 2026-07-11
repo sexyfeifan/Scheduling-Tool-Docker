@@ -431,6 +431,7 @@
                     <button class="admin-tab-btn" data-tab="access">访问控制</button>
                     <button class="admin-tab-btn" data-tab="history">操作记录</button>
                     <button class="admin-tab-btn" data-tab="webhook">Webhook</button>
+                    <button class="admin-tab-btn" data-tab="api">API 管理</button>
                     <button class="admin-tab-btn" data-tab="data">数据管理</button>
                 </div>
 
@@ -524,6 +525,29 @@
                 </div>
 
                 <!-- 数据管理标签页 -->
+                <div id="admin-tab-api" class="admin-tab-panel" style="display: none;">
+                    <div class="settings-section">
+                        <h3>API 管理</h3>
+                        <p class="hint-text">管理 API 接口访问权限和查看可用接口</p>
+                        <div class="form-group">
+                            <label class="animal-switch" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                <input type="checkbox" id="api-readonly-toggle" class="switch-input" checked>
+                                <span class="switch"><span class="handle"></span></span>
+                                <span class="animal-switch-label">API 只读模式（推荐开启）</span>
+                            </label>
+                            <p class="hint-text" style="margin-top:4px;">开启后，所有 API 仅允许读取（GET），禁止写入操作，防止公开接口被恶意调用破坏数据。</p>
+                        </div>
+                        <div class="form-group" style="margin-top:12px;">
+                            <button type="button" id="save-api-settings" class="btn primary">保存 API 设置</button>
+                        </div>
+                    </div>
+                    <div class="settings-section" style="margin-top:16px;">
+                        <h3>可用接口列表</h3>
+                        <p class="hint-text">点击链接可复制完整 URL</p>
+                        <div id="api-endpoints-list" style="margin-top:10px;"></div>
+                    </div>
+                </div>
+
                 <div id="admin-tab-data" class="admin-tab-panel" style="display: none;">
                     <div class="data-mgmt-tabs">
                         <button class="data-mgmt-tab active" data-sub="rename">姓名更替</button>

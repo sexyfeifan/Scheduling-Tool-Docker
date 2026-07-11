@@ -2591,6 +2591,7 @@ async function showAdminModal() {
         loadAccessSettings();
         loadHistoryRecords();
         loadWebhookSettings();
+        loadApiSettings();
         await loadDataManagement();
         initAnimalSelects(document.getElementById('admin-modal'));
     } else {
@@ -2630,6 +2631,7 @@ async function showAdminModal() {
                     loadAccessSettings();
                     loadHistoryRecords();
                     loadWebhookSettings();
+                    loadApiSettings();
                     showToast('解锁成功', 'success');
                     await loadDataManagement();
                     initAnimalSelects(document.getElementById('admin-modal'));
@@ -3229,6 +3231,67 @@ async function loadDataManagement() {
                 }
             } catch (err) {
                 showToast('操作失败: ' + err.message, 'error');
+            }
+        });
+    }
+}
+
+function loadApiSettings() {
+    const readonlyToggle = document.getElementById('api-readonly-toggle');
+    const endpointsList = document.getElementById('api-endpoints-list');
+    const saveBtn = document.getElementById('save-api-settings');
+
+    if (!readonlyToggle) return;
+
+    // Load current setting
+    settingAPI.getSettings().then(settings => {
+        if (typeof settings.apiReadOnly === 'boolean') {
+            readonlyToggle.checked = settings.apiReadOnly;
+        }
+    }).catch(() => {});
+
+    // Load endpoints
+    fetch('/api/endpoints').then(r => r.json()).then(data => {
+        if (!endpointsList) return;
+        if (data.apiReadOnly !== undefined) readonlyToggle.checked = data.apiReadOnly;
+        
+        const grouped = {};
+        (data.endpoints || []).forEach(ep => {
+            const group = ep.path.split('/').slice(2, 3).join('/') || 'system';
+            if (!grouped[group]) grouped[group] = [];
+            grouped[group].push(ep);
+        });
+
+        let html = '';
+        for (const [group, endpoints] of Object.entries(grouped)) {
+            html += `<div style="margin-bottom:12px;">`;
+            html += `<div style="font-size:12px;font-weight:700;color:#8B7E6A;text-transform:uppercase;margin-bottom:6px;">${escapeHtml(group)}</div>`;
+            endpoints.forEach(ep => {
+                const methodColors = { GET: '#10B981', POST: '#F59E0B', DELETE: '#EF4444', PUT: '#3B82F6' };
+                const mc = methodColors[ep.method] || '#999';
+                const readOnlyTag = ep.readOnly ? '<span style="font-size:9px;background:#F59E0B;color:#fff;padding:1px 5px;border-radius:8px;margin-left:4px;">只读模式可控</span>' : '';
+                html += `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:12px;cursor:pointer;" onclick="navigator.clipboard.writeText('${ep.url}');window.showToast&&showToast('已复制','success');">`;
+                html += `<span style="background:${mc};color:#fff;padding:2px 6px;border-radius:6px;font-size:10px;font-weight:700;min-width:42px;text-align:center;">${ep.method}</span>`;
+                html += `<span style="font-family:monospace;color:#794f27;word-break:break-all;">${escapeHtml(ep.url)}</span>`;
+                html += readOnlyTag;
+                html += `</div>`;
+            });
+            html += `</div>`;
+        }
+        endpointsList.innerHTML = html || '<p style="color:#999;">无可用接口</p>';
+    }).catch(() => {
+        if (endpointsList) endpointsList.innerHTML = '<p style="color:#e05a5a;">加载失败</p>';
+    });
+
+    // Save button
+    if (saveBtn && !saveBtn.dataset.bound) {
+        saveBtn.dataset.bound = '1';
+        saveBtn.addEventListener('click', async () => {
+            try {
+                await settingAPI.saveSettings({ apiReadOnly: readonlyToggle.checked });
+                showToast('API 设置已保存', 'success');
+            } catch (e) {
+                showToast('保存失败: ' + (e.message || '未知错误'), 'error');
             }
         });
     }

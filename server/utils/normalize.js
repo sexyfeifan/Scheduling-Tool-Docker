@@ -37,7 +37,8 @@ const DEFAULT_SETTINGS = {
     platform: 'custom',
     dailyTemplate: '',
     weeklyTemplate: ''
-  }
+  },
+  apiReadOnly: true
 };
 
 function isValidDateString(value) {
@@ -236,7 +237,8 @@ function normalizeSettingsPayload(rawSettings) {
     customRoleOptions,
     projectTemplates: normalizeTemplateList(base.projectTemplates),
     access: normalizeAccessConfig(base.access),
-    webhook: normalizeWebhookConfig(base.webhook)
+    webhook: normalizeWebhookConfig(base.webhook),
+    apiReadOnly: typeof base.apiReadOnly === 'boolean' ? base.apiReadOnly : true
   };
 }
 
@@ -303,7 +305,8 @@ function sanitizeSettingsForClient(settings) {
       shareEnabled: Boolean(settings.access && settings.access.shareEnabled),
       sharePath: (settings.access && settings.access.sharePath) || 'canbox'
     },
-    webhook: settings.webhook || { enabled: false, url: '', platform: 'custom', dailyTemplate: '', weeklyTemplate: '' }
+    webhook: settings.webhook || { enabled: false, url: '', platform: 'custom', dailyTemplate: '', weeklyTemplate: '' },
+    apiReadOnly: typeof settings.apiReadOnly === 'boolean' ? settings.apiReadOnly : true
   };
 }
 

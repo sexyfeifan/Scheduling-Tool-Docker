@@ -9,6 +9,7 @@ const logger = require('./logger');
 const pinoHttp = require('pino-http');
 const { securityHeaders } = require('./middleware/securityHeaders');
 const { createRequireAdminPassword, createRequireEditAccess, csrfProtection } = require('./middleware/auth');
+const { createApiReadOnlyGuard } = require('./middleware/apiReadOnly');
 const { verifyPassword } = require('./utils/normalize');
 const { createBackupRouter } = require('./routes/backup');
 const { createSchedulesRouter } = require('./routes/schedules');
@@ -94,6 +95,7 @@ function createApp(options = {}) {
   // 认证中间件（从 middleware/auth.js 加载）
   const requireAdminPassword = createRequireAdminPassword(backupPassword);
   const requireEditAccess = createRequireEditAccess(store);
+  const apiReadOnlyGuard = createApiReadOnlyGuard(store);
 
   function baseUrlFromRequest(req) {
     return `${req.protocol}://${req.get('host')}`;
@@ -134,10 +136,11 @@ function createApp(options = {}) {
   app.use('/api/backup', backupLimiter);
   app.use('/api/restore', backupLimiter);
 
-  app.use('/api/schedules', createSchedulesRouter({ requireEditAccess, sendUpdateToClients, store }));
+  app.use('/api/schedules', createSchedulesRouter({ apiReadOnlyGuard, requireEditAccess, sendUpdateToClients, store }));
   app.use('/api', createBackupRouter({
     backupPassword,
     backupService,
+    apiReadOnlyGuard,
     requireAdminPassword,
     requireEditAccess,
     sendUpdateToClients,
@@ -145,16 +148,17 @@ function createApp(options = {}) {
   }));
   app.use('/api/settings', createSettingsRouter({
     baseUrlFromRequest,
+    apiReadOnlyGuard,
     requireAdminPassword,
     requireEditAccess,
     sendUpdateToClients,
     store
   }));
-  app.use('/api/history', createHistoryRouter({ requireAdminPassword, store }));
-  app.use('/api/webhook', createWebhookRouter({ requireAdminPassword, store }));
+  app.use('/api/history', createHistoryRouter({ apiReadOnlyGuard, requireAdminPassword, store }));
+  app.use('/api/webhook', createWebhookRouter({ apiReadOnlyGuard, requireAdminPassword, store }));
   app.use('/api/calendar', createCalendarRouter({ store }));
   app.use('/api/export', createExportRouter({ store }));
-  app.use('/api/schedules/batch', createBatchRouter({ requireEditAccess, sendUpdateToClients, store }));
+  app.use('/api/schedules/batch', createBatchRouter({ apiReadOnlyGuard, requireEditAccess, sendUpdateToClients, store }));
   app.use('/api/schedules/search', createSearchRouter({ store }));
   app.use('/api/schedules/conflicts', createConflictRouter({ store }));
   app.use('/api/statistics', createStatisticsRouter({ store }));
