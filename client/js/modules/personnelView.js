@@ -110,13 +110,23 @@ export function createPersonnelViewModule({ api, onJumpToWeek }) {
       }
     });
 
+    // 添加老刀出镜虚拟角色（姜轩 · 出镜）
+    const laodaoK = '姜轩|laodao';
+    if (!seen.has(laodaoK)) {
+        seen.add(laodaoK);
+        persons.push({ name: '姜轩', roleKey: 'laodao', roleLabel: '出镜', color: '#F59E0B', isLaodao: true });
+    }
+
     const scheduledOnly = document.getElementById('personnel-scheduled-only');
     const filterScheduled = scheduledOnly && scheduledOnly.checked;
 
     if (filterScheduled) {
       const filtered = persons.filter(person => {
         return dates.some(date => {
-          return (cachedData[date] || []).some(proj => proj[person.roleKey] === person.name);
+          return (cachedData[date] || []).some(proj => {
+            if (person.isLaodao) return proj.laodao === true;
+            return proj[person.roleKey] === person.name;
+          });
         });
       });
       persons.length = 0;
@@ -158,7 +168,7 @@ export function createPersonnelViewModule({ api, onJumpToWeek }) {
       let scheduleCount = 0;
       dates.forEach(date => {
         (cachedData[date] || []).forEach(proj => {
-          if (proj[person.roleKey] === person.name) scheduleCount++;
+          if (person.isLaodao ? proj.laodao === true : proj[person.roleKey] === person.name) scheduleCount++;
         });
       });
 
@@ -170,7 +180,7 @@ export function createPersonnelViewModule({ api, onJumpToWeek }) {
       html += '</div>';
 
       dates.forEach(date => {
-        const projects = (cachedData[date] || []).filter(p => p[person.roleKey] === person.name);
+        const projects = (cachedData[date] || []).filter(p => person.isLaodao ? p.laodao === true : p[person.roleKey] === person.name);
         const isToday = date === formatDate(new Date());
         const d = new Date(date);
         const isWeekend = d.getDay() === 0 || d.getDay() === 6;
