@@ -110,12 +110,15 @@ export function createPersonnelViewModule({ api, onJumpToWeek }) {
       }
     });
 
-    // 添加老刀出镜虚拟角色（姜轩 · 出镜）
-    const laodaoK = '姜轩|laodao';
-    if (!seen.has(laodaoK)) {
-        seen.add(laodaoK);
-        persons.push({ name: '姜轩', roleKey: 'laodao', roleLabel: '出镜', color: '#F59E0B', isLaodao: true });
+    // 添加老刀出镜虚拟角色（姜轩 · 出镜），插入到姜轩导演正下方
+    const laodaoEntry = { name: '姜轩', roleKey: 'laodao', roleLabel: '出镜', color: '#F59E0B', isLaodao: true };
+    const jiangIdx = persons.findIndex(p => p.name === '姜轩');
+    if (jiangIdx >= 0) {
+        persons.splice(jiangIdx + 1, 0, laodaoEntry);
+    } else {
+        persons.push(laodaoEntry);
     }
+    seen.add('姜轩|laodao');
 
     const scheduledOnly = document.getElementById('personnel-scheduled-only');
     const filterScheduled = scheduledOnly && scheduledOnly.checked;
