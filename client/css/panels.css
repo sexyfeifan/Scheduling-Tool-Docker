@@ -277,29 +277,22 @@
     max-width: 900px;
     width: 94vw;
     max-height: 88vh;
-    overflow-x: hidden;
-    overflow-y: auto;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .admin-tabs {
     display: flex;
     gap: 4px;
-    margin-bottom: 18px;
     border-bottom: 2px solid rgba(170, 166, 157, 0.15);
-    padding-bottom: 0;
+    padding: 8px 24px 0;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     flex-wrap: nowrap;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    max-width: 100%;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: #f8f6f0;
-    padding-top: 8px;
+    flex-shrink: 0;
 }
 
 .admin-tabs::-webkit-scrollbar {
@@ -307,7 +300,10 @@
 }
 
 .admin-tab-panel {
+    overflow-y: auto;
     overflow-x: hidden;
+    flex: 1;
+    padding: 0 24px 24px;
 }
 
 .admin-tab-btn {
