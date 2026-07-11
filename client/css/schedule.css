@@ -210,16 +210,19 @@
 
 /* 平台/方向药丸标（暖灰色实心，区别于类型标半透明） */
 .badge-tag {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 2px 8px;
     border-radius: 12px;
     font-size: 10px;
     font-weight: 700;
     color: #fff;
     background: #8B7E6A;
-    line-height: 1.4;
     white-space: nowrap;
     letter-spacing: 0.3px;
+    height: 18px;
+    line-height: 1;
 }
 .badge-tag.badge-platform {
     background: #8B7E6A;
