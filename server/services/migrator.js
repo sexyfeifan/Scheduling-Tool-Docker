@@ -51,6 +51,22 @@ const SQLITE_MIGRATIONS = [
       `);
     }
   },
+  {
+    version: 3,
+    description: 'history 表添加 category, ip, user_agent 列',
+    up: (db) => {
+      const cols = db.prepare("PRAGMA table_info(history)").all();
+      if (!cols.some(c => c.name === 'category')) {
+        db.exec("ALTER TABLE history ADD COLUMN category TEXT NOT NULL DEFAULT 'system'");
+      }
+      if (!cols.some(c => c.name === 'ip')) {
+        db.exec("ALTER TABLE history ADD COLUMN ip TEXT");
+      }
+      if (!cols.some(c => c.name === 'user_agent')) {
+        db.exec("ALTER TABLE history ADD COLUMN user_agent TEXT");
+      }
+    }
+  },
 ];
 
 /**

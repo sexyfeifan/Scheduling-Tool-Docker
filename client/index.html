@@ -429,10 +429,10 @@
                     <button class="admin-tab-btn active" data-tab="settings">设置</button>
                     <button class="admin-tab-btn" data-tab="backup">备份与恢复</button>
                     <button class="admin-tab-btn" data-tab="access">访问控制</button>
-                    <button class="admin-tab-btn" data-tab="history">操作记录</button>
                     <button class="admin-tab-btn" data-tab="webhook">Webhook</button>
                     <button class="admin-tab-btn" data-tab="api">API 管理</button>
                     <button class="admin-tab-btn" data-tab="data">数据管理</button>
+                    <button class="admin-tab-btn" data-tab="history">操作记录</button>
                 </div>
 
                 <!-- 设置标签页 -->
@@ -642,18 +642,29 @@
                 <!-- 操作记录标签页 -->
                 <div id="admin-tab-history" class="admin-tab-panel" style="display: none;">
                     <div class="history-filters">
-                        <input type="date" id="history-date-filter" placeholder="按日期筛选">
-                        <button id="history-refresh-btn" class="btn">刷新</button>
-                        <button id="history-clear-btn" class="btn" style="background:#e74c3c;color:white;">清空记录</button>
+                        <div id="history-category-filters" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+                            <button type="button" class="tag-btn active" data-category="all">全部</button>
+                            <button type="button" class="tag-btn" data-category="schedule" style="background:#10B981;">排期</button>
+                            <button type="button" class="tag-btn" data-category="settings" style="background:#3B82F6;">设置</button>
+                            <button type="button" class="tag-btn" data-category="system" style="background:#9f927d;">系统</button>
+                            <button type="button" class="tag-btn" data-category="error" style="background:#EF4444;">错误</button>
+                            <button type="button" class="tag-btn" data-category="access" style="background:#F59E0B;">访问</button>
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                            <input type="date" id="history-date-filter" placeholder="按日期筛选">
+                            <button id="history-refresh-btn" class="btn">刷新</button>
+                            <button id="history-clear-btn" class="btn" style="background:#e74c3c;color:white;">清空记录</button>
+                        </div>
                     </div>
                     <div id="history-table-container" class="history-table-container">
                         <table class="history-table">
                             <thead>
                                 <tr>
                                     <th>时间</th>
+                                    <th>类别</th>
                                     <th>操作</th>
-                                    <th>日期</th>
                                     <th>详情</th>
+                                    <th>IP</th>
                                 </tr>
                             </thead>
                             <tbody id="history-tbody"></tbody>

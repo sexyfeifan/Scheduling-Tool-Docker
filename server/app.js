@@ -25,6 +25,7 @@ const { createConflictRouter } = require('./routes/conflict');
 const { createStatisticsRouter } = require('./routes/statistics');
 const { createBackupService } = require('./services/backupService');
 const { createSqliteStore } = require('./services/sqliteStore');
+const { addHistoryRecord } = require('./utils/historyHelper');
 
 const passwordLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -184,6 +185,9 @@ function createApp(options = {}) {
 
   app.use((error, req, res, next) => {
     logger.error(error);
+    try {
+      addHistoryRecord(store, req, 'error', '服务器错误', error.message || '服务器错误', error.stack || '');
+    } catch (_) {}
     const statusCode = error && error.message && /无效/.test(error.message) ? 400 : 500;
     res.status(statusCode).json({ message: error.message || '服务器错误' });
   });

@@ -5074,10 +5074,18 @@ function showCopyModal(dateStr, projectIndex) {
 }
 
 // ── 操作记录 ──
-async function loadHistoryRecords() {
+const CATEGORY_STYLES = {
+    schedule: { label: '排期', bg: '#10B981', color: '#fff' },
+    settings: { label: '设置', bg: '#3B82F6', color: '#fff' },
+    system: { label: '系统', bg: '#9f927d', color: '#fff' },
+    error: { label: '错误', bg: '#EF4444', color: '#fff' },
+    access: { label: '访问', bg: '#F59E0B', color: '#fff' }
+};
+
+async function loadHistoryRecords(category = null) {
     const tbody = document.getElementById('history-tbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary)">加载中...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-secondary)">加载中...</td></tr>';
 
     const dateFilterEl = document.getElementById('history-date-filter');
     const dateFilter = dateFilterEl ? dateFilterEl.value : '';
@@ -5085,10 +5093,10 @@ async function loadHistoryRecords() {
     if (dateFilter) params.date = dateFilter;
 
     try {
-        const records = await apiClient.getHistory(params);
+        const records = await apiClient.getHistory({ ...params, ...(category ? { category } : {}) });
 
         if (!records || records.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary)">暂无记录</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-secondary)">暂无记录</td></tr>';
             return;
         }
 
@@ -5099,6 +5107,10 @@ async function loadHistoryRecords() {
             const ts = new Date(r.ts).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
             const actionLabel = actionLabels[r.action] || r.action;
             const actionClass = actionClasses[r.action] || '';
+
+            // Category badge
+            const cat = CATEGORY_STYLES[r.category] || CATEGORY_STYLES.system;
+            const categoryBadge = `<span style="display:inline-block;padding:2px 6px;border-radius:8px;font-size:10px;font-weight:600;background:${cat.bg};color:${cat.color};">${cat.label}</span>`;
 
             // 优先使用后端生成的 detail 字段
             let detail = r.detail || '';
@@ -5133,17 +5145,35 @@ async function loadHistoryRecords() {
                 }
             }
 
+            const description = escapeHtml(detail);
+            const changes = r.changes ? ` · ${escapeHtml(r.changes)}` : '';
+            const ipDisplay = r.ip || '-';
+
             return `<tr>
                 <td style="white-space:nowrap;font-family:monospace;font-size:12px;">${ts}</td>
+                <td style="white-space:nowrap;">${categoryBadge}</td>
                 <td class="${actionClass}" style="white-space:nowrap;">${actionLabel}</td>
-                <td style="white-space:nowrap;">${r.date || ''}</td>
-                <td class="history-diff" style="font-size:13px;">${escapeHtml(detail)}</td>
+                <td class="history-diff" style="font-size:13px;">${description}${changes}</td>
+                <td style="white-space:nowrap;font-size:12px;color:var(--text-secondary);">${escapeHtml(ipDisplay)}</td>
             </tr>`;
         }).join('');
     } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary)">加载失败</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-secondary)">加载失败</td></tr>';
         showToast('加载操作记录失败', 'error');
     }
+}
+
+// ── 操作记录分类筛选 ──
+const catFilters = document.getElementById('history-category-filters');
+if (catFilters) {
+    catFilters.querySelectorAll('.tag-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            catFilters.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const category = btn.dataset.category;
+            loadHistoryRecords(category === 'all' ? null : category);
+        });
+    });
 }
 
 // ── 单日一键排序 ──

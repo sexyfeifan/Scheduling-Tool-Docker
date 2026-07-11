@@ -3,6 +3,7 @@ const fs = require('fs').promises;
 
 const { asyncHandler } = require('../middleware/asyncHandler');
 const { timingSafeEqual } = require('../utils/normalize');
+const { addHistoryRecord } = require('../utils/historyHelper');
 
 function createBackupRouter({ backupPassword, backupService, requireAdminPassword, requireEditAccess, sendUpdateToClients, store }) {
   const router = express.Router();
@@ -12,7 +13,13 @@ function createBackupRouter({ backupPassword, backupService, requireAdminPasswor
     if (!password) {
       return res.status(400).json({ valid: false, message: '请输入密码' });
     }
-    res.json({ valid: timingSafeEqual(password, backupPassword) });
+    const valid = timingSafeEqual(password, backupPassword);
+    if (valid) {
+      addHistoryRecord(store, req, 'access', '密码验证', '管理员密码验证成功');
+    } else {
+      addHistoryRecord(store, req, 'access', '密码验证失败', '管理员密码验证失败');
+    }
+    res.json({ valid });
   });
 
   router.post('/backup', requireEditAccess, asyncHandler(async (req, res) => {

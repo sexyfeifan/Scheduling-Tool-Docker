@@ -5,8 +5,8 @@ function createHistoryRouter({ requireAdminPassword, store }) {
 
   router.get('/', requireAdminPassword, (req, res) => {
     const limit = Math.min(Number(req.query.limit) || 100, 500);
-    const { date } = req.query;
-    const rows = store.readHistory({ limit, date });
+    const { date, category } = req.query;
+    const rows = store.readHistory({ limit, date, category });
     res.json(rows);
   });
 

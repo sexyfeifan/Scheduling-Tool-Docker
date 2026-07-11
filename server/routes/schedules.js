@@ -1,6 +1,7 @@
 const express = require('express');
 
 const { generateId, isValidDateString, normalizeProjects } = require('../utils/normalize');
+const { addHistoryRecord } = require('../utils/historyHelper');
 
 function createSchedulesRouter({ store, sendUpdateToClients, requireEditAccess }) {
   const router = express.Router();
@@ -37,10 +38,8 @@ function createSchedulesRouter({ store, sendUpdateToClients, requireEditAccess }
 
     store.writeScheduleDate(date, existing ? existing.id : generateId('schedule'), normalizedProjects);
 
-    if (store.appendHistory) {
-      const detail = buildSaveDetail(date, before, normalizedProjects);
-      store.appendHistory({ action: 'saveSchedule', date, before, after: normalizedProjects, detail });
-    }
+    const detail = buildSaveDetail(date, before, normalizedProjects);
+    addHistoryRecord(store, req, 'schedule', '保存排期', detail, detail, date);
 
     sendUpdateToClients({ type: 'scheduleUpdate', date, projects: normalizedProjects });
     res.json({ message: '保存成功' });
@@ -59,16 +58,9 @@ function createSchedulesRouter({ store, sendUpdateToClients, requireEditAccess }
 
     store.deleteScheduleDate(date);
 
-    if (store.appendHistory) {
-      const names = (existing.projects || []).map(p => p.name).filter(Boolean).join(', ');
-      store.appendHistory({
-        action: 'deleteSchedule',
-        date,
-        before: existing.projects,
-        after: null,
-        detail: `删除 ${date} 的排期（${(existing.projects || []).length}个项目: ${names || '无'}）`
-      });
-    }
+    const names = (existing.projects || []).map(p => p.name).filter(Boolean).join(', ');
+    const deleteDetail = `删除 ${date} 的排期（${(existing.projects || []).length}个项目: ${names || '无'}）`;
+    addHistoryRecord(store, req, 'schedule', '删除排期', deleteDetail, deleteDetail, date);
 
     sendUpdateToClients({ type: 'scheduleDelete', date });
     res.json({ message: '删除成功' });

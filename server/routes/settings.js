@@ -9,6 +9,7 @@ const {
   sanitizeAccessForClient,
   sanitizeSettingsForClient
 } = require('../utils/normalize');
+const { addHistoryRecord } = require('../utils/historyHelper');
 
 function createSettingsRouter({ baseUrlFromRequest, requireAdminPassword, requireEditAccess, store, sendUpdateToClients }) {
   const router = express.Router();
@@ -26,6 +27,7 @@ function createSettingsRouter({ baseUrlFromRequest, requireAdminPassword, requir
     });
 
     store.writeSettings(nextSettings);
+    addHistoryRecord(store, req, 'settings', '保存设置', '保存系统设置');
     sendUpdateToClients({ type: 'settingsUpdate', settings: sanitizeSettingsForClient(nextSettings) });
     res.json({ message: '设置已保存' });
   });
@@ -52,6 +54,7 @@ function createSettingsRouter({ baseUrlFromRequest, requireAdminPassword, requir
 
     const nextSettings = { ...settings, access };
     store.writeSettings(nextSettings);
+    addHistoryRecord(store, req, 'settings', '保存访问控制', '保存访问控制设置');
     res.json({
       message: '访问控制已保存',
       access: sanitizeAccessForClient(nextSettings, baseUrlFromRequest(req))
@@ -85,6 +88,7 @@ function createSettingsRouter({ baseUrlFromRequest, requireAdminPassword, requir
 
     const nextSettings = { ...settings, projectTemplates: nextTemplates };
     store.writeSettings(nextSettings);
+    addHistoryRecord(store, req, 'settings', '保存模板', `保存项目模板: ${template.name}`);
     sendUpdateToClients({ type: 'templateUpdate', templates: nextTemplates });
     res.json({ message: '模板已保存', template });
   });
@@ -99,6 +103,7 @@ function createSettingsRouter({ baseUrlFromRequest, requireAdminPassword, requir
 
     const nextSettings = { ...settings, projectTemplates: nextTemplates };
     store.writeSettings(nextSettings);
+    addHistoryRecord(store, req, 'settings', '删除模板', `删除项目模板: ${req.params.id}`);
     sendUpdateToClients({ type: 'templateUpdate', templates: nextTemplates });
     res.json({ message: '模板已删除' });
   });

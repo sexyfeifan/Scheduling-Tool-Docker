@@ -222,7 +222,7 @@ function createSqliteStore(options = {}) {
       .run('main', JSON.stringify(normalized));
   }
 
-  function appendHistory({ action, date, before, after, detail }) {
+  function appendHistory({ action, date, before, after, detail, category, ip, user_agent }) {
     try {
       const now = new Date();
       const todayStr = now.toISOString().slice(0, 10);
@@ -243,14 +243,17 @@ function createSqliteStore(options = {}) {
       }
 
       getDb().prepare(
-        'INSERT INTO history (ts, action, date, detail, before_json, after_json) VALUES (?, ?, ?, ?, ?, ?)'
+        'INSERT INTO history (ts, action, date, detail, before_json, after_json, category, ip, user_agent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
       ).run(
         now.toISOString(),
         String(action),
         date || null,
         detail || null,
         before !== undefined ? JSON.stringify(before) : null,
-        after !== undefined ? JSON.stringify(after) : null
+        after !== undefined ? JSON.stringify(after) : null,
+        category || 'system',
+        ip || null,
+        user_agent || null
       );
 
       // 清理 30 天前的旧记录
@@ -265,11 +268,21 @@ function createSqliteStore(options = {}) {
     getDb().prepare('DELETE FROM history').run();
   }
 
-  function readHistory({ limit = 100, date } = {}) {
+  function readHistory({ limit = 100, date, category } = {}) {
+    if (date && category) {
+      return getDb().prepare(
+        'SELECT * FROM history WHERE date = ? AND category = ? ORDER BY ts DESC LIMIT ?'
+      ).all(date, category, limit);
+    }
     if (date) {
       return getDb().prepare(
         'SELECT * FROM history WHERE date = ? ORDER BY ts DESC LIMIT ?'
       ).all(date, limit);
+    }
+    if (category) {
+      return getDb().prepare(
+        'SELECT * FROM history WHERE category = ? ORDER BY ts DESC LIMIT ?'
+      ).all(category, limit);
     }
     return getDb().prepare(
       'SELECT * FROM history ORDER BY ts DESC LIMIT ?'
