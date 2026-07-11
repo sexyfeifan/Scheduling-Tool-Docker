@@ -277,7 +277,8 @@
     max-width: 900px;
     width: 94vw;
     max-height: 88vh;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
 }
@@ -292,10 +293,16 @@
     -webkit-overflow-scrolling: touch;
     flex-wrap: nowrap;
     scrollbar-width: none;
+    -ms-overflow-style: none;
+    max-width: 100%;
 }
 
 .admin-tabs::-webkit-scrollbar {
     display: none;
+}
+
+.admin-tab-panel {
+    overflow-x: hidden;
 }
 
 .admin-tab-btn {
