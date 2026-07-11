@@ -310,11 +310,35 @@
                             <button type="button" class="tag-btn" data-value="竖屏">竖屏</button>
                         </div>
                     </div>
+                    <!-- 项目组：同名日程关联 -->
+                    <div id="project-group-section" class="form-group" style="display:none;background:rgba(25,200,185,0.06);border:1px solid rgba(25,200,185,0.2);border-radius:12px;padding:10px 14px;margin-top:4px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                            <span style="font-size:12px;font-weight:700;color:#19c8b9;">📎 项目组</span>
+                            <span id="project-group-count" style="font-size:11px;color:#8B7E6A;"></span>
+                        </div>
+                        <div id="project-group-list" style="max-height:120px;overflow-y:auto;font-size:11px;color:#794f27;"></div>
+                    </div>
                     <div class="form-actions">
                         <button type="submit" class="btn primary">保存</button>
                         <button type="button" id="cancel-edit" class="btn">取消</button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- 项目组同步弹窗 -->
+        <div id="sync-modal" class="modal" style="display:none;">
+            <div class="modal-content" style="max-width:420px;">
+                <span class="close" id="sync-modal-close">&times;</span>
+                <h3 style="margin-bottom:12px;">同步修改到关联日程</h3>
+                <p id="sync-description" style="font-size:13px;color:#794f27;margin-bottom:12px;"></p>
+                <div id="sync-changes" style="background:#f8f6f0;border-radius:10px;padding:10px;margin-bottom:12px;font-size:12px;"></div>
+                <div id="sync-targets" style="max-height:200px;overflow-y:auto;margin-bottom:16px;"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button type="button" id="sync-all" class="btn primary" style="flex:1;">全部同步</button>
+                    <button type="button" id="sync-selected" class="btn" style="flex:1;">同步选中</button>
+                    <button type="button" id="sync-none" class="btn" style="flex:1;background:#f0ebe3;color:#794f27;">仅本条</button>
+                </div>
             </div>
         </div>
 

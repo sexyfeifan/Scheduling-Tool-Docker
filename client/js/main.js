@@ -2058,6 +2058,11 @@ function confirmDateSelection() {
     datePickerModal.style.display = 'none';
 }
 
+// 项目组同步相关变量
+let editProjectCurrentName = '';
+let editProjectCurrentDate = '';
+let editProjectGroupEntries = [];
+
 // 编辑项目
 function editProject(dateStr, projectIndex) {
     const project = scheduleData[dateStr][projectIndex];
@@ -2121,6 +2126,41 @@ function editProject(dateStr, projectIndex) {
     const projectStatusSelect = document.getElementById('project-status');
     if (projectStatusSelect) projectStatusSelect.value = project.status || '已确认';
     
+    // 项目组检测
+    editProjectCurrentName = project.name || '';
+    editProjectCurrentDate = dateStr;
+    const groupSection = document.getElementById('project-group-section');
+    const groupCount = document.getElementById('project-group-count');
+    const groupList = document.getElementById('project-group-list');
+    
+    if (editProjectCurrentName && groupSection) {
+        editProjectGroupEntries = [];
+        for (const [d, projects] of Object.entries(scheduleData)) {
+            projects.forEach((p, i) => {
+                if (p.name === editProjectCurrentName && !(d === dateStr && i === projectIndex)) {
+                    editProjectGroupEntries.push({ date: d, index: i, project: p });
+                }
+            });
+        }
+        if (editProjectGroupEntries.length > 0) {
+            groupSection.style.display = 'block';
+            if (groupCount) groupCount.textContent = `发现 ${editProjectGroupEntries.length} 个同名日程`;
+            if (groupList) {
+                groupList.innerHTML = editProjectGroupEntries.map(e => {
+                    const d = new Date(e.date + 'T00:00:00');
+                    const wd = ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
+                    return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(0,0,0,0.05);"><span>${d.getMonth()+1}月${d.getDate()}日 ${wd}</span><span style="color:#8B7E6A;">${e.project.status || ''}</span></div>`;
+                }).join('');
+            }
+        } else {
+            groupSection.style.display = 'none';
+            editProjectGroupEntries = [];
+        }
+    } else if (groupSection) {
+        groupSection.style.display = 'none';
+        editProjectGroupEntries = [];
+    }
+
     projectModal.style.display = 'block';
     projectNameInput.focus();
 }
@@ -2215,12 +2255,134 @@ async function saveProject() {
         projectModal.style.display = 'none';
         pushUndoSnapshot(currentEditingProject ? '编辑项目' : '新增项目', beforeState, scheduleData);
         renderSchedule();
+
+        // 项目组同步检查
+        if (editProjectGroupEntries.length > 0 && editProjectCurrentName && currentEditingProject) {
+            const origProject = beforeState[currentEditingProject.date] && beforeState[currentEditingProject.date][currentEditingProject.index];
+            if (origProject) {
+                const changes = [];
+                const fields = ['name','location','director','photographer','production','rd','operational','audio','business','type','startTime','status','laodao','isAdvertiser','advertiserNo'];
+                fields.forEach(f => {
+                    if (JSON.stringify(project[f]) !== JSON.stringify(origProject[f])) {
+                        changes.push({ field: f, from: origProject[f], to: project[f] });
+                    }
+                });
+                ['platforms','orientations'].forEach(f => {
+                    if (JSON.stringify(project[f] || []) !== JSON.stringify(origProject[f] || [])) {
+                        changes.push({ field: f, from: origProject[f] || [], to: project[f] || [] });
+                    }
+                });
+
+                if (changes.length > 0) {
+                    showSyncDialog(changes, project, currentEditingProject.date, currentEditingProject.index);
+                    return;
+                }
+            }
+        }
+
         showToast(currentEditingProject ? '项目已更新' : '项目已创建', 'success');
     } catch (error) {
         console.error('保存项目时出错:', error);
         scheduleData = beforeState;
         showToast(error.message || '保存项目时出错，请重试', 'error');
     }
+}
+
+// 显示项目组同步对话框
+function showSyncDialog(changes, project, currentDate, currentIndex) {
+    const modal = document.getElementById('sync-modal');
+    if (!modal) return;
+    
+    const changesDiv = document.getElementById('sync-changes');
+    if (changesDiv) {
+        const fieldLabels = {name:'名称',location:'拍摄地',director:'导演',photographer:'摄影',production:'制片',rd:'研发',operational:'运营',audio:'录音',business:'商务',type:'类型',startTime:'开始时间',status:'状态',laodao:'老刀出镜',isAdvertiser:'广告商单',advertiserNo:'项目号',platforms:'投放平台',orientations:'拍摄方向'};
+        changesDiv.innerHTML = changes.map(c => {
+            const label = fieldLabels[c.field] || c.field;
+            const from = Array.isArray(c.from) ? c.from.join(', ') : (c.from || '空');
+            const to = Array.isArray(c.to) ? c.to.join(', ') : (c.to || '空');
+            return `<div style="padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.06);"><strong>${label}</strong>: <span style="color:#999;text-decoration:line-through;">${escapeHtml(String(from))}</span> → <span style="color:#19c8b9;font-weight:600;">${escapeHtml(String(to))}</span></div>`;
+        }).join('');
+    }
+    
+    const targetsDiv = document.getElementById('sync-targets');
+    if (targetsDiv) {
+        targetsDiv.innerHTML = '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">选择要同步的日程：</div>' + 
+            editProjectGroupEntries.map((e, i) => {
+                const d = new Date(e.date + 'T00:00:00');
+                const wd = ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
+                return `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.04);cursor:pointer;font-size:13px;"><input type="checkbox" class="sync-target-cb" data-idx="${i}" checked style="width:18px;height:18px;"><span>${d.getMonth()+1}月${d.getDate()}日 ${wd} (${e.project.status || ''})</span></label>`;
+            }).join('');
+    }
+    
+    const desc = document.getElementById('sync-description');
+    if (desc) desc.textContent = `「${editProjectCurrentName}」有 ${editProjectGroupEntries.length} 个关联日程。选择同步范围：`;
+    
+    modal.style.display = 'block';
+    
+    const syncAll = document.getElementById('sync-all');
+    const syncSelected = document.getElementById('sync-selected');
+    const syncNone = document.getElementById('sync-none');
+    const syncClose = document.getElementById('sync-modal-close');
+    
+    const cleanup = () => {
+        modal.style.display = 'none';
+        syncAll.onclick = null;
+        syncSelected.onclick = null;
+        syncNone.onclick = null;
+        syncClose.onclick = null;
+    };
+    
+    syncAll.onclick = () => {
+        applySyncToAll(changes);
+        cleanup();
+    };
+    
+    syncSelected.onclick = () => {
+        const selected = Array.from(document.querySelectorAll('.sync-target-cb:checked')).map(cb => parseInt(cb.dataset.idx));
+        applySyncToSelected(changes, selected);
+        cleanup();
+    };
+    
+    syncNone.onclick = () => {
+        showToast('已保存，未同步到其他日程', 'success');
+        cleanup();
+    };
+    
+    syncClose.onclick = () => {
+        showToast('已保存，未同步到其他日程', 'success');
+        cleanup();
+    };
+}
+
+function applySyncToAll(changes) {
+    applySyncToSelected(changes, editProjectGroupEntries.map((_, i) => i));
+}
+
+function applySyncToSelected(changes, indices) {
+    const beforeState = cloneScheduleState();
+    let syncCount = 0;
+    
+    indices.forEach(idx => {
+        const entry = editProjectGroupEntries[idx];
+        if (!entry) return;
+        const projects = scheduleData[entry.date];
+        if (!projects || !projects[entry.index]) return;
+        
+        changes.forEach(c => {
+            if (Array.isArray(c.to)) {
+                projects[entry.index][c.field] = [...c.to];
+            } else {
+                projects[entry.index][c.field] = c.to;
+            }
+        });
+        syncCount++;
+        
+        persistScheduleDate(entry.date);
+    });
+    
+    pushUndoSnapshot('同步项目组', beforeState, cloneScheduleState());
+    renderSchedule();
+    showToast(`已同步 ${syncCount} 个日程`, 'success');
 }
 
 // 显示设置模态框
