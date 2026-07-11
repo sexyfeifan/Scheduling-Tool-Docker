@@ -11,3 +11,4 @@ data/
 *.db-wal
 package-lock.json
 client/js/vendor/html-to-image-entry.js
+Scheduling-Tool-Docker-v*
