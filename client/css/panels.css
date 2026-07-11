@@ -295,6 +295,11 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
     max-width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #f8f6f0;
+    padding-top: 8px;
 }
 
 .admin-tabs::-webkit-scrollbar {

@@ -268,25 +268,54 @@ function createSqliteStore(options = {}) {
     getDb().prepare('DELETE FROM history').run();
   }
 
+  // 根据 action 描述自动推断旧记录的 category
+  function inferCategory(record) {
+    if (record.category && record.category !== 'system') return record.category;
+    const action = (record.action || '').toLowerCase();
+    const detail = (record.detail || '').toLowerCase();
+    const text = action + ' ' + detail;
+    if (/删除|创建|编辑|排期|批量|移动|复制|排序/.test(text)) return 'schedule';
+    if (/设置|模板|职能|平台|类型|密码|分享|访问控制/.test(text)) return 'settings';
+    if (/密码|验证|登录|解锁/.test(text)) return 'access';
+    if (/错误|失败|异常|崩溃|validation/.test(text)) return 'error';
+    if (/启动|加载|清理|更新|备份|恢复|迁移/.test(text)) return 'system';
+    return 'system';
+  }
+
   function readHistory({ limit = 100, date, category } = {}) {
+    let rows;
     if (date && category) {
-      return getDb().prepare(
+      rows = getDb().prepare(
         'SELECT * FROM history WHERE date = ? AND category = ? ORDER BY ts DESC LIMIT ?'
       ).all(date, category, limit);
-    }
-    if (date) {
-      return getDb().prepare(
+    } else if (date) {
+      rows = getDb().prepare(
         'SELECT * FROM history WHERE date = ? ORDER BY ts DESC LIMIT ?'
       ).all(date, limit);
+    } else if (category) {
+      // 先查有 category 的，再查旧记录用推断过滤
+      rows = getDb().prepare(
+        'SELECT * FROM history ORDER BY ts DESC LIMIT ?'
+      ).all(limit * 3); // 取更多以补偿过滤
+    } else {
+      rows = getDb().prepare(
+        'SELECT * FROM history ORDER BY ts DESC LIMIT ?'
+      ).all(limit);
     }
+    // 对旧记录自动推断 category
+    rows = rows.map(r => {
+      if (!r.category || r.category === '') {
+        return { ...r, category: inferCategory(r) };
+      }
+      return r;
+    });
+    // 如果有 category 筛选，过滤推断后的结果
     if (category) {
-      return getDb().prepare(
-        'SELECT * FROM history WHERE category = ? ORDER BY ts DESC LIMIT ?'
-      ).all(category, limit);
+      rows = rows.filter(r => r.category === category).slice(0, limit);
+    } else {
+      rows = rows.slice(0, limit);
     }
-    return getDb().prepare(
-      'SELECT * FROM history ORDER BY ts DESC LIMIT ?'
-    ).all(limit);
+    return rows;
   }
 
   function createSnapshot() {
