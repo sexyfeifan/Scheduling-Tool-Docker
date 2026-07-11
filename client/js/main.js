@@ -3254,30 +3254,50 @@ function loadApiSettings() {
     fetch('/api/endpoints').then(r => r.json()).then(data => {
         if (!endpointsList) return;
         if (data.apiReadOnly !== undefined) readonlyToggle.checked = data.apiReadOnly;
-        
-        const grouped = {};
-        (data.endpoints || []).forEach(ep => {
-            const group = ep.path.split('/').slice(2, 3).join('/') || 'system';
-            if (!grouped[group]) grouped[group] = [];
-            grouped[group].push(ep);
-        });
+
+        // Permission label config
+        const permConfig = {
+            readonly: { label: '只读', bg: '#10B981', desc: '仅允许读取数据' },
+            readwrite: { label: '读写', bg: '#F59E0B', desc: '可读取和修改数据' },
+            write: { label: '写入', bg: '#EF4444', desc: '仅写入/修改数据' }
+        };
 
         let html = '';
-        for (const [group, endpoints] of Object.entries(grouped)) {
-            html += `<div style="margin-bottom:12px;">`;
-            html += `<div style="font-size:12px;font-weight:700;color:#8B7E6A;text-transform:uppercase;margin-bottom:6px;">${escapeHtml(group)}</div>`;
-            endpoints.forEach(ep => {
-                const methodColors = { GET: '#10B981', POST: '#F59E0B', DELETE: '#EF4444', PUT: '#3B82F6' };
-                const mc = methodColors[ep.method] || '#999';
-                const readOnlyTag = ep.readOnly ? '<span style="font-size:9px;background:#F59E0B;color:#fff;padding:1px 5px;border-radius:8px;margin-left:4px;">只读模式可控</span>' : '';
-                html += `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:12px;cursor:pointer;" onclick="navigator.clipboard.writeText('${ep.url}');window.showToast&&showToast('已复制','success');">`;
-                html += `<span style="background:${mc};color:#fff;padding:2px 6px;border-radius:6px;font-size:10px;font-weight:700;min-width:42px;text-align:center;">${ep.method}</span>`;
-                html += `<span style="font-family:monospace;color:#794f27;word-break:break-all;">${escapeHtml(ep.url)}</span>`;
-                html += readOnlyTag;
-                html += `</div>`;
-            });
+        (data.endpoints || []).forEach(ep => {
+            const methodColors = { GET: '#10B981', POST: '#F59E0B', DELETE: '#EF4444', PUT: '#3B82F6' };
+            const mc = methodColors[ep.method] || '#999';
+            
+            // Determine permission type
+            let permType = ep.perm || 'readonly';
+            if (!ep.perm) {
+                permType = ep.method === 'GET' ? 'readonly' : 'write';
+            }
+            const perm = permConfig[permType] || permConfig.readonly;
+
+            html += `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,0.05);cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="navigator.clipboard.writeText('${ep.url}');window.showToast&&showToast('已复制链接','success');">`;
+            // Method badge
+            html += `<span style="background:${mc};color:#fff;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;min-width:50px;text-align:center;flex-shrink:0;">${ep.method}</span>`;
+            // Info column
+            html += `<div style="flex:1;min-width:0;">`;
+            // Description
+            html += `<div style="font-size:13px;font-weight:600;color:#794f27;margin-bottom:2px;">${escapeHtml(ep.description)}</div>`;
+            // URL
+            html += `<div style="font-family:monospace;font-size:11px;color:#9f927d;word-break:break-all;">${escapeHtml(ep.url)}</div>`;
+            // Auth info
+            let authHtml;
+            if (ep.auth && ep.auth !== '无') {
+                authHtml = `<span style="font-size:10px;color:#8B7E6A;">🔐 ${escapeHtml(ep.auth)}</span>`;
+            } else {
+                authHtml = `<span style="font-size:10px;color:#10B981;">🔓 公开</span>`;
+            }
+            html += `<div style="display:flex;gap:8px;align-items:center;margin-top:4px;">`;
+            html += authHtml;
             html += `</div>`;
-        }
+            html += `</div>`;
+            // Permission badge
+            html += `<span style="background:${perm.bg};color:#fff;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;flex-shrink:0;">${perm.label}</span>`;
+            html += `</div>`;
+        });
         endpointsList.innerHTML = html || '<p style="color:#999;">无可用接口</p>';
     }).catch(() => {
         if (endpointsList) endpointsList.innerHTML = '<p style="color:#e05a5a;">加载失败</p>';

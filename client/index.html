@@ -527,15 +527,17 @@
                 <!-- 数据管理标签页 -->
                 <div id="admin-tab-api" class="admin-tab-panel" style="display: none;">
                     <div class="settings-section">
-                        <h3>API 管理</h3>
-                        <p class="hint-text">管理 API 接口访问权限和查看可用接口</p>
-                        <div class="form-group">
+                        <h3>API 接口管理</h3>
+                        <div class="form-group" style="background:rgba(25,200,185,0.06);border:1px solid rgba(25,200,185,0.2);border-radius:12px;padding:14px;">
                             <label class="animal-switch" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                                 <input type="checkbox" id="api-readonly-toggle" class="switch-input" checked>
                                 <span class="switch"><span class="handle"></span></span>
-                                <span class="animal-switch-label">API 只读模式（推荐开启）</span>
+                                <span class="animal-switch-label">API 只读模式</span>
                             </label>
-                            <p class="hint-text" style="margin-top:4px;">开启后，所有 API 仅允许读取（GET），禁止写入操作，防止公开接口被恶意调用破坏数据。</p>
+                            <p class="hint-text" style="margin-top:6px;margin-bottom:0;">
+                                <strong>开启（推荐）</strong>：所有 API 仅允许读取（GET），POST/PUT/DELETE 请求会被拒绝返回 403，防止公开的 API 地址被恶意调用破坏数据。<br>
+                                <strong>关闭</strong>：允许写入操作，需要配合编辑密码或管理员密码使用。
+                            </p>
                         </div>
                         <div class="form-group" style="margin-top:12px;">
                             <button type="button" id="save-api-settings" class="btn primary">保存 API 设置</button>
@@ -543,8 +545,8 @@
                     </div>
                     <div class="settings-section" style="margin-top:16px;">
                         <h3>可用接口列表</h3>
-                        <p class="hint-text">点击链接可复制完整 URL</p>
-                        <div id="api-endpoints-list" style="margin-top:10px;"></div>
+                        <p class="hint-text">点击接口可复制完整 URL。权限标签：<span style="background:#10B981;color:#fff;padding:1px 6px;border-radius:6px;font-size:10px;">只读</span> <span style="background:#F59E0B;color:#fff;padding:1px 6px;border-radius:6px;font-size:10px;">读写</span> <span style="background:#EF4444;color:#fff;padding:1px 6px;border-radius:6px;font-size:10px;">写入</span></p>
+                        <div id="api-endpoints-list" style="margin-top:10px;border:1px solid rgba(170,166,157,0.2);border-radius:12px;overflow:hidden;"></div>
                     </div>
                 </div>
 
