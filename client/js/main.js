@@ -4577,9 +4577,10 @@ function drawScheduleToCanvas() {
     tempContainer.style.padding = '24px';
     tempContainer.style.minHeight = '800px';
 
-    // 根据列数计算宽度
+    // 根据列数计算宽度（跨周时增大基础宽度，保证卡片不被压缩）
     const cols = totalDays;
-    const colWidth = Math.max(180, Math.min(240, 1680 / cols));
+    const baseWidth = cols <= 7 ? 1680 : Math.max(1680, cols * 200);
+    const colWidth = Math.max(200, Math.min(240, baseWidth / cols));
     const containerWidth = colWidth * cols + 48;
     tempContainer.style.width = containerWidth + 'px';
 
